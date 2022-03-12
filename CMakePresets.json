@@ -1,0 +1,112 @@
+{
+  "version": 3,
+	"cmakeMinimumRequired": {
+		"major": 3,
+		"minor": 22,
+		"patch": 0
+	},
+  "configurePresets": [
+		{
+			"name": "Common",
+			"hidden": true,
+			"generator": "Ninja",
+			"binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchain-gcc.cmake",
+				"CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+		},
+    {
+      "name": "Debug",
+			"hidden": true,
+			"inherits": "Common",
+      "displayName": "Debug Configure preset",
+      "description": "Sets Ninja generator, build and install directory",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+		{
+			"name": "Debug P1",
+			"inherits": "Debug",
+			"displayName": "Debug P1",
+			"cacheVariables": {
+				"SWORDFISH_MACHINE_TYPE": "1",
+				"SWORDFISH_MACHINE_NAME": "Proteus P1"
+			}
+		},
+		{
+			"name": "Debug P2",
+			"inherits": "Debug",
+			"displayName": "Debug P2",
+			"cacheVariables": {
+				"SWORDFISH_MACHINE_TYPE": "2",
+				"SWORDFISH_MACHINE_NAME": "Proteus P2"
+			}
+		},
+		{
+			"name": "Debug P3",
+			"inherits": "Debug",
+			"displayName": "Debug P3",
+			"cacheVariables": {
+				"SWORDFISH_MACHINE_TYPE": "3",
+				"SWORDFISH_MACHINE_NAME": "Proteus P3"
+			}
+		},
+		{
+			"name": "Debug P4",
+			"inherits": "Debug",
+			"displayName": "Debug P4",
+			"cacheVariables": {
+				"SWORDFISH_MACHINE_TYPE": "4",
+				"SWORDFISH_MACHINE_NAME": "Proteus P4"
+			}
+		},
+		{
+      "name": "Release",
+			"hidden": true,
+			"inherits": "Common",
+      "displayName": "Release Configure preset",
+      "description": "Sets Ninja generator, build and install directory",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+		{
+			"name": "Release P1",
+			"inherits": "Release",
+			"displayName": "Release P1",
+			"cacheVariables": {
+				"SWORDFISH_MACHINE_TYPE": "1",
+				"SWORDFISH_MACHINE_NAME": "Proteus P1"
+			}
+		},
+		{
+			"name": "Release P2",
+			"inherits": "Release",
+			"displayName": "Release P2",
+			"cacheVariables": {
+				"SWORDFISH_MACHINE_TYPE": "2",
+				"SWORDFISH_MACHINE_NAME": "Proteus P2"
+			}
+		},
+		{
+			"name": "Release P3",
+			"inherits": "Release",
+			"displayName": "Release P3",
+			"cacheVariables": {
+				"SWORDFISH_MACHINE_TYPE": "3",
+				"SWORDFISH_MACHINE_NAME": "Proteus P3"
+			}
+		},
+		{
+			"name": "Release P4",
+			"inherits": "Release",
+			"displayName": "Release P4",
+			"cacheVariables": {
+				"SWORDFISH_MACHINE_TYPE": "4",
+				"SWORDFISH_MACHINE_NAME": "Proteus P4"
+			}
+		}
+  ]
+}

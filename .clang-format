@@ -1,0 +1,64 @@
+AlignArrayOfStructures: Right
+AlignEscapedNewlines: DontAlign
+AlignConsecutiveMacros: AcrossEmptyLinesAndComments
+AlignTrailingComments: false
+AllowAllArgumentsOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine : false
+AllowShortFunctionsOnASingleLine: false
+AlwaysBreakAfterReturnType: None
+AlwaysBreakTemplateDeclarations: Yes
+BreakBeforeBraces: Attach
+BreakConstructorInitializers: AfterColon
+BreakInheritanceList: AfterColon
+ColumnLimit: 0
+Cpp11BracedListStyle: false
+DerivePointerAlignment: false
+EmptyLineAfterAccessModifier: Never
+EmptyLineBeforeAccessModifier: Always
+FixNamespaceComments: true
+IncludeBlocks: Regroup
+IndentAccessModifiers: false
+IndentCaseBlocks: false
+IndentCaseLabels: true
+IndentExternBlock: Indent
+IndentGotoLabels: false
+IndentPPDirectives: AfterHash
+IndentRequires: true
+IndentWidth: 2
+InsertTrailingCommas: None
+LambdaBodyIndentation: Signature
+Language: Cpp
+NamespaceIndentation: All
+PPIndentWidth: 2
+# PackConstructorInitializers: Never
+PointerAlignment: Left
+# QualifierAlignment: Left
+ReferenceAlignment: Left
+# SeparateDefinitionBlocks: Always
+ShortNamespaceLines: 0
+SortUsingDeclarations: true
+SpaceAfterCStyleCast: true
+SpaceAfterLogicalNot: false
+SpaceAfterTemplateKeyword: false
+SpaceAroundPointerQualifiers: Default
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeCaseColon: false
+SpaceBeforeCpp11BracedList: true
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeParens: ControlStatements
+# SpaceBeforeRangedBasedForLoopColon: true
+SpaceBeforeSquareBrackets: false
+SpaceInEmptyBlock: false
+SpaceInEmptyParentheses: false
+SpacesInAngles: Never
+SpacesInCStyleCastParentheses: false
+SpacesInConditionalStatement: false
+SpacesInContainerLiterals: false
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+Standard: Cpp20
+SortIncludes: false
+Standard: c++17
+TabWidth: 2
+UseCRLF: false
+UseTab: AlignWithSpaces

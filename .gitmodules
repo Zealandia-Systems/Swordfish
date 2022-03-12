@@ -1,0 +1,18 @@
+[submodule "external/ArduinoCore-samd"]
+	path = external/ArduinoCore-samd
+	url = https://github.com/Zealandia-Systems/ArduinoCore-samd.git
+[submodule "external/eigen"]
+	path = external/eigen
+	url = https://gitlab.com/Zealandia-Systems/eigen.git
+[submodule "external/CMSIS_5"]
+	path = external/CMSIS_5
+	url = https://github.com/Zealandia-Systems/CMSIS_5.git
+[submodule "external/ArduinoModule-CMSIS-Atmel"]
+	path = external/ArduinoModule-CMSIS-Atmel
+	url = https://github.com/Zealandia-Systems/ArduinoModule-CMSIS-Atmel.git
+[submodule "external/Adafruit_SPIFlash"]
+	path = external/Adafruit_SPIFlash
+	url = https://github.com/Zealandia-Systems/Adafruit_SPIFlash
+[submodule "external/SdFat"]
+	path = external/SdFat
+	url = https://github.com/Zealandia-Systems/SdFat.git
