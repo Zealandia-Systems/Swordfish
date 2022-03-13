@@ -26,7 +26,7 @@
 #include "CoordinateSystemTable.h"
 #include "Limits.h"
 
-#include "../src/core/types.h"
+#include <marlin/core/types.h>
 
 namespace swordfish::estop {
 	class EStopModule;

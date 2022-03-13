@@ -7,8 +7,8 @@
 
 #include <charconv>
 
-#include "../../../src/gcode/gcode.h"
-#include "../../../src/libs/modbus.h"
+#include <marlin/gcode/gcode.h>
+#include <marlin/libs/modbus.h>
 
 #include <swordfish/debug.h>
 #include <swordfish/modules/estop/EStopModule.h>

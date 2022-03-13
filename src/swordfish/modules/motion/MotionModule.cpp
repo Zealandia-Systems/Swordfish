@@ -9,9 +9,9 @@
 
 #include "MotionModule.h"
 
-#include "../src/module/endstops.h"
-#include "../src/module/motion.h"
-#include "../src/module/planner.h"
+#include <marlin/module/endstops.h>
+#include <marlin/module/motion.h>
+#include <marlin/module/planner.h>
 
 extern float32_t rapidrate_mm_s;
 

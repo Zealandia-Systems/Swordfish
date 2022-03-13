@@ -9,13 +9,13 @@
 
 #include <Eigen/Core>
 
-#include "../../src/gcode/gcode.h"
-#include "../../src/feature/host_actions.h"
-#include "../../src/feature/spindle_laser.h"
-#include "../../src/MarlinCore.h"
-#include "../../src/module/motion.h"
-#include "../../src/module/endstops.h"
-#include "../../src/module/planner.h"
+#include <marlin/gcode/gcode.h>
+#include <marlin/feature/host_actions.h>
+#include <marlin/feature/spindle_laser.h>
+#include <marlin/MarlinCore.h>
+#include <marlin/module/motion.h>
+#include <marlin/module/endstops.h>
+#include <marlin/module/planner.h>
 
 #include <swordfish/debug.h>
 #include <swordfish/Controller.h>

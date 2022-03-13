@@ -9,7 +9,7 @@
 
 #include "debug.h"
 
-#include "../../src/libs/rtt/SEGGER_RTT.h"
+#include <marlin/libs/rtt/SEGGER_RTT.h>
 
 #include <swordfish/io/OutputStream.h>
 

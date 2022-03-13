@@ -7,7 +7,7 @@
 
 #include <swordfish/modules/estop/EStopModule.h>
 
-#include "../../../src/libs/modbus.h"
+#include <marlin/libs/modbus.h>
 
 #include "FulingDZBDriverImpl.h"
 

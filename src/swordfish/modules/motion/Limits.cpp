@@ -9,7 +9,7 @@
 
 #include <swordfish/debug.h>
 
-#include "../../src/module/motion.h"
+#include <marlin/module/motion.h>
 
 #include "Limits.h"
 #include "LimitException.h"

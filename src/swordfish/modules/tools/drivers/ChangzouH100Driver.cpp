@@ -5,7 +5,7 @@
  *  Author: smohekey
  */ 
 
-#include "../../../src/libs/modbus.h"
+#include <marlin/libs/modbus.h>
 
 #include <swordfish/debug.h>
 

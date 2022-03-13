@@ -6,7 +6,7 @@
 #include <swordfish/io/WrappingInputStream.h>
 #include <swordfish/io/WrappingOutputStream.h>
 
-#include "../src/hal/shared/eeprom_api.h"
+#include <marlin/hal/shared/eeprom_api.h>
 
 namespace swordfish {
 	static constexpr uint32_t CONFIG_START = 0x2000;

@@ -11,8 +11,8 @@
 
 #include <swordfish/debug.h>
 
-#include "../../../src/core/serial.h"
-#include "../../../src/libs/modbus.h"
+#include <marlin/core/serial.h>
+#include <marlin/libs/modbus.h>
 #include "../IDriver.h"
 
 namespace swordfish::tools::drivers {
