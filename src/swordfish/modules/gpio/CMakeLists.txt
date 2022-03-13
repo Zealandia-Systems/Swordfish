@@ -1,0 +1,9 @@
+target_sources(${PROJECT_NAME}.elf
+	PRIVATE
+		GPIOModule.cpp
+		GPIOModule.h
+		Pin.cpp
+		Pin.h
+		PinTable.cpp
+		PinTable.h
+)

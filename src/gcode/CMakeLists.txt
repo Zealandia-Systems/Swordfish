@@ -1,0 +1,22 @@
+target_sources(${PROJECT_NAME}.elf
+	PRIVATE
+		gcode_d.cpp
+		gcode.cpp
+		gcode.h
+		parser.cpp
+		parser.h
+		queue.cpp
+		queue.h
+)
+
+add_subdirectory(calibrate)
+add_subdirectory(config)
+add_subdirectory(control)
+add_subdirectory(eeprom)
+add_subdirectory(geometry)
+add_subdirectory(host)
+add_subdirectory(motion)
+add_subdirectory(probe)
+add_subdirectory(sd)
+add_subdirectory(stats)
+add_subdirectory(units)

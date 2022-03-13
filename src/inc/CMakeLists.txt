@@ -1,0 +1,9 @@
+target_sources(${PROJECT_NAME}.elf
+	PRIVATE
+		Conditionals_adv.h
+		Conditionals_LCD.h
+		Conditionals_post.h
+		MarlinConfig.h
+		MarlinConfigPre.h
+		SanityCheck.h
+)

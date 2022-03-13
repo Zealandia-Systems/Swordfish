@@ -1,0 +1,15 @@
+target_sources(${PROJECT_NAME}.elf
+	PRIVATE
+		ConsoleOutputStream.cpp
+		ConsoleOutputStream.h
+		InputStream.h
+		OutputStream.h
+		Reader.h
+		Seekable.h
+		StringOutputStream.cpp
+		StringOutputStream.h
+		WrappingInputStream.h
+		WrappingOutputStream.h
+		Writer.cpp
+		Writer.h
+)

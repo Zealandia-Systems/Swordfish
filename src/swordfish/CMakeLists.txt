@@ -1,0 +1,22 @@
+target_sources(${PROJECT_NAME}.elf
+	PRIVATE
+		Controller.cpp
+		Controller.h
+		debug.cpp
+		debug.h
+		Exception.cpp
+		Exception.h
+		macros.h
+		Module.cpp
+		Module.h
+		PersistentStore.h
+		types.h
+)
+
+add_subdirectory(core)
+add_subdirectory(data)
+add_subdirectory(json)
+add_subdirectory(io)
+add_subdirectory(modules)
+add_subdirectory(trace)
+add_subdirectory(utils)

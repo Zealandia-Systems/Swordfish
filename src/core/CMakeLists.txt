@@ -1,0 +1,16 @@
+target_sources(${PROJECT_NAME}.elf
+	PRIVATE
+		boards.h
+		debug_out.h
+		debug_section.h
+		drivers.h
+		language.h
+		macros.h
+		millis_t.h
+		multi_language.h
+		serial.cpp
+		serial.h
+		types.h
+		utility.cpp
+		utility.h
+)

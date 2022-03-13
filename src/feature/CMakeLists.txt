@@ -1,0 +1,9 @@
+target_sources(${PROJECT_NAME}.elf
+	PRIVATE
+		binary_stream.cpp
+		binary_stream.h
+		e_parser.cpp
+		e_parser.h
+		host_actions.cpp
+		host_actions.h
+)

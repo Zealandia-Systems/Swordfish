@@ -1,0 +1,30 @@
+target_sources(${PROJECT_NAME}.elf
+	PRIVATE
+		Driver.cpp
+		Driver.h
+		DriverException.cpp
+		DriverException.h
+		DriverParameter.cpp
+		DriverParameter.h
+		DriverParameterDefinition.h
+		DriverParameterTable.cpp
+		DriverParameterTable.h
+		DriverTable.cpp
+		DriverTable.h
+		IDriver.cpp
+		IDriver.h
+		Pocket.cpp
+		Pocket.h
+		PocketTable.cpp
+		PocketTable.h
+		Tool.cpp
+		Tool.h
+		ToolGeometry.cpp
+		ToolGeometry.h
+		ToolsModule.cpp
+		ToolsModule.h
+		ToolTable.cpp
+		ToolTable.h
+)
+
+add_subdirectory(drivers)

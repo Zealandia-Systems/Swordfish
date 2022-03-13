@@ -1,0 +1,22 @@
+target_sources(${PROJECT_NAME}.elf
+	PRIVATE
+		endstops.cpp
+		endstops.h
+		estop.h
+		motion.cpp
+		motion.h
+		planner_bezier.cpp
+		planner_bezier.h
+		planner.cpp
+		planner.h
+		printcounter.cpp
+		printcounter.h
+		settings.cpp
+		settings.h
+		stepper.cpp
+		stepper.h
+		temperature.cpp
+		temperature.h
+)
+
+add_subdirectory(stepper)

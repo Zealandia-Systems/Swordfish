@@ -1,0 +1,10 @@
+{
+	"C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+	"cmake.generator": "Ninja",
+	"cmake.parallelJobs": 8,
+	"files.associations": {
+		"*.h": "cpp",
+		"type_traits": "cpp",
+		"*.in": "cpp"
+	}
+}

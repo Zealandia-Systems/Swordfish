@@ -1,0 +1,13 @@
+target_sources(${PROJECT_NAME}.elf
+	PRIVATE
+		M2000.cpp
+		M201-M205.cpp
+		M220.cpp
+		M221.cpp
+		M222.cpp
+		M309.cpp
+		M43.cpp
+		M540.cpp
+		M575.cpp
+		M92.cpp	
+)

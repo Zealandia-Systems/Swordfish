@@ -1,0 +1,29 @@
+target_sources(${PROJECT_NAME}.elf
+	PRIVATE
+		inc/Conditionals_adv.h
+		inc/Conditionals_LCD.h
+		inc/Conditionals_post.h
+		inc/SanityCheck.h
+		eeprom_qspi.cpp
+		endstop_interrupts.h
+		fastio.h
+		HAL_SPI.cpp
+		HAL.cpp
+		HAL.h
+		MarlinSerial_AGCM4.cpp
+		MarlinSerial_AGCM4.h
+		MarlinSPI.h
+		pinsDebug.h
+		QSPIFlash.cpp
+		QSPIFlash.h
+		RS485.cpp
+		RS485.h
+		SAMD51.h
+		Servo.cpp
+		ServoTimers.h
+		spi_pins.h
+		timers.cpp
+		timers.h
+		watchdog.cpp
+		watchdog.h	
+)

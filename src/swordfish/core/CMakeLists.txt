@@ -1,0 +1,29 @@
+target_sources(${PROJECT_NAME}.elf
+	PRIVATE
+		Array.h
+		Boundary.h
+		Console.cpp
+		Console.h
+		DuplicateIndexException.cpp
+		DuplicateIndexException.h
+		FormatException.cpp
+		FormatException.h
+		InvalidOperationException.cpp
+		InvalidOperationException.h
+		ISR.cpp
+		ISR.h
+		ListPack.h
+		Object.cpp
+		Object.h
+		ObjectList.h
+		Pack.cpp
+		Pack.h
+		Schema.h
+		String.cpp
+		String.h
+		ValueArray.h
+		Vector2.cpp
+		Vector2.h
+		Vector3.cpp
+		Vector3.h
+)

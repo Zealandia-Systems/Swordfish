@@ -1,0 +1,5 @@
+add_subdirectory(estop)
+add_subdirectory(gcode)
+add_subdirectory(gpio)
+add_subdirectory(motion)
+add_subdirectory(tools)

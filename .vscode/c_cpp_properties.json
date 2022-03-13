@@ -1,0 +1,12 @@
+{
+	"configurations": [
+		{
+			"name": "Debug",
+			"compileCommands": "${workspaceFolder}\\build\\compile_commands.json"
+		},
+		{
+			"name": "Release"
+		}
+	],
+	"version": 4
+}

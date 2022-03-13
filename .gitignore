@@ -20,12 +20,7 @@
 #
 
 # Generated files
-_Version.h
-bdf2u8g
-marlin_config.json
-mczip.h
-*.gen
-*.sublime-workspace
+build/
 
 #
 # OS
@@ -116,56 +111,3 @@ tags
 # Debug files
 *.dSYM/
 *.su
-
-# PlatformIO files/dirs
-.pio*
-.pioenvs
-.piolibdeps
-.clang_complete
-.gcc-flags.json
-/lib/
-
-# Secure Credentials
-Configuration_Secure.h
-
-# Visual Studio
-*.sln
-*.vcxproj
-*.vcxproj.user
-*.vcxproj.filters
-Release/
-Debug/
-__vm/
-.vs/
-vc-fileutils.settings
-
-# Visual Studio Code
-.vscode/*
-!.vscode/extensions.json
-
-#Simulation
-imgui.ini
-eeprom.dat
-spi_flash.bin
-
-#cmake
-CMakeLists.txt
-src/CMakeLists.txt
-CMakeListsPrivate.txt
-build/
-
-# CLion
-cmake-build-*
-
-# Eclipse
-.project
-.cproject
-.pydevproject
-.settings
-.classpath
-
-# Python
-__pycache__
-
-# IOLogger logs
-*_log.csv

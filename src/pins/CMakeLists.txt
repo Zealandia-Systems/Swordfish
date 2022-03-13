@@ -1,0 +1,9 @@
+target_sources(${PROJECT_NAME}.elf
+	PRIVATE
+		samd/pins_boardinator.h
+		pins_postprocess.h
+		pins.h
+		pinsDebug_list.h
+		pinsDebug.h
+		sensitive_pins.h
+)

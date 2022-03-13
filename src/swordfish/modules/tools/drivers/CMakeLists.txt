@@ -1,0 +1,11 @@
+target_sources(${PROJECT_NAME}.elf
+	PRIVATE
+		ChangzouH100Driver.cpp
+		ChangzouH100DriverImpl.h
+		FulingDZBDriverImpl.cpp
+		FulingDZBDriverImpl.h
+		PWMLaserDriverImpl.cpp
+		PWMLaserDriverImpl.h
+		RS485DriverImpl.cpp
+		RS485DriverImpl.h
+)

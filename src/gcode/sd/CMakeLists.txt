@@ -1,0 +1,18 @@
+target_sources(${PROJECT_NAME}.elf
+	PRIVATE
+		M1001.cpp
+		M20.cpp
+		M21_M22.cpp
+		M23.cpp
+		M24_M25.cpp
+		M26.cpp
+		M27.cpp
+		M28_M29.cpp
+		M30.cpp
+		M32.cpp
+		M33.cpp
+		M34.cpp
+		M524.cpp
+		M808.cpp
+		M928.cpp
+)

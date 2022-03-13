@@ -1,0 +1,9 @@
+target_sources(${PROJECT_NAME}.elf
+	PRIVATE
+		RTTSerial.cpp
+		RTTSerial.h
+		SEGGER_RTT_Conf.h
+		SEGGER_RTT.c
+		SEGGER_RTT.h
+		SEGGER_RTT_ASM_ARMv7M.S
+)
