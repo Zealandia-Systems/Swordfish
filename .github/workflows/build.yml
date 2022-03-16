@@ -24,4 +24,4 @@ jobs:
         uses: ashutoshvarma/action-cmake-build@master
         with:
           build-dir: ${{runner.workspace}}/build
-          configure-options: -G Ninja -DCMAKE_TOOLCHAIN_FILE=${{runner.workspace}}/cmake/toolchain-gcc.cmake
+          configure-options: -G Ninja -DCMAKE_TOOLCHAIN_FILE=${{runner.workspace}}/Swordfish/cmake/toolchain-gcc.cmake
