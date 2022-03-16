@@ -2,7 +2,7 @@
 
 #include <SERCOM.h>
 
-#include "Modbus.h"
+#include "modbus.h"
 
 #include "../inc/MarlinConfig.h"
 #include "../core/serial.h"
