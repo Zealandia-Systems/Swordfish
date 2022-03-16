@@ -43,6 +43,7 @@ jobs:
           path: ${{runner.workspace}}/build/*.uf2
   release:
     needs: build
+    runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v3
