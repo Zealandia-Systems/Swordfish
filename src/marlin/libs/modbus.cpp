@@ -6,8 +6,8 @@
 
 #include "../inc/MarlinConfig.h"
 #include "../core/serial.h"
-#include "../hal/HAL.h"
-#include "../hal/SAMD51/RS485.h"
+#include "../HAL/HAL.h"
+#include "../HAL/SAMD51/RS485.h"
 
 #include <swordfish/debug.h>
 
