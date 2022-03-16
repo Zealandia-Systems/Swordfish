@@ -3,6 +3,13 @@ on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        config:
+          - { name: P1, machine-type: 1, machine-name: P1 }
+          - { name: P2, machine-type: 2, machine-name: P2 }
+          - { name: P3, machine-type: 3, machine-name: P3 }
+          - { name: P4, machine-type: 4, machine-name: P4 }
     steps:
       - name: Install GCC
         uses: carlosperate/arm-none-eabi-gcc-action@v1
@@ -15,13 +22,14 @@ jobs:
         with:
           version: 1.10.0
 
-      - name: Checkout source
-        uses: actions/checkout@v2
-        with:
-          submodules: recursive
+#      - name: Checkout source
+#        uses: actions/checkout@v2
+#        with:
+#          submodules: recursive
         
-      - name: CMake configure
+      - name: CMake configure and build
         uses: ashutoshvarma/action-cmake-build@master
         with:
           build-dir: ${{runner.workspace}}/build
-          configure-options: -G Ninja -DCMAKE_TOOLCHAIN_FILE=${{runner.workspace}}/Swordfish/cmake/toolchain-gcc.cmake
+          build-type: Release
+          configure-options: -G Ninja -DCMAKE_TOOLCHAIN_FILE=${{runner.workspace}}/Swordfish/cmake/toolchain-gcc.cmake -DSWORDFISH_MACHINE_TYPE=${{matrix.config.machine-type}} -DSWORDFISH_MACHINE_NAME=${{matrix.config.machine-name}}
