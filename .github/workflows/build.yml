@@ -22,10 +22,10 @@ jobs:
         with:
           version: 1.10.0
 
-#      - name: Checkout source
-#        uses: actions/checkout@v2
-#        with:
-#          submodules: recursive
+      - name: Checkout source
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
         
       - name: CMake configure and build
         uses: ashutoshvarma/action-cmake-build@master
