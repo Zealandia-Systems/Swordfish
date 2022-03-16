@@ -68,6 +68,11 @@ add_custom_target(${PROJECT_NAME}.bin ALL DEPENDS ${PROJECT_NAME}.elf)
 add_custom_command(TARGET ${PROJECT_NAME}.bin
     COMMAND ${CMAKE_OBJCOPY} ARGS -O binary ${PROJECT_NAME}.elf ${PROJECT_NAME}.bin)
 
+add_custom_target(uf2 DEPENDS ${PROJECT_NAME}.bin)
+add_custom_command(TARGET uf2
+	USES_TERMINAL
+	COMMAND ${CMAKE_SOURCE_DIR}/tools/uf2conv.py -c -b 0x4000 -o "${CMAKE_BINARY_DIR}/${PROJECT_NAME}-${CMAKE_BUILD_TYPE}-${SWORDFISH_MACHINE_NAME}.uf2" "${CMAKE_BINARY_DIR}/${PROJECT_NAME}.bin")
+
 add_custom_target(flash DEPENDS ${PROJECT_NAME}.bin)
 add_custom_command(TARGET flash
     USES_TERMINAL

@@ -39,6 +39,7 @@ applet/
 *.i
 *.ii
 *.swp
+*.log
 tags
 
 #
