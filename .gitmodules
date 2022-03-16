@@ -3,7 +3,7 @@
 	url = https://github.com/Zealandia-Systems/ArduinoCore-samd.git
 [submodule "external/eigen"]
 	path = external/eigen
-	url = https://gitlab.com/Zealandia-Systems/eigen.git
+	url = https://github.com/Zealandia-Systems/eigen.git
 [submodule "external/CMSIS_5"]
 	path = external/CMSIS_5
 	url = https://github.com/Zealandia-Systems/CMSIS_5.git
