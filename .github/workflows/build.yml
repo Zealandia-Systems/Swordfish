@@ -11,6 +11,11 @@ jobs:
           - { name: P3, machine-type: 3, machine-name: P3 }
           - { name: P4, machine-type: 4, machine-name: P4 }
     steps:
+      - name: Checkout source
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+        
       - name: Install GCC
         uses: carlosperate/arm-none-eabi-gcc-action@v1
         id: arm-none-eabi-gcc-action
@@ -22,11 +27,6 @@ jobs:
         with:
           version: 1.10.0
 
-      - name: Checkout source
-        uses: actions/checkout@v2
-        with:
-          submodules: recursive
-        
       - name: CMake configure and build
         uses: ashutoshvarma/action-cmake-build@master
         with:
