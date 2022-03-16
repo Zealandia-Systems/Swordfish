@@ -3,18 +3,18 @@ on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
-      steps:
-        - name: Checkout source
-          uses: actions/checkout@v2
-          
-        - name: Install GCC
-          uses: carlosperate/arm-none-eabi-gcc-action@v1
-          id: arm-none-eabi-gcc-action
-          with:
-            release: '10.3-2021.10'
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v2
+        
+      - name: Install GCC
+        uses: carlosperate/arm-none-eabi-gcc-action@v1
+        id: arm-none-eabi-gcc-action
+        with:
+          release: '10.3-2021.10'
 
-        - name: CMake configure
-          uses: ashutoshvarma/action-cmake-build@master
-          with:
-            build-dir: ${{runner.workspace}}/build
-            configure-options: -DCMAKE_TOOLCHAIN_FILE=${{runner.workspace}}/cmake/toolchain-gcc.cmake
+      - name: CMake configure
+        uses: ashutoshvarma/action-cmake-build@master
+        with:
+          build-dir: ${{runner.workspace}}/build
+          configure-options: -DCMAKE_TOOLCHAIN_FILE=${{runner.workspace}}/cmake/toolchain-gcc.cmake
