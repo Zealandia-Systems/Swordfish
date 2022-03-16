@@ -2,6 +2,7 @@ name: build
 on: [push]
 jobs:
   build:
+    name: ${{matrix.config.name}}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -32,10 +33,16 @@ jobs:
         with:
           build-dir: ${{runner.workspace}}/build
           build-type: Release
+          target: uf2
           configure-options: -G Ninja -DCMAKE_TOOLCHAIN_FILE=${{runner.workspace}}/Swordfish/cmake/toolchain-gcc.cmake -DSWORDFISH_MACHINE_TYPE=${{matrix.config.machine-type}} -DSWORDFISH_MACHINE_NAME=${{matrix.config.machine-name}}
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
           name: build-output
-          path: ${{runner.workspace}}/build/
+          path: ${{runner.workspace}}/build/*.uf2
+  release:
+    needs: build
+      steps:
+        - name: Download artifacts
+          uses: actions/download-artifact@v3
