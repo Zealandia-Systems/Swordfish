@@ -44,8 +44,9 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: build-output
+          name: Swordfish-${{matrix.config.machine-name}}.uf2
           path: ${{runner.workspace}}/build/*.uf2
+
   release:
     needs: build
     runs-on: ubuntu-latest
