@@ -2,7 +2,7 @@ name: bump-release
 on:
   push:
     branches:
-      - github-build-actions
+      - main
     tags:
       - 'v*.*.*'
   pull_request:
