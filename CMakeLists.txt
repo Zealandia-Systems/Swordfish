@@ -70,7 +70,8 @@ configure_file(${CMAKE_SOURCE_DIR}/Version.h.in ${CMAKE_BINARY_DIR}/Version.h @O
 message(STATUS "Short Version: ${SWORDFISH_VERSION_SHORT}")
 message(STATUS "Long Version: ${SWORDFISH_VERSION_LONG}")
 
-project(Swordfish VERSION ${SWORDFISH_VERSION_SHORT})
+string(SUBSTRING ${SWORDFISH_VERSION_SHORT} 1 -1 SWORDFISH_PROJECT_VERSION)
+project(Swordfish VERSION ${SWORDFISH_PROJECT_VERSION})
 
 add_executable(${PROJECT_NAME}.elf "")
 
