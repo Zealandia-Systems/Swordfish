@@ -1,7 +1,11 @@
 name: build-release
-on: push
-  branches: main
-  tags: 'v*.*.*'
+on:
+  push:
+    branches:
+      - github-build-actions
+    tags:
+      - 'v*.*.*'
+
 jobs:
   build:
     name: ${{matrix.config.name}}
