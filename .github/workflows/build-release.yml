@@ -1,5 +1,7 @@
-name: build
-on: [push]
+name: build-release
+on: push
+  branches: main
+  tags: 'v*.*.*'
 jobs:
   build:
     name: ${{matrix.config.name}}

@@ -17,7 +17,7 @@ endif()
 # Final fallback: Just use a bogus version string that is semantically older
 # than anything else and spit out a warning to the developer.
 if(NOT DEFINED SWORDFISH_VERSION)
-  set(FOOBAR_VERSION v0.0.0-unknown)
+  set(SWORDFISH_VERSION v0.0.0-unknown)
   message(WARNING "Failed to determine FOOBAR_VERSION from Git tags. Using default version \"${SWORDFISH_VERSION}\".")
 endif()
 
