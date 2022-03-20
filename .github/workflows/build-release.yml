@@ -6,6 +6,7 @@ on:
     tags:
       - 'v*.*.*'
 
+
 jobs:
   build:
     name: ${{matrix.config.name}}
