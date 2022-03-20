@@ -33,7 +33,7 @@
  * Swordfish release version identifier
  */
 #ifndef SHORT_BUILD_VERSION
-#	define SHORT_BUILD_VERSION "@SWORDFISH_VERSION@"
+#	define SHORT_BUILD_VERSION "@SWORDFISH_VERSION_LONG@"
 #endif
 
 /**
