@@ -20,6 +20,8 @@ jobs:
         # with:
         #   config-name: my-config.yml
         #   disable-autolabeler: true
+        with:
+          commitish: main
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
