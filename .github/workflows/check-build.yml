@@ -1,4 +1,4 @@
-name: release
+name: check-build
 on:
   pull_request:
     types: [opened, reopened, synchronize]
@@ -7,15 +7,4 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: Zealandia-Systems/Swordfish/.github/workflows/build-func.yml@main
-      - uses: actions/download-artifact@v3
-        with:
-          path: ${{runner.workspace}}/artifacts/
-
-      - name: Upload Assets
-        uses: AButler/upload-release-assets@v2.0
-        with:
-          files: '${{runner.workspace}}/artifacts/*.uf2'
-          repo-token: ${{ github.token }}
+    uses: Zealandia-Systems/Swordfish/.github/workflows/build-func.yml@main
