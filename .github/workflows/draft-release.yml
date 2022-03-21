@@ -9,8 +9,11 @@ on:
 jobs:
   update_draft:
     runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.step1.outputs.upload_url }}
     steps:
-      - uses: release-drafter/release-drafter@v5
+      - id: step1
+        uses: release-drafter/release-drafter@v5
         with:
           disable-autolabeler: true
         env:
@@ -28,8 +31,7 @@ jobs:
           path: ${{runner.workspace}}/artifacts/
 
       - name: Upload Assets
-        uses: alexellis/upload-assets@0.2.2
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
+        uses: NBTX/upload-release-assets@v1
         with:
-          asset_paths: '["${{runner.workspace}}/artifacts/*.uf2"]'
+          upload_url: ${{needs.update_draft.outputs.upload_url}}
+          targets: ${{runner.workspace}}//artifacts/*
