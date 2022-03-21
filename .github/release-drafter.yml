@@ -1,4 +1,4 @@
-name-template: 'v$RESOLVED_VERSION 🌈'
+name-template: 'v$RESOLVED_VERSION 🐟'
 tag-template: 'v$RESOLVED_VERSION'
 categories:
   - title: '🚀 Features'
@@ -17,13 +17,13 @@ change-title-escapes: '\<*_&' # You can add # and @ to disable mentions, and add
 version-resolver:
   major:
     labels:
-      - 'bump:major'
+      - 'major'
   minor:
     labels:
-      - 'bump:minor'
+      - 'minor'
   patch:
     labels:
-      - 'bump:patch'
+      - 'patch'
   default: patch
 autolabeler:
   - label: 'chore'
