@@ -17,12 +17,10 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
 
   build:
-    needs: update_release_draft
-    runs-on: ubuntu-latest
     uses: Zealandia-Systems/Swordfish/.github/workflows/build-func.yml@main
 
   upload-assets:
-    needs: build
+    needs: [update_release_draft, build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v3

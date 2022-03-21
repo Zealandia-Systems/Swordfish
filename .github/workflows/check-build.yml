@@ -7,7 +7,6 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
     uses: Zealandia-Systems/Swordfish/.github/workflows/build-func.yml@main
 
   upload-assets:
