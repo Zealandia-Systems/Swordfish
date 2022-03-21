@@ -48,22 +48,8 @@ jobs:
           configure-options: -G Ninja -DCMAKE_TOOLCHAIN_FILE=${{runner.workspace}}/Swordfish/cmake/toolchain-gcc.cmake -DSWORDFISH_MACHINE_TYPE=${{matrix.config.machine-type}} -DSWORDFISH_MACHINE_NAME=${{matrix.config.machine-name}}
 
       - name: Upload Assets
-        uses: actions/upload-artifact@v3
-        with:
-          name: Swordfish-${{matrix.config.machine-name}}.uf2
-          path: ${{runner.workspace}}/build/*.uf2
-
-  publish:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v3
-        with:
-          path: ./artifacts/
-      - name: Upload assets
         uses: alexellis/upload-assets@0.2.2
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
-          asset_paths: ./artifacts/*
+          asset_paths: ${{runner.workspace}}/build/*.uf2
