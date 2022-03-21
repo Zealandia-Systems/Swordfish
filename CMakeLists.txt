@@ -17,21 +17,63 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-project(Swordfish)
+find_package(Git REQUIRED)
+find_package(Python3 REQUIRED)
 
-find_package(Git)
+#add_custom_target(version
+#	${CMAKE_COMMAND}
+#		-D SRC=${CMAKE_SOURCE_DIR}/Version.h.in
+#		-D DST=${CMAKE_BINARY_DIR}/Version.h
+#		-D GIT_EXECUTABLE=${GIT_EXECUTABLE}
+#		-P ${CMAKE_SOURCE_DIR}/cmake/GenerateVersionHeader.cmake
+#)
 
-add_custom_target(version
-	${CMAKE_COMMAND}
-		-D SRC=${CMAKE_SOURCE_DIR}/Version.h.in
-		-D DST=${CMAKE_BINARY_DIR}/Version.h
-		-D GIT_EXECUTABLE=${GIT_EXECUTABLE}
-		-P ${CMAKE_SOURCE_DIR}/cmake/GenerateVersionHeader.cmake
-)
+if(GIT_EXECUTABLE)
+	# Generate a git-describe version string from Git repository tags
+	execute_process(
+		COMMAND ${GIT_EXECUTABLE} describe --tags --abbrev=0
+		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+		OUTPUT_VARIABLE GIT_DESCRIBE_VERSION
+		RESULT_VARIABLE GIT_DESCRIBE_ERROR_CODE
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+	)
+	if(NOT GIT_DESCRIBE_ERROR_CODE)
+		set(SWORDFISH_VERSION_SHORT ${GIT_DESCRIBE_VERSION})
+	endif()
+
+	execute_process(
+		COMMAND ${GIT_EXECUTABLE} describe --tags --dirty
+		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+		OUTPUT_VARIABLE GIT_DESCRIBE_VERSION
+		RESULT_VARIABLE GIT_DESCRIBE_ERROR_CODE
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+	)
+	if(NOT GIT_DESCRIBE_ERROR_CODE)
+		set(SWORDFISH_VERSION_LONG ${GIT_DESCRIBE_VERSION})
+	endif()
+endif()
+
+# Final fallback: Just use a bogus version string that is semantically older
+# than anything else and spit out a warning to the developer.
+if(NOT DEFINED SWORDFISH_VERSION_SHORT)
+	set(SWORDFISH_VERSION_SHORT v0.0.0)
+  	message(WARNING "Failed to determine SWORDFISH_VERSION_SHORT from Git tags. Using default version \"${SWORDFISH_VERSION_SHORT}\".")
+endif()
+
+if(NOT DEFINED SWORDFISH_VERSION_LONG)
+  	set(SWORDFISH_VERSION_LONG v0.0.0-unknown)
+  	message(WARNING "Failed to determine SWORDFISH_VERSION_LONG from Git tags. Using default version \"${SWORDFISH_VERSION_LONG}\".")
+endif()
+
+configure_file(${CMAKE_SOURCE_DIR}/Version.h.in ${CMAKE_BINARY_DIR}/Version.h @ONLY)
+
+message(STATUS "Short Version: ${SWORDFISH_VERSION_SHORT}")
+message(STATUS "Long Version: ${SWORDFISH_VERSION_LONG}")
+
+string(SUBSTRING ${SWORDFISH_VERSION_SHORT} 1 -1 SWORDFISH_PROJECT_VERSION)
+project(Swordfish VERSION ${SWORDFISH_PROJECT_VERSION})
 
 add_executable(${PROJECT_NAME}.elf "")
-
-add_dependencies(${PROJECT_NAME}.elf version)
 
 add_subdirectory(external)
 add_subdirectory(src)
@@ -58,6 +100,7 @@ target_compile_definitions(${PROJECT_NAME}.elf
 		MACHINE_TYPE=${SWORDFISH_MACHINE_TYPE}
 		MACHINE_NAME=${SWORDFISH_MACHINE_NAME}
 )
+
 target_include_directories(${PROJECT_NAME}.elf
 	PRIVATE
 		src
@@ -71,7 +114,7 @@ add_custom_command(TARGET ${PROJECT_NAME}.bin
 add_custom_target(uf2 DEPENDS ${PROJECT_NAME}.bin)
 add_custom_command(TARGET uf2
 	USES_TERMINAL
-	COMMAND ${CMAKE_SOURCE_DIR}/tools/uf2conv.py -c -b 0x4000 -o "${CMAKE_BINARY_DIR}/${PROJECT_NAME}-${CMAKE_BUILD_TYPE}-${SWORDFISH_MACHINE_NAME}.uf2" "${CMAKE_BINARY_DIR}/${PROJECT_NAME}.bin")
+	COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/uf2conv.py -c -b 0x4000 -o "${CMAKE_BINARY_DIR}/${PROJECT_NAME}-${SWORDFISH_VERSION_LONG}-${SWORDFISH_MACHINE_NAME}.uf2" "${CMAKE_BINARY_DIR}/${PROJECT_NAME}.bin")
 
 add_custom_target(flash DEPENDS ${PROJECT_NAME}.bin)
 add_custom_command(TARGET flash

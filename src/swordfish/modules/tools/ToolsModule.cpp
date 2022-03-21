@@ -360,7 +360,7 @@ start:
 		if (tool && tool->isFixed()) {
 			_spindlePocket->setToolIndex(nextToolIndex);
 
-			tools.writeRecordJson(out, *tool);
+			//tools.writeRecordJson(out, *tool);
 
 			Controller::getInstance().save();
 

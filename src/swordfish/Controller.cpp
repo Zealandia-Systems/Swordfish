@@ -16,7 +16,7 @@
 
 #include <Adafruit_SPIFlashBase.h>
 
-#include <marlin/hal/SAMD51/watchdog.h>
+#include <marlin/HAL/SAMD51/watchdog.h>
 #include <marlin/MarlinCore.h>
 
 namespace swordfish {
