@@ -1,10 +1,6 @@
-name: release
+name: build
 on:
-  push:
-    branches:
-      - main
-    tags:
-      - 'v*.*.*'
+  workflow_call
 
 jobs:
   build:
@@ -46,9 +42,9 @@ jobs:
           build-type: Release
           target: uf2
           configure-options: -G Ninja -DCMAKE_TOOLCHAIN_FILE=${{runner.workspace}}/Swordfish/cmake/toolchain-gcc.cmake -DSWORDFISH_MACHINE_TYPE=${{matrix.config.machine-type}} -DSWORDFISH_MACHINE_NAME=${{matrix.config.machine-name}}
-
-      - name: Upload Assets
-        uses: AButler/upload-release-assets@v2.0
+      
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
         with:
-          files: '${{runner.workspace}}/build/*.uf2'
-          repo-token: ${{ github.token }}
+          name: Swordfish-${{matrix.config.machine-name}}.uf2
+          path: ${{runner.workspace}}/build/*.uf2
