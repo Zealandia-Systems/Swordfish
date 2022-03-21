@@ -21,7 +21,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
 
   tag:
-    needs: [update_draft]
+    needs: update_draft
     runs-on: ubuntu-latest
     steps:
       - name: Tag Commit
@@ -31,7 +31,7 @@ jobs:
           tag: ${{ needs.update_draft.outputs.tag_name }}
 
   build:
-    needs: update_draft
+    needs: tag
     uses: Zealandia-Systems/Swordfish/.github/workflows/build-func.yml@main
     with:
       upload_url: ${{ needs.update_draft.outputs.upload_url }}
