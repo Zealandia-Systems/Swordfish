@@ -20,7 +20,7 @@ jobs:
     uses: Zealandia-Systems/Swordfish/.github/workflows/build-func.yml@main
 
   upload-assets:
-    needs: [update_release_draft, build]
+    needs: [update_draft, build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v3
