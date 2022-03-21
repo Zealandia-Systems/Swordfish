@@ -48,7 +48,7 @@ jobs:
           configure-options: -G Ninja -DCMAKE_TOOLCHAIN_FILE=${{runner.workspace}}/Swordfish/cmake/toolchain-gcc.cmake -DSWORDFISH_MACHINE_TYPE=${{matrix.config.machine-type}} -DSWORDFISH_MACHINE_NAME=${{matrix.config.machine-name}}
 
       - name: Upload Assets
-        uses: AButler/upload-release-assets@2.0
+        uses: AButler/upload-release-assets@v2.0
         with:
           files: '${{runner.workspace}}/build/*.uf2'
           repo-token: ${{ github.token }}
