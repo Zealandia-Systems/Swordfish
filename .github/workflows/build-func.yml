@@ -47,7 +47,7 @@ jobs:
           configure-options: -G Ninja -DCMAKE_TOOLCHAIN_FILE=${{runner.workspace}}/Swordfish/cmake/toolchain-gcc.cmake -DSWORDFISH_MACHINE_TYPE=${{matrix.config.machine-type}} -DSWORDFISH_MACHINE_NAME=${{matrix.config.machine-name}}
       
       - name: Upload Assets
-        uses: NBTX/upload-release-assets@v3
+        uses: NBTX/upload-release-assets@v1
         if: inputs.upload_url != ''
         with:
           upload_url: ${{inputs.upload_url}}
