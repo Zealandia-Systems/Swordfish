@@ -52,4 +52,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
-          asset_paths: ${{runner.workspace}}/build/*.uf2
+          asset_paths: '["${{runner.workspace}}/build/*.uf2"]'
