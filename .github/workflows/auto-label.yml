@@ -15,6 +15,5 @@ jobs:
           field: branch
           regex: '([a-z]+?)-'
           lowercase: true
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
+          token: ${{ github.token }}
 
