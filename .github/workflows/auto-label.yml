@@ -1,4 +1,4 @@
-name: release
+name: auto-label
 on:
   pull_request:
     types: [opened, reopened, synchronize]
@@ -6,7 +6,7 @@ on:
     types: [opened, reopened, synchronize]
 
 jobs:
-  update_release_draft:
+  auto-label:
     runs-on: ubuntu-latest
     steps:
       # (Optional) GitHub Enterprise requires GHE_HOST variable set
