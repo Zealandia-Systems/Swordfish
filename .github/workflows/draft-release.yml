@@ -20,18 +20,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
 
   build:
+    needs: update_draft
     uses: Zealandia-Systems/Swordfish/.github/workflows/build-func.yml@main
-
-  upload-assets:
-    needs: [update_draft, build]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v3
-        with:
-          path: ${{runner.workspace}}/artifacts/
-
-      - name: Upload Assets
-        uses: NBTX/upload-release-assets@v1
-        with:
-          upload_url: ${{needs.update_draft.outputs.upload_url}}
-          targets: ${{runner.workspace}}//artifacts/*
+    with:
+      upload_url: ${{needs.update_draft.outputs.upload_url}}
