@@ -7,7 +7,17 @@ on:
       - 'v*.*.*'
 
 jobs:
+  update_draft:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: release-drafter/release-drafter@v5
+        with:
+          disable-autolabeler: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
   build:
+    needs: update_release_draft
     name: ${{matrix.config.name}}
     runs-on: ubuntu-latest
     strategy:
