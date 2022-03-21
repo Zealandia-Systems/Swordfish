@@ -1,6 +1,9 @@
 name: build
 on:
-  workflow_call
+  workflow_call:
+    inputs:
+      upload_url:
+        type: string
 
 jobs:
   build:
@@ -43,8 +46,9 @@ jobs:
           target: uf2
           configure-options: -G Ninja -DCMAKE_TOOLCHAIN_FILE=${{runner.workspace}}/Swordfish/cmake/toolchain-gcc.cmake -DSWORDFISH_MACHINE_TYPE=${{matrix.config.machine-type}} -DSWORDFISH_MACHINE_NAME=${{matrix.config.machine-name}}
       
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v3
+      - name: Upload Assets
+        uses: NBTX/upload-release-assets@v3
+        if: inputs.upload_url != ''
         with:
-          name: Swordfish-${{matrix.config.machine-name}}.uf2
-          path: ${{runner.workspace}}/build/*.uf2
+          upload_url: ${{inputs.upload_url}}
+          targets: ${{runner.workspace}}/build/*.uf2
