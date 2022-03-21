@@ -54,7 +54,7 @@ jobs:
           target: uf2
           configure-options: -G Ninja -DCMAKE_TOOLCHAIN_FILE=${{runner.workspace}}/Swordfish/cmake/toolchain-gcc.cmake -DSWORDFISH_MACHINE_TYPE=${{matrix.config.machine-type}} -DSWORDFISH_MACHINE_NAME=${{matrix.config.machine-name}}
 
-      - name: Upload Artifact
+      - name: Upload Assets
         uses: actions/upload-artifact@v3
         with:
           name: Swordfish-${{matrix.config.machine-name}}.uf2
@@ -76,7 +76,7 @@ jobs:
         #   config-name: my-config.yml
         #   disable-autolabeler: true
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
 
   publish:
     needs: update_release_draft
@@ -84,3 +84,11 @@ jobs:
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v3
+        with:
+          path: ./artifacts/
+      - name: Upload assets
+        uses: alexellis/upload-assets@0.2.2
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          asset_paths: ["./artifacts/*"]
