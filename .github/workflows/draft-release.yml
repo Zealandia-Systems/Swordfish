@@ -1,0 +1,32 @@
+name: release
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  update_draft:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: release-drafter/release-drafter@v5
+        with:
+          disable-autolabeler: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+  build:
+    needs: update_release_draft
+    runs-on: ubuntu-latest
+    steps:
+      - uses: Zealandia-Systems/Swordfish/.github/workflows/build-func.yml@main
+      - uses: actions/download-artifact@v3
+        with:
+          path: ${{runner.workspace}}/artifacts/
+
+      - name: Upload Assets
+        uses: AButler/upload-release-assets@v2.0
+        with:
+          files: '${{runner.workspace}}/artifacts/*.uf2'
+          repo-token: ${{ github.token }}
