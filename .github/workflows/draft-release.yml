@@ -9,8 +9,11 @@ on:
 jobs:
   update_draft:
     runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.step1.outputs.upload_url }}
     steps:
-      - uses: release-drafter/release-drafter@v5
+      - id: step1
+        uses: release-drafter/release-drafter@v5
         with:
           disable-autolabeler: true
         env:
@@ -20,4 +23,4 @@ jobs:
     needs: update_draft
     uses: Zealandia-Systems/Swordfish/.github/workflows/build-func.yml@main
     with:
-      upload_url: ${{jobs.update_draft.upload_url}}
+      upload_url: ${{needs.update_draft.outputs.upload_url}}
