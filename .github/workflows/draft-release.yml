@@ -28,6 +28,8 @@ jobs:
         uses: richardsimko/update-tag@v1
         with:
           tag_name: ${{ needs.update_draft.outputs.tag_name }}-draft
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
 
   build:
     needs: tag
