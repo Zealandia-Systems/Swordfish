@@ -27,7 +27,7 @@ jobs:
       - name: Update Tag
         uses: richardsimko/update-tag@v1
         with:
-          tag: ${{ needs.update_draft.outputs.tag_name }}-draft
+          tag_name: ${{ needs.update_draft.outputs.tag_name }}-draft
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
