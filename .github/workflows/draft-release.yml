@@ -24,10 +24,9 @@ jobs:
     needs: update_draft
     runs-on: ubuntu-latest
     steps:
-      - name: Tag Commit
-        uses: fischerscode/tagger@v0.1.0
+      - name: Update Tag
+        uses: richardsimko/update-tag@v1
         with:
-          prefix: 'v'
           tag: ${{ needs.update_draft.outputs.tag_name }}-draft
 
   build:
