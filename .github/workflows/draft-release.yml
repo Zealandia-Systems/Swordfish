@@ -25,10 +25,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Tag Commit
-        uses: tvdias/github-tagger@v0.0.1
+        uses: fischerscode/tagger@v0.1.0
         with:
-          repo-token: "${{ github.token }}"
-          tag: ${{ needs.update_draft.outputs.tag_name }}
+          prefix: 'v'
+          tag: ${{ needs.update_draft.outputs.tag_name }}-draft
 
   build:
     needs: tag
