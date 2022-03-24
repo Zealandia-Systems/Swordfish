@@ -24,22 +24,22 @@
 
 #if HAS_RESUME_CONTINUE
 
-#include "../../inc/MarlinConfig.h"
+#	include "../../inc/MarlinConfig.h"
 
-#include "../gcode.h"
+#	include "../gcode.h"
 
-#include "../../module/planner.h" // for synchronize()
-#include "../../MarlinCore.h"     // for wait_for_user_response()
+#	include "../../module/planner.h" // for synchronize()
+#	include "../../MarlinCore.h" // for wait_for_user_response()
 
-#if HAS_LCD_MENU
-  #include "../../lcd/marlinui.h"
-#elif ENABLED(EXTENSIBLE_UI)
-  #include "../../lcd/extui/ui_api.h"
-#endif
+#	if HAS_LCD_MENU
+#		include "../../lcd/marlinui.h"
+#	elif ENABLED(EXTENSIBLE_UI)
+#		include "../../lcd/extui/ui_api.h"
+#	endif
 
-#if ENABLED(HOST_PROMPT_SUPPORT)
-  #include "../../feature/host_actions.h"
-#endif
+#	if ENABLED(HOST_PROMPT_SUPPORT)
+#		include "../../feature/host_actions.h"
+#	endif
 
 void unconditional_stop() {
 	planner.synchronize();
@@ -50,37 +50,40 @@ void unconditional_stop() {
  * M1: Conditional stop   - Wait for user button press on LCD
  */
 void GcodeSuite::M0_M1() {
-  millis_t ms = 0;
-  if (parser.seenval('P')) ms = parser.value_millis();              // Milliseconds to wait
-  if (parser.seenval('S')) ms = parser.value_millis_from_seconds(); // Seconds to wait
+	millis_t ms = 0;
+	if (parser.seenval('P'))
+		ms = parser.value_millis(); // Milliseconds to wait
+	if (parser.seenval('S'))
+		ms = parser.value_millis_from_seconds(); // Seconds to wait
 
 	unconditional_stop();
-	
-  #if HAS_LCD_MENU
 
-    if (parser.string_arg)
-      ui.set_status(parser.string_arg, true);
-    else {
-      LCD_MESSAGEPGM(MSG_USERWAIT);
-      #if ENABLED(LCD_PROGRESS_BAR) && PROGRESS_MSG_EXPIRE > 0
-        ui.reset_progress_bar_timeout();
-      #endif
-    }
+#	if HAS_LCD_MENU
 
-  #elif ENABLED(EXTENSIBLE_UI)
-    if (parser.string_arg)
-      ExtUI::onUserConfirmRequired(parser.string_arg); // Can this take an SRAM string??
-    else
-      ExtUI::onUserConfirmRequired_P(GET_TEXT(MSG_USERWAIT));
-  #endif
+	if (parser.string_arg)
+		ui.set_status(parser.string_arg, true);
+	else {
+		LCD_MESSAGEPGM(MSG_USERWAIT);
+#		if ENABLED(LCD_PROGRESS_BAR) && PROGRESS_MSG_EXPIRE > 0
+		ui.reset_progress_bar_timeout();
+#		endif
+	}
 
-	//auto message = parser.string_arg ?: parser.codenum == 0 ? PSTR("M0 Stop") : PSTR("M1 Stop");
-	
-  //TERN_(HOST_PROMPT_SUPPORT, host_prompt(PROMPT_USER_CONTINUE, message, CONTINUE_STR));
+#	elif ENABLED(EXTENSIBLE_UI)
+	if (parser.string_arg)
+		ExtUI::onUserConfirmRequired(parser.string_arg); // Can this take an SRAM string??
+	else
+		ExtUI::onUserConfirmRequired_P(GET_TEXT(MSG_USERWAIT));
+#	endif
 
-  wait_for_user_response(ms);
+	auto message = parser.string_arg ?: parser.codenum == 0 ? PSTR("M0 Stop")
+	                                                        : PSTR("M1 Stop");
 
-  TERN_(HAS_LCD_MENU, ui.reset_status());
+	TERN_(HOST_PROMPT_SUPPORT, host_prompt(PROMPT_USER_CONTINUE, message, CONTINUE_STR));
+
+	wait_for_user_response(ms);
+
+	TERN_(HAS_LCD_MENU, ui.reset_status());
 }
 
 #endif // HAS_RESUME_CONTINUE
