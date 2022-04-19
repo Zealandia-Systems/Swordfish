@@ -5,6 +5,17 @@
 	"files.associations": {
 		"*.h": "cpp",
 		"type_traits": "cpp",
-		"*.in": "cpp"
+		"*.in": "cpp",
+		"*.cps": "javascript",
+		"*.tcc": "cpp",
+		"cstdio": "cpp",
+		"list": "cpp",
+		"deque": "cpp",
+		"string": "cpp",
+		"vector": "cpp",
+		"functional": "cpp",
+		"ranges": "cpp",
+		"superlusupport": "cpp",
+		"charconv": "cpp"
 	}
 }
