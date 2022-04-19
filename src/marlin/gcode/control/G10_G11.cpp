@@ -40,8 +40,8 @@ using namespace swordfish::motion;
 
 //#define DEBUG_CNC_G10
 
-template<typename T>
-static T& getRecord(Table<T>& table, uint16_t index, bool& created) {
+template<typename TRecord, typename TTable>
+static TRecord& getRecord(Table<TRecord, TTable>& table, uint16_t index, bool& created) {
 	created = false;
 
 	for (auto& record : table) {
@@ -246,7 +246,7 @@ void GcodeSuite::G10() {
 			bool pocketChanged = false;
 			// bool driverChanged = false;
 
-			Tool& tool = getRecord<Tool>(tools, index, created);
+			Tool& tool = getRecord<Tool, ToolTable>(tools, index, created);
 
 			if (parser.seenval('I')) {
 				auto driverIndex = parser.value_long() - 1;
@@ -314,7 +314,7 @@ void GcodeSuite::G10() {
 			const uint16_t index = p - 1;
 			bool created;
 
-			Pocket& pocket = getRecord<Pocket>(pockets, index, created);
+			Pocket& pocket = getRecord<Pocket, PocketTable>(pockets, index, created);
 
 			if (parser.seenval('E')) {
 				pocket.setEnabled(parser.value_bool());
@@ -404,7 +404,7 @@ void GcodeSuite::G10() {
 			const uint16_t index = d - 1;
 			bool created;
 
-			auto& driver = getRecord<Driver>(drivers, index, created);
+			auto& driver = getRecord<Driver, DriverTable>(drivers, index, created);
 
 			if (parser.seen('T')) {
 				auto type = parser.value_long() - 1;
@@ -460,7 +460,7 @@ void GcodeSuite::G10() {
 				return;
 			}
 
-			auto& driverParameter = getRecord<DriverParameter>(driverParameters, index, created);
+			auto& driverParameter = getRecord<DriverParameter, DriverParameterTable>(driverParameters, index, created);
 
 			driverParameter.setId(id);
 			driverParameter.setDriverIndex(driverIndex);

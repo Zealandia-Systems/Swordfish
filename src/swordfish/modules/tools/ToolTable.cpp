@@ -3,7 +3,7 @@
  *
  * Created: 7/09/2021 8:25:53 am
  *  Author: smohekey
- */ 
+ */
 
 #include "ToolTable.h"
 #include "Tool.h"
@@ -13,21 +13,21 @@
 
 namespace swordfish::tools {
 	using namespace swordfish::core;
-	
-	ToolTable::ToolTable(Object* parent) : data::Table<Tool>(parent) {
-		
+
+	ToolTable::ToolTable(Object* parent) :
+			data::Table<Tool, ToolTable>(parent) {
 	}
 
-	void ToolTable::remove(Tool& tool) {
+	void ToolTable::removeInternal(Tool& tool) {
 		auto& toolsModule = ToolsModule::getInstance();
 		auto& pockets = toolsModule.getPockets();
-		
-		for(auto& pocket : pockets) {
-			if(pocket.getToolIndex() == tool.getIndex()) {
+
+		for (auto& pocket : pockets) {
+			if (pocket.getToolIndex() == tool.getIndex()) {
 				pocket.setToolIndex(-1);
 			}
 		}
-		
+
 		ObjectList<Tool>::remove(tool);
 	}
-}
+} // namespace swordfish::tools

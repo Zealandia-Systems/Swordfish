@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.22.0)
 
+message(STATUS "---------------------")
+message(STATUS "Configuring Swordfish")
+message(STATUS "---------------------")
 message(STATUS "CMake version: ${CMAKE_VERSION}")
 
 if(CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR)
@@ -20,19 +23,11 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 find_package(Git REQUIRED)
 find_package(Python3 REQUIRED)
 
-#add_custom_target(version
-#	${CMAKE_COMMAND}
-#		-D SRC=${CMAKE_SOURCE_DIR}/Version.h.in
-#		-D DST=${CMAKE_BINARY_DIR}/Version.h
-#		-D GIT_EXECUTABLE=${GIT_EXECUTABLE}
-#		-P ${CMAKE_SOURCE_DIR}/cmake/GenerateVersionHeader.cmake
-#)
-
 if(GIT_EXECUTABLE)
 	# Generate a git-describe version string from Git repository tags
 	execute_process(
 		COMMAND ${GIT_EXECUTABLE} describe --tags --abbrev=0
-		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		OUTPUT_VARIABLE GIT_DESCRIBE_VERSION
 		RESULT_VARIABLE GIT_DESCRIBE_ERROR_CODE
 		OUTPUT_STRIP_TRAILING_WHITESPACE
@@ -43,7 +38,7 @@ if(GIT_EXECUTABLE)
 
 	execute_process(
 		COMMAND ${GIT_EXECUTABLE} describe --tags --dirty
-		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		OUTPUT_VARIABLE GIT_DESCRIBE_VERSION
 		RESULT_VARIABLE GIT_DESCRIBE_ERROR_CODE
 		OUTPUT_STRIP_TRAILING_WHITESPACE

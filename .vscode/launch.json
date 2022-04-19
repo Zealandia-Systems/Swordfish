@@ -6,18 +6,18 @@
     "configurations": [
         {
             "cwd": "${workspaceRoot}",
-            "executable": "./build/Swordfish.elf",
+            "executable": "${command:cmake.launchTargetPath}",
             "name": "Debug Swordfish",
             "request": "launch",
             "type": "cortex-debug",
             "servertype": "jlink",
             "serverpath": "C:/Program Files/SEGGER/JLink/JLinkGDBServerCL.exe",
-            "armToolchainPath": "C:/Program Files (x86)/GNU Arm Embedded Toolchain/10 2021.07/bin",
+            "armToolchainPath": "C:/Program Files (x86)/GNU Arm Embedded Toolchain/10 2021.10/bin",
             "device": "ATSAMD51P20A",
             "interface": "swd",
             "serialNumber": "", // add J-Link serial number if having multiple attached the same time.
             "runToEntryPoint": "main",
-            "svdFile": "${workspaceRoot}/external/cmsis-svd/data/Atmel/ATSAMD51P20A.svd",
+            "svdFile": "${workspaceRoot}/ATSAMD51P20A.svd",
             "preRestartCommands": [
                 "monitor reset"
             ],
