@@ -6,7 +6,7 @@
     "configurations": [
         {
             "cwd": "${workspaceRoot}",
-            "executable": "./build/Swordfish.elf",
+            "executable": "${workspaceRoot}/build/Swordfish.elf",
             "name": "Debug Swordfish",
             "request": "launch",
             "type": "cortex-debug",
