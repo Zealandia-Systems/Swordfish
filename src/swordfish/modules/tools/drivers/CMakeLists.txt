@@ -2,6 +2,8 @@ target_sources(${PROJECT_NAME}.elf
 	PRIVATE
 		ChangzouH100DriverImpl.cpp
 		ChangzouH100DriverImpl.h
+		CT100DriverImpl.cpp
+		CT100DriverImpl.h
 		FulingDZBDriverImpl.cpp
 		FulingDZBDriverImpl.h
 		PWMLaserDriverImpl.cpp
