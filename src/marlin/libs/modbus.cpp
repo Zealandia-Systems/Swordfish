@@ -96,13 +96,23 @@ namespace modbus {
 	}
 
 	static void log(const char* message, uint8_t* buffer, uint8_t length) {
+		static const char lookup[] = {
+			'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+			'A', 'B', 'C', 'D', 'E', 'F'
+		};
+
 		char formatBuffer[length * 2 + 1];
 		char* p = formatBuffer;
 
 		memset(formatBuffer, 0, length * 2 + 1);
 
-		for (auto i = 0; i < length; i++, p += 2) {
-			std::to_chars(p, p + 2, buffer[i], 16);
+		for (auto i = 0; i < length; i++) {
+			auto high = buffer[i] >> 4;
+			auto low = buffer[i] & 0xF;
+
+			*p++ = lookup[high];
+			*p++ = lookup[low];
+			// std::to_chars(p, p + 2, buffer[i], 16);
 			// snprintf(p, 3, "%02x", buffer[i]);
 		}
 
@@ -216,7 +226,7 @@ namespace modbus {
 			// read crc
 			bytesRead += __rs485.readBytes(buffer + bytesRead, 2);
 
-			log("modbus::read_holding_registers response: ", buffer, bytesRead);
+			logln("modbus::read_holding_registers response: ", buffer, bytesRead);
 
 			safe_delay(4);
 
