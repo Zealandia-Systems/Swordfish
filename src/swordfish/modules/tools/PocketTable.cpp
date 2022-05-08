@@ -3,7 +3,7 @@
  *
  * Created: 7/09/2021 8:27:09 am
  *  Author: smohekey
- */ 
+ */
 
 #include "PocketTable.h"
 #include "Pocket.h"
@@ -16,7 +16,7 @@
 namespace swordfish::tools {
 	using namespace swordfish::core;
 
-	PocketTable::PocketTable(Object* parent) : data::Table<Pocket>(parent) {
-		
+	PocketTable::PocketTable(Object* parent) :
+			data::Table<Pocket, PocketTable>(parent) {
 	}
-}
+} // namespace swordfish::tools
