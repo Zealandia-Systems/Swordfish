@@ -1075,6 +1075,8 @@ const char* GcodeSuite::get_state() {
 			return "paused";
 		case PAUSED_FOR_INPUT:
 			return "waiting";
+		case SPINDLE_RAMPING:
+			return "spindle:ramping";
 		default:
 			return "idle";
 	}
