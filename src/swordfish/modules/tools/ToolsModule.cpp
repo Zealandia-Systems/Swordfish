@@ -52,7 +52,7 @@ namespace swordfish::tools {
 		utils::typeName<ToolsModule>(),
 		&(Module::__schema),
 		{__automaticField       },
-		{ __pocketsField,__toolsField,
+		{ __pocketsField, __toolsField,
                         __driversField,
                         __driverParametersField }
 	};
@@ -360,7 +360,7 @@ start:
 		if (tool && tool->isFixed()) {
 			_spindlePocket->setToolIndex(nextToolIndex);
 
-			//tools.writeRecordJson(out, *tool);
+			// tools.writeRecordJson(out, *tool);
 
 			Controller::getInstance().save();
 
@@ -526,6 +526,8 @@ start:
 		// Raise the Z axis
 		motionModule.setActiveCoordinateSystem(mcs);
 		motionModule.rapidMove({ .z = 0 });
+
+		ensureClearOfCaddy();
 
 		return offsetZ;
 	}
