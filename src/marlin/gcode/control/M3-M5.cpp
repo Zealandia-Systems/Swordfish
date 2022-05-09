@@ -30,7 +30,6 @@
 using namespace swordfish::core;
 using namespace swordfish::tools;
 
-
 /**
  * Laser:
  *  M3 - Laser ON/Power (Ramped power)
@@ -69,19 +68,21 @@ using namespace swordfish::tools;
  *  PWM duty cycle goes from 0 (off) to 255 (always on).
  */
 void GcodeSuite::M3_M4(const bool is_M4) {
+	KEEPALIVE_STATE(SPINDLE_RAMPING);
+
 	auto& toolsModule = ToolsModule::getInstance();
 	auto& driver = toolsModule.getCurrentDriver();
 
 	planner.synchronize();
 
-	if(driver.hasDirection()) {
+	if (driver.hasDirection()) {
 		driver.setTargetDirection(is_M4 ? Direction::Reverse : Direction::Forward);
 	}
-		
-	if(parser.seenval('S')) {
+
+	if (parser.seenval('S')) {
 		driver.setTargetPower(round(parser.value_float()));
 	}
-	
+
 	driver.setEnabled(true);
 	driver.apply();
 }
@@ -90,6 +91,8 @@ void GcodeSuite::M3_M4(const bool is_M4) {
  * M5 - Cutter OFF (when moves are complete)
  */
 void GcodeSuite::M5() {
+	KEEPALIVE_STATE(SPINDLE_RAMPING);
+
 	auto& toolsModule = ToolsModule::getInstance();
 	auto& driver = toolsModule.getCurrentDriver();
 
