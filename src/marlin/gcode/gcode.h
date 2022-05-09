@@ -438,7 +438,8 @@ public:
 		HOMING,
 		PROBING,
 		PAUSED_FOR_USER, // Blocking pending any input
-		PAUSED_FOR_INPUT // Blocking pending text input (concept)
+		PAUSED_FOR_INPUT, // Blocking pending text input (concept)
+		SPINDLE_RAMPING
 	};
 
 	static MarlinBusyState busy_state;
