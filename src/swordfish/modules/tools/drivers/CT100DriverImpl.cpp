@@ -59,7 +59,7 @@ namespace swordfish::tools::drivers {
 	uint16_t CT100DriverImpl::readOutputFrequency() const {
 		debug()();
 
-		return readHoldingRegister(0x3001, (uint16_t) 0);
+		return readHoldingRegister(0x3000, (uint16_t) 0);
 	}
 
 	uint16_t CT100DriverImpl::readOutputVoltage() const {
@@ -77,7 +77,7 @@ namespace swordfish::tools::drivers {
 	uint16_t CT100DriverImpl::readDCBusVoltage() const {
 		debug()();
 
-		return readHoldingRegister(0x3007, 0);
+		return readHoldingRegister(0x3005, 0);
 	}
 
 	State CT100DriverImpl::readState() const {
