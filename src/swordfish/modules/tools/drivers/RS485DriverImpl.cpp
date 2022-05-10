@@ -63,8 +63,6 @@ namespace swordfish::tools::drivers {
 		}
 
 		modbus::init(_baudRate);
-
-		writeStop();
 	}
 
 	uint8_t RS485DriverImpl::getSlaveAddress() const {
@@ -78,17 +76,15 @@ namespace swordfish::tools::drivers {
 	void RS485DriverImpl::idle() {
 		auto ms = millis();
 
-		/*
-		if(((int64_t)_nextRefresh - (int64_t)ms) < 0) {
-		  if(!(CoreDebug->DHCSR & CoreDebug_DHCSR_C_DEBUGEN_Msk)) {
-		    refresh();
-		  }
+		if (((int64_t) _nextRefresh - (int64_t) ms) < 0) {
+			// if (!(CoreDebug->DHCSR & CoreDebug_DHCSR_C_DEBUGEN_Msk)) {
+			refresh();
+			//}
 
-		  auto delta = _enabled ? 100 : 1000;
+			auto delta = _enabled ? 100 : 1000;
 
-		  _nextRefresh = ms + delta;
+			_nextRefresh = ms + delta;
 		}
-		*/
 
 		if (_hasFan && !_enabled && ((int64_t) _fanOffTime - (int64_t) ms) < 0) {
 			WRITE(SPINDLE_FAN_PIN, SPINDLE_FAN_OFF);
@@ -221,6 +217,16 @@ namespace swordfish::tools::drivers {
 	}
 
 	void RS485DriverImpl::refresh() {
+		if (_doReset) {
+			writeTargetFrequency(0);
+			writeStop();
+
+			_doReset = false;
+		}
+
+		_state = readState();
+		_fault = readFault();
+
 		auto maximumFrequency = readMaximumFrequency();
 
 		_outputFrequency = readOutputFrequency();
@@ -231,9 +237,6 @@ namespace swordfish::tools::drivers {
 		_dcBusVoltage = readDCBusVoltage();
 
 		_currentPower = ((((float32_t) _maxPower) * 1.0f) / (float32_t) maximumFrequency) * (float32_t) _outputFrequency;
-
-		_state = readState();
-		_fault = readFault();
 	}
 
 	void RS485DriverImpl::apply() {
@@ -274,5 +277,16 @@ namespace swordfish::tools::drivers {
 
 			waitForSpindle(0);
 		}
+	}
+
+	// called in interrupt context
+	void RS485DriverImpl::emergencyStop() {
+		setEnabled(false);
+		setTargetPower(0);
+	}
+
+	// called in interrupt context
+	void RS485DriverImpl::emergencyClear() {
+		_doReset = true;
 	}
 } // namespace swordfish::tools::drivers
