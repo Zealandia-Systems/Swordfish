@@ -3,7 +3,7 @@
  *
  * Created: 16/09/2021 8:41:26 am
  *  Author: smohekey
- */ 
+ */
 
 #define HAS_Z_BRAKE 1
 
@@ -19,51 +19,56 @@
 
 namespace swordfish::estop {
 	using namespace swordfish::tools;
-	
+
 	EStopModule* EStopModule::__instance = nullptr;
-	
+
 	core::Schema EStopModule::__schema = {
 		utils::typeName<EStopModule>(),
-		&(Module::__schema), {
-			
-		}, {
-			
+		&(Module::__schema),
+		{
+
+		},
+		{
+
 		}
 	};
-	
+
 	EStopModule::EStopModule(core::Object* parent) :
-		Module(parent),
-		_pack(__schema, *this, &(Module::_pack)),
-		_estopISR(std::bind(&EStopModule::handleEStop, this), ESTOP_PIN, CHANGE) {
-		
+			Module(parent),
+			_pack(__schema, *this, &(Module::_pack)),
+			_estopISR(std::bind(&EStopModule::handleEStop, this), ESTOP_PIN, CHANGE) {
 	}
-	
+
 	void EStopModule::handleEStop() {
 		_triggered = READ(ESTOP_PIN) != ESTOP_ENDSTOP_INVERTING;
-		
-		if(_triggered) {
-			auto& toolsModule = ToolsModule::getInstance();
-			auto& driver = toolsModule.getCurrentDriver();
-			
+
+		auto& toolsModule = ToolsModule::getInstance();
+		auto& driver = toolsModule.getCurrentDriver();
+
+		if (_triggered) {
 			debug()("estop triggered");
-			
+
 			driver.emergencyStop();
-			
+
 			DISABLE_AXIS_Z();
-			
+
 			planner.quick_stop();
-			
+
 			set_axis_never_homed(X_AXIS);
 			set_axis_never_homed(Y_AXIS);
 			set_axis_never_homed(Z_AXIS);
+		} else {
+			debug()("estop cleared");
+
+			driver.emergencyClear();
 		}
 	}
-	
+
 	void EStopModule::init() {
 		SET_INPUT_PULLDOWN(ESTOP_PIN);
-		
+
 		_triggered = READ(ESTOP_PIN) != ESTOP_ENDSTOP_INVERTING;
-		
+
 		_estopISR.attach();
 	}
 
@@ -71,4 +76,4 @@ namespace swordfish::estop {
 		return *(__instance ?: __instance = new EStopModule(parent));
 	}
 
-}
+} // namespace swordfish::estop

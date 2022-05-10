@@ -95,15 +95,15 @@ namespace swordfish::tools::drivers {
 
 		debug()("fault: ", fault);
 
-		if (fault == 17) {
-			auto& estopModule = EStopModule::getInstance();
+		/*if (fault == 17) {
+		  auto& estopModule = EStopModule::getInstance();
 
-			debug()("External fault detected.");
+		  debug()("External fault detected.");
 
-			if (!estopModule.isTriggered()) {
-				writeHoldingRegister(0x1000, 0x0007);
-			}
-		}
+		  if (!estopModule.isTriggered()) {
+		    writeHoldingRegister(0x1000, 0x0007);
+		  }
+		}*/
 
 		return fault;
 	}

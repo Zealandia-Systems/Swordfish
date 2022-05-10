@@ -3,7 +3,7 @@
  *
  * Created: 12/10/2021 9:42:09 am
  *  Author: smohekey
- */ 
+ */
 
 #pragma once
 
@@ -16,16 +16,16 @@ namespace swordfish::tools::drivers {
 	protected:
 		enum class ControlState {
 			Unknown = 0,
-			Running = (1<<0),
-			Jogging = (1<<1),
-			Reverse = (1<<2),
-			InRunning = (1<<3),
-			InJogging = (1<<4),
-			InReverse = (1<<5),
-			InBraking = (1<<6),
-			Tracking = (1<<7)
+			Running = (1 << 0),
+			Jogging = (1 << 1),
+			Reverse = (1 << 2),
+			InRunning = (1 << 3),
+			InJogging = (1 << 4),
+			InReverse = (1 << 5),
+			InBraking = (1 << 6),
+			Tracking = (1 << 7)
 		};
-		
+
 		enum class Fault {
 			None = 0,
 			RunningOverCurrent_S = 64,
@@ -57,24 +57,26 @@ namespace swordfish::tools::drivers {
 			OverT_d = 106,
 			OverT_n = 107
 		};
-			
+
 		ControlState readControlState() const;
-		
+
+		ControlState _currentControlState;
+
 		virtual uint16_t readMaximumFrequency() const override;
 		virtual uint16_t readFrequencyUpperLimit() const override;
 		virtual uint16_t readFrequencyLowerLimit() const override;
-		
+
 		virtual uint16_t readOutputFrequency() const override;
 		virtual uint16_t readOutputVoltage() const override;
 		virtual uint16_t readOutputCurrent() const override;
 		virtual uint16_t readDCBusVoltage() const override;
-		
+
 		virtual State readState() const override;
-		
+
 		virtual uint16_t readFault() const override;
-		
+
 		virtual void writeTargetFrequency(uint16_t targetFrequency) const override;
 		virtual void writeStart(Direction direction) const override;
 		virtual void writeStop() const override;
 	};
-}
+} // namespace swordfish::tools::drivers
