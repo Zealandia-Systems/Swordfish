@@ -76,15 +76,15 @@ namespace swordfish::tools::drivers {
 	void RS485DriverImpl::idle() {
 		auto ms = millis();
 
-		if (((int64_t) _nextRefresh - (int64_t) ms) < 0) {
-			// if (!(CoreDebug->DHCSR & CoreDebug_DHCSR_C_DEBUGEN_Msk)) {
-			refresh();
-			//}
+		/*if (((int64_t) _nextRefresh - (int64_t) ms) < 0) {
+		  // if (!(CoreDebug->DHCSR & CoreDebug_DHCSR_C_DEBUGEN_Msk)) {
+		  refresh();
+		  //}
 
-			auto delta = _enabled ? 100 : 1000;
+		  auto delta = _enabled ? 100 : 1000;
 
-			_nextRefresh = ms + delta;
-		}
+		  _nextRefresh = ms + delta;
+		}*/
 
 		if (_hasFan && !_enabled && ((int64_t) _fanOffTime - (int64_t) ms) < 0) {
 			WRITE(SPINDLE_FAN_PIN, SPINDLE_FAN_OFF);
