@@ -527,7 +527,12 @@ start:
 		motionModule.setActiveCoordinateSystem(mcs);
 		motionModule.rapidMove({ .z = 0 });
 
-		ensureClearOfCaddy();
+		if (isAutomatic()) {
+			auto& limits = motionModule.getLimits();
+			auto& minObj = limits.getMin();
+
+			motionModule.move({ .x = minObj.x(), .feedRate = homing_feedrate(X_AXIS) });
+		}
 
 		return offsetZ;
 	}
@@ -577,7 +582,7 @@ start:
 
 			planner.synchronize();
 
-			_flags[HomingFlag] = false;
+			_flags[HomingFlag] = !false;
 		}
 	}
 
