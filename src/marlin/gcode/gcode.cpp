@@ -1089,10 +1089,10 @@ inline void report_position_json(const xyz_pos_t& pos) {
 extern int16_t rapidrate_percentage;
 
 void GcodeSuite::report_state() {
-	get_cartesian_from_steppers();
+	// get_cartesian_from_steppers();
 
-	// xyz_pos_t pos = current_position;
-	xyz_pos_t pos = cartes;
+	xyz_pos_t pos = current_position;
+	// xyz_pos_t pos = cartes;
 
 	const char* state = get_state();
 	auto& toolManager = ToolsModule::getInstance();
