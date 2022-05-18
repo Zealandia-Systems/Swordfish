@@ -20,6 +20,7 @@
 #include <swordfish/debug.h>
 #include <swordfish/Controller.h>
 #include <swordfish/core/Console.h>
+#include <swordfish/core/InvalidOperationException.h>
 #include <swordfish/io/StringOutputStream.h>
 #include <swordfish/io/Writer.h>
 #include <swordfish/modules/estop/EStopException.h>
@@ -27,7 +28,7 @@
 
 #include "ToolsModule.h"
 
-extern bool run_probe(AxisEnum axis, EndstopEnum endstop, float distance);
+extern bool run_probe(AxisEnum axis, EndstopEnum endstop, float distance, float retract);
 
 namespace swordfish::tools {
 	using namespace Eigen;
@@ -232,15 +233,14 @@ start:
 			}
 		}
 
-		SERIAL_ERROR_MSG("Invalid tool number.");
+		throw InvalidOperationException("Invalid tool number.");
 
 		return;
 	}
 
 	void ToolsModule::change() {
 		if (driverIsEnabled()) {
-			SERIAL_ERROR_MSG("Can't change tools while a tool is in use.");
-			return;
+			throw InvalidOperationException("Can't change tools while a tool is in use.");
 		}
 
 		if (!isAutomatic()) {
@@ -388,8 +388,6 @@ start:
 
 		_spindlePocket->setToolIndex(nextToolIndex);
 
-		setNextToolIndex(-1);
-
 		Controller::getInstance().save();
 	}
 
@@ -402,11 +400,9 @@ start:
 		auto nextToolIndex = getNextToolIndex();
 
 		if (currentToolIndex == nextToolIndex) {
+			throw InvalidOperationException("Requested tool is already selected.");
+
 			debug()("nothing to change");
-
-			setNextToolIndex(-1);
-
-			Controller::getInstance().save();
 
 			return;
 		}
@@ -471,8 +467,6 @@ start:
 		motionModule.setActiveCoordinateSystem(oldWCS);
 		motionModule.setLimitsEnabled(true);
 
-		setNextToolIndex(-1);
-
 		Controller::getInstance().save();
 	}
 
@@ -509,7 +503,7 @@ start:
 
 		endstops.enable_tool_probe(true);
 
-		run_probe(Z_AXIS, TOOL_PROBE, delta);
+		run_probe(Z_AXIS, TOOL_PROBE, delta, 5);
 
 		endstops.enable_tool_probe(false);
 
