@@ -503,7 +503,7 @@ start:
 
 		endstops.enable_tool_probe(true);
 
-		run_probe(Z_AXIS, TOOL_PROBE, delta, 5);
+		run_probe(Z_AXIS, TOOL_PROBE, delta /*, 5*/);
 
 		endstops.enable_tool_probe(false);
 

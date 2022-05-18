@@ -24,21 +24,21 @@
 
 #if ENABLED(CNC_WORKSPACE_PLANES)
 
-#include "../gcode.h"
+#	include "../gcode.h"
 
 inline void report_workspace_plane() {
-  SERIAL_ECHO_START();
-  SERIAL_ECHOPGM("Workspace Plane ");
-  serialprintPGM(
-      gcode.workspace_plane == GcodeSuite::PLANE_YZ ? PSTR("YZ\n")
-    : gcode.workspace_plane == GcodeSuite::PLANE_ZX ? PSTR("ZX\n")
-                                                    : PSTR("XY\n")
-  );
+	SERIAL_ECHO_START();
+	SERIAL_ECHOPGM("Workspace Plane ");
+	serialprintPGM(
+			gcode.workspace_plane == GcodeSuite::PLANE_YZ   ? PSTR("YZ\n")
+			: gcode.workspace_plane == GcodeSuite::PLANE_ZX ? PSTR("ZX\n")
+																											: PSTR("XY\n"));
 }
 
 inline void set_workspace_plane(const GcodeSuite::WorkspacePlane plane) {
-  gcode.workspace_plane = plane;
-  if (DEBUGGING(INFO)) report_workspace_plane();
+	gcode.workspace_plane = plane;
+	if (DEBUGGING(INFO))
+		report_workspace_plane();
 }
 
 /**
@@ -48,31 +48,31 @@ inline void set_workspace_plane(const GcodeSuite::WorkspacePlane plane) {
  */
 void GcodeSuite::G17() {
 	auto old_plane = gcode.workspace_plane;
-	
-	set_workspace_plane(PLANE_XY); 
 
-	if (parser.chain()) {       // Command to chain?
-		process_parsed_command(); // ...process the chained command
+	set_workspace_plane(PLANE_XY);
+
+	if (parser.chain()) { // Command to chain?
+		process_parsed_command(true); // ...process the chained command
 		set_workspace_plane(old_plane);
 	}
 }
 void GcodeSuite::G18() {
 	auto old_plane = gcode.workspace_plane;
-	
+
 	set_workspace_plane(PLANE_ZX);
 
-	if (parser.chain()) {       // Command to chain?
-		process_parsed_command(); // ...process the chained command
+	if (parser.chain()) { // Command to chain?
+		process_parsed_command(true); // ...process the chained command
 		set_workspace_plane(old_plane);
 	}
 }
 void GcodeSuite::G19() {
 	auto old_plane = gcode.workspace_plane;
-	
+
 	set_workspace_plane(PLANE_YZ);
-	
-	if (parser.chain()) {       // Command to chain?
-		process_parsed_command(); // ...process the chained command
+
+	if (parser.chain()) { // Command to chain?
+		process_parsed_command(true); // ...process the chained command
 		set_workspace_plane(old_plane);
 	}
 }
