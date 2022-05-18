@@ -27,7 +27,7 @@
  * M400: Finish all moves
  */
 void GcodeSuite::M400() {
+	planner.synchronize();
 
-  planner.synchronize();
-
+	report_state();
 }
