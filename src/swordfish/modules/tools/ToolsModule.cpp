@@ -439,7 +439,7 @@ start:
 					!freePocket &&
 					nextTool &&
 					!nextTool->isFixed() &&
-					nextPocket) {
+					!nextPocket) {
 				// no free pocket for current and next tool is not in a pocket
 				// ask user to swap
 
