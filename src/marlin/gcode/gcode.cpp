@@ -529,7 +529,7 @@ void GcodeSuite::process_parsed_command(const bool no_ok /*=false*/) {
 						set_relative_mode(false);
 
 						if (parser.chain()) { // Command to chain?
-							process_parsed_command();
+							process_parsed_command(true);
 
 							restore_relative_mode(mode);
 						}
@@ -543,7 +543,7 @@ void GcodeSuite::process_parsed_command(const bool no_ok /*=false*/) {
 						set_relative_mode(true);
 
 						if (parser.chain()) {
-							process_parsed_command();
+							process_parsed_command(true);
 
 							restore_relative_mode(mode);
 						}
@@ -1089,20 +1089,22 @@ inline void report_position_json(const xyz_pos_t& pos) {
 extern int16_t rapidrate_percentage;
 
 void GcodeSuite::report_state() {
-	xyz_pos_t lpos = current_position;
+	get_cartesian_from_steppers();
+
+	// xyz_pos_t pos = current_position;
+	xyz_pos_t pos = cartes;
+
 	const char* state = get_state();
 	auto& toolManager = ToolsModule::getInstance();
 	auto& motionManager = MotionModule::getInstance();
 	auto& driver = toolManager.getCurrentDriver();
 
-	motionManager.toLogical(lpos);
-
 	SERIAL_ECHO("{\"state\":\"");
 	SERIAL_ECHO(state);
 	SERIAL_ECHO("\",\"mpos\":");
-	report_position_json(current_position);
+	report_position_json(pos);
 	SERIAL_ECHO(",\"wpos\":");
-	report_position_json(lpos);
+	report_position_json(pos.asLogical());
 	// SERIAL_ECHO(",\"spos\":");
 	// SERIAL_PRINTF("{\"x\":%lf,\"y\":%lf,\"z\":%lf}", Stepper::count_position.x, Stepper::count_position.y, Stepper::count_position.z);
 	SERIAL_PRINTF(",\"wcs\":%ld", motionManager.getActiveCoordinateSystem().getIndex() + 1);

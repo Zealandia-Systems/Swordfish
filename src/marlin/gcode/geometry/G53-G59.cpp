@@ -88,7 +88,7 @@ void GcodeSuite::G53() {
 #	endif
 
 	if (parser.chain()) { // Command to chain?
-		process_parsed_command(); // ...process the chained command
+		process_parsed_command(true); // ...process the chained command
 
 		motionManager.setActiveCoordinateSystem(activeSystem);
 
@@ -126,7 +126,7 @@ void GcodeSuite::G54() {
 	}
 
 	if (parser.chain()) { // Command to chain?
-		process_parsed_command(); // ...process the chained command
+		process_parsed_command(true); // ...process the chained command
 
 		motionManager.setActiveCoordinateSystem(activeSystem);
 
