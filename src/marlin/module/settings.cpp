@@ -208,7 +208,7 @@ typedef struct SettingsDataStruct {
 
 	planner_settings_t planner_settings;
 
-	xyze_float_t planner_max_jerk; // M205 XYZE  planner.max_jerk
+	xyza_float_t planner_max_jerk; // M205 XYZE  planner.max_jerk
 	float planner_junction_deviation_mm; // M205 J     planner.junction_deviation_mm
 
 	xyz_pos_t home_offset; // M206 XYZ / M665 TPZ
@@ -674,7 +674,7 @@ bool MarlinSettings::save() {
 		EEPROM_WRITE(dummyf);
 #		endif
 #	else
-		const xyze_pos_t planner_max_jerk = { 10, 10, 0.4, float(DEFAULT_EJERK) };
+		const xyza_pos_t planner_max_jerk = { 10, 10, 0.4, float(DEFAULT_EJERK) };
 		EEPROM_WRITE(planner_max_jerk);
 #	endif
 
@@ -1553,7 +1553,7 @@ bool MarlinSettings::_load() {
 			EEPROM_READ(tmp3); // max_feedrate_mm_s
 
 			if (!validating)
-				LOOP_XYZE_N(i) {
+				LOOP_XYZA_N(i) {
 					const bool in = (i < esteppers + XYZ);
 					planner.settings.max_acceleration_mm_per_s2[i] = in ? tmp1[i] : pgm_read_dword(&_DMA[ALIM(i, _DMA)]);
 					planner.settings.axis_steps_per_mm[i] = in ? tmp2[i] : pgm_read_float(&_DASU[ALIM(i, _DASU)]);
@@ -2651,7 +2651,7 @@ bool MarlinSettings::save() {
 void MarlinSettings::reset() {
 	// Controller::getInstance().reset();
 
-	LOOP_XYZE_N(i) {
+	LOOP_XYZA_N(i) {
 		planner.settings.max_acceleration_mm_per_s2[i] = pgm_read_dword(&_DMA[ALIM(i, _DMA)]);
 		planner.settings.axis_steps_per_mm[i] = pgm_read_float(&_DASU[ALIM(i, _DASU)]);
 		planner.settings.max_feedrate_mm_s[i] = pgm_read_float(&_DMF[ALIM(i, _DMF)]);

@@ -139,9 +139,9 @@ planner_settings_t Planner::settings; // Initialized by settings.load()
 laser_state_t Planner::laser_inline; // Current state for blocks
 #endif
 
-uint32_t Planner::max_acceleration_steps_per_s2[XYZE_N]; // (steps/s^2) Derived from mm_per_s2
+uint32_t Planner::max_acceleration_steps_per_s2[XYZA_N]; // (steps/s^2) Derived from mm_per_s2
 
-float Planner::steps_to_mm[XYZE_N]; // (mm) Millimeters per step
+float Planner::steps_to_mm[XYZA_N]; // (mm) Millimeters per step
 
 #if HAS_JUNCTION_DEVIATION
 float Planner::junction_deviation_mm; // (mm) M205 J
@@ -151,7 +151,7 @@ float Planner::max_e_jerk[DISTINCT_E]; // Calculated from junction_deviation_mm
 #endif
 
 #if HAS_CLASSIC_JERK
-TERN(HAS_LINEAR_E_JERK, xyz_pos_t, xyze_pos_t)
+TERN(HAS_LINEAR_E_JERK, xyz_pos_t, xyza_pos_t)
 Planner::max_jerk;
 #endif
 
@@ -165,7 +165,7 @@ uint8_t Planner::last_extruder = 0; // Respond to extruder change
 
 #if ENABLED(DIRECT_STEPPING)
 uint32_t Planner::last_page_step_rate = 0;
-xyze_bool_t Planner::last_page_dir { 0 };
+xyza_bool_t Planner::last_page_dir { 0 };
 #endif
 
 #if EXTRUDERS
@@ -209,11 +209,11 @@ bool Planner::autotemp_enabled = false;
 
 // private:
 
-xyze_long_t Planner::position { 0, 0, 0 };
+xyza_long_t Planner::position { 0, 0, 0 };
 
 uint32_t Planner::cutoff_long;
 
-xyze_float_t Planner::previous_speed;
+xyza_float_t Planner::previous_speed;
 float Planner::previous_nominal_speed_sqr;
 
 #if ENABLED(DISABLE_INACTIVE_EXTRUDER)
@@ -231,11 +231,11 @@ float Planner::extruder_advance_K[EXTRUDERS]; // Initialized by settings.load()
 #endif
 
 #if HAS_POSITION_FLOAT
-xyze_pos_t Planner::position_float; // Needed for accurate maths. Steps cannot be used!
+xyza_pos_t Planner::position_float; // Needed for accurate maths. Steps cannot be used!
 #endif
 
 #if IS_KINEMATIC
-xyze_pos_t Planner::position_cart;
+xyza_pos_t Planner::position_cart;
 #endif
 
 #if HAS_WIRED_LCD
@@ -1290,7 +1290,7 @@ void Planner::getHighESpeed() {
 void Planner::check_axes_activity() {
 
 #if ANY(DISABLE_X, DISABLE_Y, DISABLE_Z, DISABLE_E)
-	xyze_bool_t axis_active = { false };
+	xyza_bool_t axis_active = { false };
 #endif
 
 #if HAS_FAN
@@ -1710,9 +1710,9 @@ void Planner::synchronize() {
  * Returns true if movement was properly queued, false otherwise (if cleaning)
  */
 bool Planner::_buffer_steps(
-		const xyze_long_t& target,
+		const xyza_long_t& target,
 #if HAS_POSITION_FLOAT
-		const xyze_pos_t& target_float,
+		const xyza_pos_t& target_float,
 #endif
 		const feedRate_t fr_mm_s,
 		const uint8_t extruder,
@@ -1780,7 +1780,7 @@ bool Planner::_populate_block(
 		bool split_move,
 		const abce_long_t& target,
 #if HAS_POSITION_FLOAT
-		const xyze_pos_t& target_float,
+		const xyza_pos_t& target_float,
 #endif
 		feedRate_t fr_mm_s,
 		const uint8_t extruder,
@@ -2079,7 +2079,7 @@ bool Planner::_populate_block(
 
 	// Calculate and limit speed in mm/sec
 
-	xyze_float_t current_speed;
+	xyza_float_t current_speed;
 	float speed_factor = 1.0f; // factor <1 decreases speed
 
 	// Linear axes first with less logic
@@ -2305,9 +2305,9 @@ bool Planner::_populate_block(
 	      already calculated in a different place. */
 
 	// Unit vector of previous path line segment
-	static xyze_float_t prev_unit_vec;
+	static xyza_float_t prev_unit_vec;
 
-	xyze_float_t unit_vec { steps_dist_mm.x, steps_dist_mm.y, steps_dist_mm.z, steps_dist_mm.e };
+	xyza_float_t unit_vec { steps_dist_mm.x, steps_dist_mm.y, steps_dist_mm.z, steps_dist_mm.e };
 
 	/**
 	 * On CoreXY the length of the vector [A,B] is SQRT(2) times the length of the head movement vector [X,Y].
@@ -2334,7 +2334,7 @@ bool Planner::_populate_block(
 			NOLESS(junction_cos_theta, -0.999999f); // Check for numerical round-off to avoid divide by zero.
 
 			// Convert delta vector to unit vector
-			xyze_float_t junction_unit_vec = unit_vec - prev_unit_vec;
+			xyza_float_t junction_unit_vec = unit_vec - prev_unit_vec;
 			normalize_junction_vector(junction_unit_vec);
 
 			const float junction_acceleration = limit_value_by_axis_maximum(block->acceleration, junction_unit_vec),
@@ -2665,7 +2665,7 @@ bool Planner::buffer_segment(
 	};
 
 #if HAS_POSITION_FLOAT
-	const xyze_pos_t target_float = { a, b, c, e };
+	const xyza_pos_t target_float = { a, b, c, e };
 #endif
 
 	// DRYRUN prevents E moves from taking place
@@ -2745,7 +2745,7 @@ bool Planner::buffer_line(
 		const float millimeters,
 		const float32_t accel_mm_s2 /* = 0.0*/
 ) {
-	xyze_pos_t machine = { rx, ry, rz, e };
+	xyza_pos_t machine = { rx, ry, rz, e };
 	TERN_(HAS_POSITION_MODIFIERS, apply_modifiers(machine));
 
 	return buffer_segment(
@@ -2844,7 +2844,7 @@ void Planner::set_machine_position_mm(const float& a, const float& b, const floa
 }
 
 void Planner::set_position_mm(const float& rx, const float& ry, const float& rz, const float& e) {
-	xyze_pos_t machine = { rx, ry, rz, e };
+	xyza_pos_t machine = { rx, ry, rz, e };
 #if HAS_POSITION_MODIFIERS
 	apply_modifiers(machine, true);
 #endif
@@ -2883,7 +2883,7 @@ void Planner::reset_acceleration_rates() {
 #	define AXIS_CONDITION true
 #endif
 	uint32_t highest_rate = 1;
-	LOOP_XYZE_N(i) {
+	LOOP_XYZA_N(i) {
 		max_acceleration_steps_per_s2[i] = settings.max_acceleration_mm_per_s2[i] * settings.axis_steps_per_mm[i];
 		if (AXIS_CONDITION)
 			NOLESS(highest_rate, max_acceleration_steps_per_s2[i]);
@@ -2894,13 +2894,14 @@ void Planner::reset_acceleration_rates() {
 
 // Recalculate position, steps_to_mm if settings.axis_steps_per_mm changes!
 void Planner::refresh_positioning() {
-	LOOP_XYZE_N(i)
-	steps_to_mm[i] = 1.0f / settings.axis_steps_per_mm[i];
-	set_position_mm(current_position);
-	reset_acceleration_rates();
+	LOOP_XYZA_N(i) {
+		steps_to_mm[i] = 1.0f / settings.axis_steps_per_mm[i];
+		set_position_mm(current_position);
+		reset_acceleration_rates();
+	}
 }
 
-inline void limit_and_warn(float& val, const uint8_t axis, PGM_P const setting_name, const xyze_float_t& max_limit) {
+inline void limit_and_warn(float& val, const uint8_t axis, PGM_P const setting_name, const xyza_float_t& max_limit) {
 	const uint8_t lim_axis = axis > E_AXIS ? E_AXIS : axis;
 	const float before = val;
 	LIMIT(val, 0.1, max_limit[lim_axis]);
@@ -2915,11 +2916,11 @@ inline void limit_and_warn(float& val, const uint8_t axis, PGM_P const setting_n
 void Planner::set_max_acceleration(const uint8_t axis, float targetValue) {
 #if ENABLED(LIMITED_MAX_ACCEL_EDITING)
 #	ifdef MAX_ACCEL_EDIT_VALUES
-	constexpr xyze_float_t max_accel_edit = MAX_ACCEL_EDIT_VALUES;
-	const xyze_float_t& max_acc_edit_scaled = max_accel_edit;
+	constexpr xyza_float_t max_accel_edit = MAX_ACCEL_EDIT_VALUES;
+	const xyza_float_t& max_acc_edit_scaled = max_accel_edit;
 #	else
-	constexpr xyze_float_t max_accel_edit = DEFAULT_MAX_ACCELERATION;
-	const xyze_float_t max_acc_edit_scaled = max_accel_edit * 2;
+	constexpr xyza_float_t max_accel_edit = DEFAULT_MAX_ACCELERATION;
+	const xyza_float_t max_acc_edit_scaled = max_accel_edit * 2;
 #	endif
 	limit_and_warn(targetValue, axis, PSTR("Acceleration"), max_acc_edit_scaled);
 #endif
@@ -2932,11 +2933,11 @@ void Planner::set_max_acceleration(const uint8_t axis, float targetValue) {
 void Planner::set_max_feedrate(const uint8_t axis, float targetValue) {
 #if ENABLED(LIMITED_MAX_FR_EDITING)
 #	ifdef MAX_FEEDRATE_EDIT_VALUES
-	constexpr xyze_float_t max_fr_edit = MAX_FEEDRATE_EDIT_VALUES;
-	const xyze_float_t& max_fr_edit_scaled = max_fr_edit;
+	constexpr xyza_float_t max_fr_edit = MAX_FEEDRATE_EDIT_VALUES;
+	const xyza_float_t& max_fr_edit_scaled = max_fr_edit;
 #	else
-	constexpr xyze_float_t max_fr_edit = DEFAULT_MAX_FEEDRATE;
-	const xyze_float_t max_fr_edit_scaled = max_fr_edit * 2;
+	constexpr xyza_float_t max_fr_edit = DEFAULT_MAX_FEEDRATE;
+	const xyza_float_t max_fr_edit_scaled = max_fr_edit * 2;
 #	endif
 	limit_and_warn(targetValue, axis, PSTR("Feedrate"), max_fr_edit_scaled);
 #endif
@@ -2946,7 +2947,7 @@ void Planner::set_max_feedrate(const uint8_t axis, float targetValue) {
 void Planner::set_max_jerk(const AxisEnum axis, float targetValue) {
 #if HAS_CLASSIC_JERK
 #	if ENABLED(LIMITED_JERK_EDITING)
-	constexpr xyze_float_t max_jerk_edit =
+	constexpr xyza_float_t max_jerk_edit =
 #		ifdef MAX_JERK_EDIT_VALUES
 			MAX_JERK_EDIT_VALUES
 #		else

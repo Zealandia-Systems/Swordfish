@@ -27,7 +27,7 @@
 #include "../../module/stepper.h"
 
 #if ENABLED(I2C_POSITION_ENCODERS)
-  #include "../../feature/encoder_i2c.h"
+#	include "../../feature/encoder_i2c.h"
 #endif
 
 #include <swordfish/Controller.h>
@@ -45,64 +45,74 @@ using namespace swordfish::motion;
 void GcodeSuite::G92(bool report) {
 	auto& motionManager = MotionModule::getInstance();
 
-  bool sync_E = false, sync_XYZ = false;
+	bool sync_E = false, sync_XYZ = false;
 
-  #if ENABLED(USE_GCODE_SUBCODES)
-    const uint8_t subcode_G92 = parser.subcode;
-  #else
-    constexpr uint8_t subcode_G92 = 0;
-  #endif
+#if ENABLED(USE_GCODE_SUBCODES)
+	const uint8_t subcode_G92 = parser.subcode;
+#else
+	constexpr uint8_t subcode_G92 = 0;
+#endif
 
-  switch (subcode_G92) {
-    default: break;
-    #if ENABLED(CNC_COORDINATE_SYSTEMS)
-      case 1: {
-        // Zero the G92 values and restore current position
-        #if !IS_SCARA
-					motionManager.setWorkOffset({ 0, 0, 0 });
-        #endif // Not SCARA
-      } return;
-    #endif
-    #if ENABLED(POWER_LOSS_RECOVERY)
-      case 9: {
-        LOOP_XYZE(i) {
-          if (parser.seenval(axis_codes[i])) {
-            current_position[i] = parser.value_axis_units((AxisEnum)i);
-            if (i == E_AXIS) sync_E = true; else sync_XYZ = true;
-          }
-        }
-      } break;
-    #endif
-    case 0: {
-			Vector3f workOffset { 0, 0, 0 };
-				
-      LOOP_XYZE(i) {
-        if (parser.seenval(axis_codes[i])) {
-          const float l = parser.value_axis_units((AxisEnum)i),
-                      v = i == E_AXIS ? l : toNative(l, (AxisEnum)i),
-                      d = v - current_position[i];
-          if (!NEAR_ZERO(d)) {
-            #if IS_SCARA || !HAS_POSITION_SHIFT
-              if (i == E_AXIS) sync_E = true; else sync_XYZ = true;
-              current_position[i] = v;        // Without workspaces revert to Marlin 1.0 behavior
-            #elif HAS_POSITION_SHIFT
-               workOffset(i) += d;       // Other axes simply offset the coordinate space
-            #endif
-          }
-        }
-      }
-			
-			motionManager.setWorkOffset(workOffset);
-			
-    } break;
-  }
-
-  if    (sync_XYZ) sync_plan_position();
-  else if (sync_E) sync_plan_position_e();
-
-  #if DISABLED(DIRECT_STEPPING)
-		if(report) {
-	    report_current_position();
+	switch (subcode_G92) {
+		default:
+			break;
+#if ENABLED(CNC_COORDINATE_SYSTEMS)
+		case 1: {
+// Zero the G92 values and restore current position
+#	if !IS_SCARA
+			motionManager.setWorkOffset({ 0, 0, 0 });
+#	endif // Not SCARA
 		}
-  #endif
+			return;
+#endif
+#if ENABLED(POWER_LOSS_RECOVERY)
+		case 9: {
+			LOOP_XYZE(i) {
+				if (parser.seenval(axis_codes[i])) {
+					current_position[i] = parser.value_axis_units((AxisEnum) i);
+					if (i == E_AXIS)
+						sync_E = true;
+					else
+						sync_XYZ = true;
+				}
+			}
+		} break;
+#endif
+		case 0: {
+			Vector3f workOffset { 0, 0, 0 };
+
+			LOOP_XYZA(i) {
+				if (parser.seenval(axis_codes[i])) {
+					const float l = parser.value_axis_units((AxisEnum) i),
+											v = i == E_AXIS ? l : toNative(l, (AxisEnum) i),
+											d = v - current_position[i];
+					if (!NEAR_ZERO(d)) {
+#if IS_SCARA || !HAS_POSITION_SHIFT
+						if (i == E_AXIS)
+							sync_E = true;
+						else
+							sync_XYZ = true;
+						current_position[i] = v; // Without workspaces revert to Marlin 1.0 behavior
+#elif HAS_POSITION_SHIFT
+						workOffset(i) += d; // Other axes simply offset the coordinate space
+#endif
+					}
+				}
+			}
+
+			motionManager.setWorkOffset(workOffset);
+
+		} break;
+	}
+
+	if (sync_XYZ)
+		sync_plan_position();
+	else if (sync_E)
+		sync_plan_position_e();
+
+#if DISABLED(DIRECT_STEPPING)
+	if (report) {
+		report_current_position();
+	}
+#endif
 }

@@ -89,7 +89,7 @@ millis_t GcodeSuite::previous_move_ms = 0,
 				 GcodeSuite::stepper_inactive_time = SEC_TO_MS(DEFAULT_STEPPER_DEACTIVE_TIME);
 
 // Relative motion mode for each logical axis
-static constexpr xyze_bool_t ar_init = AXIS_RELATIVE_MODES;
+static constexpr xyza_bool_t ar_init = AXIS_RELATIVE_MODES;
 uint8_t GcodeSuite::axis_relative = ((ar_init.x ? _BV(REL_X) : 0) | (ar_init.y ? _BV(REL_Y) : 0) | (ar_init.z ? _BV(REL_Z) : 0) | (ar_init.e ? _BV(REL_E) : 0));
 
 #if EITHER(HAS_AUTO_REPORTING, HOST_KEEPALIVE_FEATURE)
@@ -161,7 +161,7 @@ int8_t GcodeSuite::get_target_e_stepper_from_command() {
 void GcodeSuite::get_destination_from_command() {
 	auto& motionModule = MotionModule::getInstance();
 
-	xyze_bool_t seen = { false, false, false, false };
+	xyza_bool_t seen = { false, false, false, false };
 
 #if ENABLED(CANCEL_OBJECTS)
 	const bool& skip_move = cancelable.skipping;

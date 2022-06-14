@@ -54,7 +54,7 @@ using namespace swordfish::motion;
  * boards to produce much smoother curved surfaces.
  */
 void plan_arc(
-		const xyze_pos_t& cart, // Destination position
+		const xyza_pos_t& cart, // Destination position
 		const ab_float_t& offset, // Center of rotation relative to current_position
 		const bool clockwise, // Clockwise?
 		const uint8_t circles // Take the scenic route
@@ -140,7 +140,7 @@ void plan_arc(
 				part_per_circle = RADIANS(360) / total_angular, // Each circle's part of the total
 				l_per_circle = linear_travel * part_per_circle, // L movement per circle
 				e_per_circle = extruder_travel * part_per_circle; // E movement per circle
-		xyze_pos_t temp_position = current_position; // for plan_arc to compare to current_position
+		xyza_pos_t temp_position = current_position; // for plan_arc to compare to current_position
 		for (uint16_t n = circles; n--;) {
 			temp_position.e += e_per_circle; // Destination E axis
 			temp_position[l_axis] += l_per_circle; // Destination L axis
@@ -199,7 +199,7 @@ void plan_arc(
 	 * This is important when there are successive arc motions.
 	 */
 	// Vector rotation matrix values
-	xyze_pos_t raw;
+	xyza_pos_t raw;
 	const float theta_per_segment = angular_travel / segments,
 							linear_per_segment = linear_travel / segments,
 							extruder_per_segment = extruder_travel / segments,

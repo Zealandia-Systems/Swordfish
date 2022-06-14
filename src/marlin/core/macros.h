@@ -26,7 +26,7 @@
 #endif
 
 #define ABCE           4
-#define XYZE           4
+#define XYZA           4
 #define ABC            3
 #define XYZ            3
 #define XY             2
