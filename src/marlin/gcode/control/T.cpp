@@ -39,7 +39,7 @@ using namespace swordfish::tools;
  *   F[units/min] Set the movement feedrate
  *   S1           Don't move the tool in XY after change
  */
-void GcodeSuite::T(const int8_t tool_index) {
+void GcodeSuite::T(const int16_t tool_index) {
 
 	DEBUG_SECTION(log_T, "T", DEBUGGING(LEVELING));
 	if (DEBUGGING(LEVELING))
