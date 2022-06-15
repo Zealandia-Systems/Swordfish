@@ -346,41 +346,21 @@ void quickstop_stepper() {
 	sync_plan_position();
 }
 
-void enable_e_steppers() {
-#define _ENA_E(N) ENABLE_AXIS_E##N();
-	REPEAT(E_STEPPERS, _ENA_E)
-}
-
 void enable_all_steppers() {
 	TERN_(AUTO_POWER_CONTROL, powerManager.power_on());
 	ENABLE_AXIS_X();
 	ENABLE_AXIS_Y();
 	ENABLE_AXIS_Z();
-	enable_e_steppers();
+	ENABLE_AXIS_A();
 
 	TERN_(EXTENSIBLE_UI, ExtUI::onSteppersEnabled());
-}
-
-void disable_e_steppers() {
-#define _DIS_E(N) DISABLE_AXIS_E##N();
-	REPEAT(E_STEPPERS, _DIS_E)
-}
-
-void disable_e_stepper(const uint8_t e) {
-#define _CASE_DIS_E(N) \
-	case N: \
-		DISABLE_AXIS_E##N(); \
-		break;
-	switch (e) {
-		REPEAT(EXTRUDERS, _CASE_DIS_E)
-	}
 }
 
 void disable_all_steppers() {
 	DISABLE_AXIS_X();
 	DISABLE_AXIS_Y();
 	DISABLE_AXIS_Z();
-	disable_e_steppers();
+	DISABLE_AXIS_A();
 
 	TERN_(EXTENSIBLE_UI, ExtUI::onSteppersDisabled());
 }
@@ -461,14 +441,7 @@ inline void abortSDPrinting() {
 	queue.clear();
 	quickstop_stepper();
 	print_job_timer.stop();
-#	if DISABLED(SD_ABORT_NO_COOLDOWN)
-	thermalManager.disable_all_heaters();
-#	endif
-#	if !HAS_CUTTER
-	thermalManager.zero_fan_speeds();
-#	else
-	cutter.enabled(false);
-#	endif
+	// cutter.enabled(false);
 	wait_for_heatup = false;
 	TERN_(POWER_LOSS_RECOVERY, recovery.purge());
 #	ifdef EVENT_GCODE_SD_ABORT
@@ -542,8 +515,8 @@ inline void manage_inactivity(const bool ignore_stepper_queue = false) {
 					DISABLE_AXIS_Y();
 				if (ENABLED(DISABLE_INACTIVE_Z))
 					DISABLE_AXIS_Z();
-				if (ENABLED(DISABLE_INACTIVE_E))
-					disable_e_steppers();
+				if (ENABLED(DISABLE_INACTIVE_A))
+					DISABLE_AXIS_A();
 
 				TERN_(AUTO_BED_LEVELING_UBL, ubl.steppers_were_disabled());
 			}
@@ -846,8 +819,6 @@ IDLE_DONE:
  * After this the machine will need to be reset.
  */
 void kill(PGM_P const lcd_error /*=nullptr*/, PGM_P const lcd_component /*=nullptr*/, const bool steppers_off /*=false*/) {
-	thermalManager.disable_all_heaters();
-
 	TERN_(HAS_CUTTER, cutter.enabled(false)); // Full cutter shutdown including ISR control
 
 	SERIAL_ERROR_MSG(STR_ERR_KILLED);
@@ -882,13 +853,12 @@ void minkill(const bool steppers_off /*=false*/) {
 	for (int i = 1000; i--;)
 		DELAY_US(250);
 
-	// Reiterate heaters off
-	thermalManager.disable_all_heaters();
-
 	TERN_(HAS_CUTTER, cutter.enabled(false)); // Reiterate cutter shutdown
 
 	// Power off all steppers (for M112) or just the E steppers
-	steppers_off ? disable_all_steppers() : disable_e_steppers();
+	if (steppers_off) {
+		disable_all_steppers();
+	}
 
 	TERN_(PSU_CONTROL, PSU_OFF());
 
@@ -920,7 +890,6 @@ void minkill(const bool steppers_off /*=false*/) {
  * After a stop the machine may be resumed with M999
  */
 void stop() {
-	thermalManager.disable_all_heaters(); // 'unpause' taken care of in here
 	print_job_timer.stop();
 
 #if ENABLED(PROBING_FANS_OFF)

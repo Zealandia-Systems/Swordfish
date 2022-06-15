@@ -161,8 +161,8 @@ typedef struct block_t {
 			acceleration; // acceleration mm/sec^2
 
 	union {
-		abce_ulong_t steps; // Step count along each axis
-		abce_long_t position; // New position to force when this sync block is executed
+		xyza_ulong_t steps; // Step count along each axis
+		xyza_long_t position; // New position to force when this sync block is executed
 	};
 	uint32_t step_event_count; // The number of step events required to complete this block
 
@@ -776,16 +776,16 @@ private:
 			const float32_t accel_mm_s2 = 0.0);
 
 	FORCE_INLINE static bool buffer_segment(
-			abce_pos_t& abce,
+			xyza_pos_t& xyza,
 			const feedRate_t& fr_mm_s,
 			const uint8_t extruder,
 			const float& millimeters = 0.0,
 			const float32_t accel_mm_s2 = 0.0) {
 		return buffer_segment(
-				abce.a,
-				abce.b,
-				abce.c,
-				abce.e,
+				xyza.x,
+				xyza.y,
+				xyza.z,
+				xyza.a,
 				fr_mm_s,
 				extruder,
 				millimeters,
@@ -824,7 +824,7 @@ public:
 				cart.x,
 				cart.y,
 				cart.z,
-				cart.e,
+				cart.a,
 				fr_mm_s,
 				extruder,
 				millimeters,
@@ -850,7 +850,7 @@ public:
 	 */
 	static void set_position_mm(const float& rx, const float& ry, const float& rz, const float& e);
 	FORCE_INLINE static void set_position_mm(const xyza_pos_t& cart) {
-		set_position_mm(cart.x, cart.y, cart.z, cart.e);
+		set_position_mm(cart.x, cart.y, cart.z, cart.a);
 	}
 	static void set_e_position_mm(const float& e);
 
@@ -861,8 +861,8 @@ public:
 	 * conversions are applied.
 	 */
 	static void set_machine_position_mm(const float& a, const float& b, const float& c, const float& e);
-	FORCE_INLINE static void set_machine_position_mm(const abce_pos_t& abce) {
-		set_machine_position_mm(abce.a, abce.b, abce.c, abce.e);
+	FORCE_INLINE static void set_machine_position_mm(const xyza_pos_t& xyza) {
+		set_machine_position_mm(xyza.x, xyza.y, xyza.z, xyza.a);
 	}
 
 	/**
@@ -871,12 +871,12 @@ public:
 	 */
 	static float get_axis_position_mm(const AxisEnum axis);
 
-	static inline abce_pos_t get_axis_positions_mm() {
-		const abce_pos_t out = {
-			get_axis_position_mm(A_AXIS),
-			get_axis_position_mm(B_AXIS),
-			get_axis_position_mm(C_AXIS),
-			get_axis_position_mm(E_AXIS)
+	static inline xyza_pos_t get_axis_positions_mm() {
+		const xyza_pos_t out = {
+			get_axis_position_mm(X_AXIS),
+			get_axis_position_mm(Y_AXIS),
+			get_axis_position_mm(Z_AXIS),
+			get_axis_position_mm(A_AXIS)
 		};
 		return out;
 	}

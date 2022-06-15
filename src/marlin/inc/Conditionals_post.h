@@ -1450,132 +1450,30 @@
 #endif
 
 // Extruder steppers and solenoids
-#if PIN_EXISTS(E0_ENABLE) || (ENABLED(SOFTWARE_DRIVER_ENABLE) && AXIS_IS_TMC(E0))
-  #define HAS_E0_ENABLE 1
+#if PIN_EXISTS(A_ENABLE) || (ENABLED(SOFTWARE_DRIVER_ENABLE) && AXIS_IS_TMC(A))
+  #define HAS_A_ENABLE 1
 #endif
-#if PIN_EXISTS(E0_DIR)
-  #define HAS_E0_DIR 1
+#if PIN_EXISTS(A_DIR)
+  #define HAS_A_DIR 1
 #endif
-#if PIN_EXISTS(E0_STEP)
-  #define HAS_E0_STEP 1
+#if PIN_EXISTS(A_STEP)
+  #define HAS_A_STEP 1
 #endif
-#if PIN_EXISTS(E0_MS1)
-  #define HAS_E0_MS_PINS 1
-#endif
-#if PIN_EXISTS(SOL0)
-  #define HAS_SOLENOID_0 1
+#if PIN_EXISTS(A_MS1)
+  #define HAS_A_MS_PINS 1
 #endif
 
-#if PIN_EXISTS(E1_ENABLE) || (ENABLED(SOFTWARE_DRIVER_ENABLE) && AXIS_IS_TMC(E1))
-  #define HAS_E1_ENABLE 1
+#if PIN_EXISTS(A2_ENABLE) || (ENABLED(SOFTWARE_DRIVER_ENABLE) && AXIS_IS_TMC(A2))
+  #define HAS_A2_ENABLE 1
 #endif
-#if PIN_EXISTS(E1_DIR)
-  #define HAS_E1_DIR 1
+#if PIN_EXISTS(A2_DIR)
+  #define HAS_A2_DIR 1
 #endif
-#if PIN_EXISTS(E1_STEP)
-  #define HAS_E1_STEP 1
+#if PIN_EXISTS(A2_STEP)
+  #define HAS_A2_STEP 1
 #endif
-#if PIN_EXISTS(E1_MS1)
-  #define HAS_E1_MS_PINS 1
-#endif
-#if PIN_EXISTS(SOL1)
-  #define HAS_SOLENOID_1 1
-#endif
-
-#if PIN_EXISTS(E2_ENABLE) || (ENABLED(SOFTWARE_DRIVER_ENABLE) && AXIS_IS_TMC(E2))
-  #define HAS_E2_ENABLE 1
-#endif
-#if PIN_EXISTS(E2_DIR)
-  #define HAS_E2_DIR 1
-#endif
-#if PIN_EXISTS(E2_STEP)
-  #define HAS_E2_STEP 1
-#endif
-#if PIN_EXISTS(E2_MS1)
-  #define HAS_E2_MS_PINS 1
-#endif
-#if PIN_EXISTS(SOL2)
-  #define HAS_SOLENOID_2 1
-#endif
-
-#if PIN_EXISTS(E3_ENABLE) || (ENABLED(SOFTWARE_DRIVER_ENABLE) && AXIS_IS_TMC(E3))
-  #define HAS_E3_ENABLE 1
-#endif
-#if PIN_EXISTS(E3_DIR)
-  #define HAS_E3_DIR 1
-#endif
-#if PIN_EXISTS(E3_STEP)
-  #define HAS_E3_STEP 1
-#endif
-#if PIN_EXISTS(E3_MS1)
-  #define HAS_E3_MS_PINS 1
-#endif
-#if PIN_EXISTS(SOL3)
-  #define HAS_SOLENOID_3 1
-#endif
-
-#if PIN_EXISTS(E4_ENABLE) || (ENABLED(SOFTWARE_DRIVER_ENABLE) && AXIS_IS_TMC(E4))
-  #define HAS_E4_ENABLE 1
-#endif
-#if PIN_EXISTS(E4_DIR)
-  #define HAS_E4_DIR 1
-#endif
-#if PIN_EXISTS(E4_STEP)
-  #define HAS_E4_STEP 1
-#endif
-#if PIN_EXISTS(E4_MS1)
-  #define HAS_E4_MS_PINS 1
-#endif
-#if PIN_EXISTS(SOL4)
-  #define HAS_SOLENOID_4 1
-#endif
-
-#if PIN_EXISTS(E5_ENABLE) || (ENABLED(SOFTWARE_DRIVER_ENABLE) && AXIS_IS_TMC(E5))
-  #define HAS_E5_ENABLE 1
-#endif
-#if PIN_EXISTS(E5_DIR)
-  #define HAS_E5_DIR 1
-#endif
-#if PIN_EXISTS(E5_STEP)
-  #define HAS_E5_STEP 1
-#endif
-#if PIN_EXISTS(E5_MS1)
-  #define HAS_E5_MS_PINS 1
-#endif
-#if PIN_EXISTS(SOL5)
-  #define HAS_SOLENOID_5 1
-#endif
-
-#if PIN_EXISTS(E6_ENABLE) || (ENABLED(SOFTWARE_DRIVER_ENABLE) && AXIS_IS_TMC(E6))
-  #define HAS_E6_ENABLE 1
-#endif
-#if PIN_EXISTS(E6_DIR)
-  #define HAS_E6_DIR 1
-#endif
-#if PIN_EXISTS(E6_STEP)
-  #define HAS_E6_STEP 1
-#endif
-#if PIN_EXISTS(E6_MS1)
-  #define HAS_E6_MS_PINS 1
-#endif
-#if PIN_EXISTS(SOL6)
-  #define HAS_SOLENOID_6 1
-#endif
-
-#if PIN_EXISTS(E7_ENABLE) || (ENABLED(SOFTWARE_DRIVER_ENABLE) && AXIS_IS_TMC(E7))
-  #define HAS_E7_ENABLE 1
-#endif
-#if PIN_EXISTS(E7_DIR)
-  #define HAS_E7_DIR 1
-#endif
-#if PIN_EXISTS(E7_STEP)
-  #define HAS_E7_STEP 1
-#endif
-#if PIN_EXISTS(E7_MS1)
-  #define HAS_E7_MS_PINS 1
-#endif
-#if PIN_EXISTS(SOL7)
-  #define HAS_SOLENOID_7 1
+#if PIN_EXISTS(A2_MS1)
+  #define HAS_A2_MS_PINS 1
 #endif
 
 //
@@ -1721,12 +1619,6 @@
   #ifndef E7_SLAVE_ADDRESS
     #define E7_SLAVE_ADDRESS 0
   #endif
-#endif
-
-#if (HAS_E_DRIVER(TMC2660) \
-  || ( E0_ENABLE_PIN != X_ENABLE_PIN && E1_ENABLE_PIN != X_ENABLE_PIN   \
-    && E0_ENABLE_PIN != Y_ENABLE_PIN && E1_ENABLE_PIN != Y_ENABLE_PIN ) )
-  #define HAS_E_STEPPER_ENABLE 1
 #endif
 
 #if ANY_AXIS_HAS(HW_SERIAL)
@@ -2211,158 +2103,8 @@
   #define HEATER_7_INVERTING false
 #endif
 
-/**
- * Helper Macros for heaters and extruder fan
- */
-
-#define WRITE_HEATER_0P(v) WRITE(HEATER_0_PIN, (v) ^ HEATER_0_INVERTING)
-#if EITHER(HAS_MULTI_HOTEND, HEATERS_PARALLEL)
-  #define WRITE_HEATER_1(v) WRITE(HEATER_1_PIN, (v) ^ HEATER_1_INVERTING)
-  #if HOTENDS > 2
-    #define WRITE_HEATER_2(v) WRITE(HEATER_2_PIN, (v) ^ HEATER_2_INVERTING)
-    #if HOTENDS > 3
-      #define WRITE_HEATER_3(v) WRITE(HEATER_3_PIN, (v) ^ HEATER_3_INVERTING)
-      #if HOTENDS > 4
-        #define WRITE_HEATER_4(v) WRITE(HEATER_4_PIN, (v) ^ HEATER_4_INVERTING)
-        #if HOTENDS > 5
-          #define WRITE_HEATER_5(v) WRITE(HEATER_5_PIN, (v) ^ HEATER_5_INVERTING)
-          #if HOTENDS > 6
-            #define WRITE_HEATER_6(v) WRITE(HEATER_6_PIN, (v) ^ HEATER_6_INVERTING)
-            #if HOTENDS > 7
-              #define WRITE_HEATER_7(v) WRITE(HEATER_7_PIN, (v) ^ HEATER_7_INVERTING)
-            #endif // HOTENDS > 7
-          #endif // HOTENDS > 6
-        #endif // HOTENDS > 5
-      #endif // HOTENDS > 4
-    #endif // HOTENDS > 3
-  #endif // HOTENDS > 2
-#endif // HAS_MULTI_HOTEND || HEATERS_PARALLEL
-#if ENABLED(HEATERS_PARALLEL)
-  #define WRITE_HEATER_0(v) { WRITE_HEATER_0P(v); WRITE_HEATER_1(v); }
-#else
-  #define WRITE_HEATER_0(v) WRITE_HEATER_0P(v)
-#endif
-
 #ifndef MIN_POWER
   #define MIN_POWER 0
-#endif
-
-/**
- * Heated bed requires settings
- */
-#if HAS_HEATED_BED
-  #ifndef MIN_BED_POWER
-    #define MIN_BED_POWER 0
-  #endif
-  #ifndef MAX_BED_POWER
-    #define MAX_BED_POWER 255
-  #endif
-  #ifndef HEATER_BED_INVERTING
-    #define HEATER_BED_INVERTING false
-  #endif
-  #define WRITE_HEATER_BED(v) WRITE(HEATER_BED_PIN, (v) ^ HEATER_BED_INVERTING)
-#endif
-
-/**
- * Heated chamber requires settings
- */
-#if HAS_HEATED_CHAMBER
-  #ifndef MAX_CHAMBER_POWER
-    #define MAX_CHAMBER_POWER 255
-  #endif
-  #ifndef HEATER_CHAMBER_INVERTING
-    #define HEATER_CHAMBER_INVERTING false
-  #endif
-  #define WRITE_HEATER_CHAMBER(v) WRITE(HEATER_CHAMBER_PIN, (v) ^ HEATER_CHAMBER_INVERTING)
-#endif
-
-#if HAS_HOTEND || HAS_HEATED_BED || HAS_HEATED_CHAMBER
-  #define HAS_TEMPERATURE 1
-#endif
-
-#if HAS_TEMPERATURE && EITHER(HAS_LCD_MENU, DWIN_CREALITY_LCD)
-  #ifdef PREHEAT_5_LABEL
-    #define PREHEAT_COUNT 5
-  #elif defined(PREHEAT_4_LABEL)
-    #define PREHEAT_COUNT 4
-  #elif defined(PREHEAT_3_LABEL)
-    #define PREHEAT_COUNT 3
-  #elif defined(PREHEAT_2_LABEL)
-    #define PREHEAT_COUNT 2
-  #elif defined(PREHEAT_1_LABEL)
-    #define PREHEAT_COUNT 1
-  #endif
-#endif
-
-/**
- * Up to 3 PWM fans
- */
-#ifndef FAN_INVERTING
-  #define FAN_INVERTING false
-#endif
-
-#if HAS_FAN7
-  #define FAN_COUNT 8
-#elif HAS_FAN6
-  #define FAN_COUNT 7
-#elif HAS_FAN5
-  #define FAN_COUNT 6
-#elif HAS_FAN4
-  #define FAN_COUNT 5
-#elif HAS_FAN3
-  #define FAN_COUNT 4
-#elif HAS_FAN2
-  #define FAN_COUNT 3
-#elif HAS_FAN1
-  #define FAN_COUNT 2
-#elif HAS_FAN0
-  #define FAN_COUNT 1
-#else
-  #define FAN_COUNT 0
-#endif
-
-#if FAN_COUNT > 0
-  #define HAS_FAN 1
-#endif
-
-/**
- * Part Cooling fan multipliexer
- */
-#if PIN_EXISTS(FANMUX0)
-  #define HAS_FANMUX 1
-#endif
-
-/**
- * MIN/MAX fan PWM scaling
- */
-#ifndef FAN_OFF_PWM
-  #define FAN_OFF_PWM 0
-#endif
-#ifndef FAN_MIN_PWM
-  #if FAN_OFF_PWM > 0
-    #define FAN_MIN_PWM (FAN_OFF_PWM + 1)
-  #else
-    #define FAN_MIN_PWM 0
-  #endif
-#endif
-#ifndef FAN_MAX_PWM
-  #define FAN_MAX_PWM 255
-#endif
-#if FAN_MIN_PWM < 0 || FAN_MIN_PWM > 255
-  #error "FAN_MIN_PWM must be a value from 0 to 255."
-#elif FAN_MAX_PWM < 0 || FAN_MAX_PWM > 255
-  #error "FAN_MAX_PWM must be a value from 0 to 255."
-#elif FAN_MIN_PWM > FAN_MAX_PWM
-  #error "FAN_MIN_PWM must be less than or equal to FAN_MAX_PWM."
-#elif FAN_OFF_PWM > FAN_MIN_PWM
-  #error "FAN_OFF_PWM must be less than or equal to FAN_MIN_PWM."
-#endif
-
-/**
- * FAST PWM FAN Settings
- */
-#if ENABLED(FAST_PWM_FAN) && !defined(FAST_PWM_FAN_FREQUENCY)
-  #define FAST_PWM_FAN_FREQUENCY ((F_CPU) / (2 * 255 * 1)) // Fan frequency default
 #endif
 
 /**
@@ -2374,29 +2116,6 @@
   #elif !WITHIN(CASE_LIGHT_MAX_PWM, 1, 255)
     #error "CASE_LIGHT_MAX_PWM must be a value from 1 to 255."
   #endif
-#endif
-
-/**
- * Bed Probe dependencies
- */
-#if HAS_BED_PROBE
-  #if BOTH(ENDSTOPPULLUPS, HAS_Z_MIN_PROBE_PIN)
-    #define ENDSTOPPULLUP_ZMIN_PROBE
-  #endif
-  #ifndef Z_PROBE_OFFSET_RANGE_MIN
-    #define Z_PROBE_OFFSET_RANGE_MIN -20
-  #endif
-  #ifndef Z_PROBE_OFFSET_RANGE_MAX
-    #define Z_PROBE_OFFSET_RANGE_MAX 20
-  #endif
-  #ifndef XY_PROBE_SPEED
-    #define XY_PROBE_SPEED ((homing_feedrate_mm_m.x + homing_feedrate_mm_m.y) / 2)
-  #endif
-  #ifndef NOZZLE_TO_PROBE_OFFSET
-    #define NOZZLE_TO_PROBE_OFFSET { 0, 0, 0 }
-  #endif
-#else
-  #undef NOZZLE_TO_PROBE_OFFSET
 #endif
 
 /**

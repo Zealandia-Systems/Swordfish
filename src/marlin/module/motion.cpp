@@ -103,7 +103,7 @@ bool relative_mode; // = false;
  *   Used by 'line_to_current_position' to do a move after changing it.
  *   Used by 'sync_plan_position' to update 'planner.position'.
  */
-xyz_pos_t current_position { X_HOME_POS, Y_HOME_POS, Z_HOME_POS };
+xyza_pos_t current_position { X_HOME_POS, Y_HOME_POS, Z_HOME_POS, 0 };
 
 /**
  * Cartesian Destination
@@ -111,7 +111,7 @@ xyz_pos_t current_position { X_HOME_POS, Y_HOME_POS, Z_HOME_POS };
  *   and expected by functions like 'prepare_line_to_destination'.
  *   G-codes can set destination using 'get_destination_from_command'
  */
-xyz_pos_t destination { 0, 0, 0 };
+xyza_pos_t destination { 0, 0, 0, 0 };
 
 // G60/G61 Position Save and Return
 #if SAVED_POSITIONS
@@ -138,7 +138,8 @@ void reset_hotend_offsets() {
 			"Offsets for the first hotend must be 0.0.");
 	// Transpose from [XYZ][HOTENDS] to [HOTENDS][XYZ]
 	HOTEND_LOOP()
-	LOOP_XYZ(a) hotend_offset[e][a] = tmp[a][e];
+	LOOP_XYZ(a)
+	hotend_offset[e][a] = tmp[a][e];
 #	if ENABLED(DUAL_X_CARRIAGE)
 	hotend_offset[1].x = _MAX(X2_HOME_POS, X2_MAX_POS);
 #	endif
@@ -153,7 +154,7 @@ feedRate_t feedrate_mm_s = MMM_TO_MMS(1500);
 int16_t feedrate_percentage = 100;
 
 // Cartesian conversion result goes here:
-xyz_pos_t cartes;
+xyza_pos_t cartes;
 
 #if IS_KINEMATIC
 
@@ -272,18 +273,11 @@ void sync_plan_position_e() {
  * suitable for current_position, etc.
  */
 void get_cartesian_from_steppers() {
-#if ENABLED(DELTA)
-	forward_kinematics_DELTA(planner.get_axis_positions_mm());
-#else
-#	if IS_SCARA
-	forward_kinematics_SCARA(
-			planner.get_axis_position_degrees(A_AXIS),
-			planner.get_axis_position_degrees(B_AXIS));
-#	else
-	cartes.set(planner.get_axis_position_mm(X_AXIS), planner.get_axis_position_mm(Y_AXIS));
-#	endif
-	cartes.z = planner.get_axis_position_mm(Z_AXIS);
-#endif
+	cartes.set(
+			planner.get_axis_position_mm(X_AXIS),
+			planner.get_axis_position_mm(Y_AXIS),
+			planner.get_axis_position_mm(Z_AXIS),
+			planner.get_axis_position_mm(A_AXIS));
 }
 
 /**
@@ -300,7 +294,6 @@ void get_cartesian_from_steppers() {
 void set_current_from_steppers_for_axis(const AxisEnum axis) {
 	get_cartesian_from_steppers();
 	xyza_pos_t pos = cartes;
-	pos.e = planner.get_axis_position_mm(E_AXIS);
 
 #if HAS_POSITION_MODIFIERS
 	planner.unapply_modifiers(pos, true);
@@ -319,39 +312,6 @@ void set_current_from_steppers_for_axis(const AxisEnum axis) {
 void line_to_current_position(const feedRate_t& fr_mm_s /*=feedrate_mm_s*/) {
 	planner.buffer_line(current_position, fr_mm_s, active_extruder);
 }
-
-#if EXTRUDERS
-void unscaled_e_move(const float& length, const feedRate_t& fr_mm_s) {
-	TERN_(HAS_FILAMENT_SENSOR, runout.reset());
-	current_position.e += length / planner.e_factor[active_extruder];
-	line_to_current_position(fr_mm_s);
-	planner.synchronize();
-}
-#endif
-
-#if IS_KINEMATIC
-
-/**
- * Buffer a fast move without interpolation. Set current_position to destination
- */
-void prepare_fast_move_to_destination(const feedRate_t& scaled_fr_mm_s /*=MMS_SCALED(feedrate_mm_s)*/) {
-	if (DEBUGGING(LEVELING))
-		DEBUG_POS("prepare_fast_move_to_destination", destination);
-
-#	if UBL_SEGMENTED
-	// UBL segmented line will do Z-only moves in single segment
-	ubl.line_to_destination_segmented(scaled_fr_mm_s);
-#	else
-	if (current_position == destination)
-		return;
-
-	planner.buffer_line(destination, scaled_fr_mm_s, active_extruder);
-#	endif
-
-	current_position = destination;
-}
-
-#endif // IS_KINEMATIC
 
 /**
  * Do a fast or normal move to 'destination' with an optional FR.
@@ -934,8 +894,9 @@ void prepare_line_to_destination(const float32_t accel_mm_s2 /* = 0.0 */) {
 }
 
 uint8_t axes_should_home(uint8_t axis_bits /*=0x07*/) {
-#define SHOULD_HOME(A) TERN(HOME_AFTER_DEACTIVATE, axis_is_trusted, axis_was_homed) \
-(A)
+#define SHOULD_HOME(A) \
+	TERN(HOME_AFTER_DEACTIVATE, axis_is_trusted, axis_was_homed) \
+	(A)
 	// Clear test bits that are trusted
 	if (TEST(axis_bits, X_AXIS) && SHOULD_HOME(X_AXIS))
 		CBI(axis_bits, X_AXIS);
@@ -1182,33 +1143,25 @@ void do_homing_move(const AxisEnum axis, const float distance, const feedRate_t 
 		TERN_(SENSORLESS_HOMING, stealth_states = start_sensorless_homing_per_axis(axis));
 	}
 
-#if IS_SCARA
-	// Tell the planner the axis is at 0
-	current_position[axis] = 0;
-	sync_plan_position();
-	current_position[axis] = distance;
-	line_to_current_position(home_fr_mm_s);
-#else
 	// Get the ABC or XYZ positions in mm
-	abce_pos_t target = planner.get_axis_positions_mm();
+	xyza_pos_t target = planner.get_axis_positions_mm();
 
 	target[axis] = 0; // Set the single homing axis to 0
 	planner.set_machine_position_mm(target); // Update the machine position
 
-#	if HAS_DIST_MM_ARG
+#if HAS_DIST_MM_ARG
 	const xyza_float_t cart_dist_mm { 0 };
-#	endif
+#endif
 
 	// Set delta/cartesian axes directly
 	target[axis] = distance; // The move will be towards the endstop
 	planner.buffer_segment(target
-#	if HAS_DIST_MM_ARG
+#if HAS_DIST_MM_ARG
 	                       ,
 	                       cart_dist_mm
-#	endif
+#endif
 	                       ,
 	                       home_fr_mm_s, active_extruder);
-#endif
 
 	planner.synchronize();
 

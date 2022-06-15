@@ -438,9 +438,9 @@ public:
 	static int32_t position(const AxisEnum axis);
 
 	// Set the current position in steps
-	static void set_position(const int32_t& a, const int32_t& b, const int32_t& c, const int32_t& e);
-	static inline void set_position(const xyza_long_t& abce) {
-		set_position(abce.a, abce.b, abce.c, abce.e);
+	static void set_position(const int32_t& x, const int32_t& y, const int32_t& z, const int32_t& a);
+	static inline void set_position(const xyza_long_t& xyza) {
+		set_position(xyza.x, xyza.y, xyza.z, xyza.a);
 	}
 	static void set_axis_position(const AxisEnum a, const int32_t& v);
 
@@ -561,8 +561,8 @@ public:
 private:
 	// Set the current position in steps
 	static void _set_position(const int32_t& a, const int32_t& b, const int32_t& c, const int32_t& e);
-	FORCE_INLINE static void _set_position(const abce_long_t& spos) {
-		_set_position(spos.a, spos.b, spos.c, spos.e);
+	FORCE_INLINE static void _set_position(const xyza_long_t& spos) {
+		_set_position(spos.x, spos.y, spos.z, spos.a);
 	}
 
 	FORCE_INLINE static uint32_t calc_timer_interval(uint32_t step_rate, uint8_t* loops) {

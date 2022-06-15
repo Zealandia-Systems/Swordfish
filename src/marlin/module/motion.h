@@ -41,7 +41,7 @@ constexpr float fslop = 0.0001;
 
 extern bool relative_mode;
 
-extern xyz_pos_t current_position, // High-level current tool position
+extern xyza_pos_t current_position, // High-level current tool position
 		destination; // Destination for a move
 
 // G60/G61 Position Save and Return
@@ -51,12 +51,7 @@ extern xyz_pos_t stored_position[SAVED_POSITIONS];
 #endif
 
 // Scratch space for a cartesian result
-extern xyz_pos_t cartes;
-
-// Until kinematics.cpp is created, declare this here
-#if IS_KINEMATIC
-extern abc_pos_t delta;
-#endif
+extern xyza_pos_t cartes;
 
 #if HAS_ABL_NOT_UBL
 extern feedRate_t xy_probe_feedrate_mm_s;

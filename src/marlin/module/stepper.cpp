@@ -489,8 +489,24 @@ Stepper::stepper_laser_t Stepper::laser_trap = {
 #	define Z_APPLY_STEP(v, Q) Z_STEP_WRITE(v)
 #endif
 
-#if DISABLED(MIXING_EXTRUDER)
-#	define E_APPLY_STEP(v, Q) E_STEP_WRITE(stepper_extruder, v)
+#if ENABLED(A_DUAL_STEPPER_DRIVERS)
+#	define A_APPLY_DIR(v, Q) \
+		do { \
+			A_DIR_WRITE(v); \
+			A2_DIR_WRITE((v) ^ ENABLED(INVERT_A2_VS_A_DIR)); \
+		} while (0)
+#	if ENABLED(A_DUAL_ENDSTOPS)
+#		define A_APPLY_STEP(v, Q) DUAL_ENDSTOP_APPLY_STEP(A, v)
+#	else
+#		define A_APPLY_STEP(v, Q) \
+			do { \
+				A_STEP_WRITE(v); \
+				A2_STEP_WRITE(v); \
+			} while (0)
+#	endif
+#else
+#	define A_APPLY_DIR(v, Q)  A_DIR_WRITE(v)
+#	define A_APPLY_STEP(v, Q) A_STEP_WRITE(v)
 #endif
 
 #define CYCLES_TO_NS(CYC)           (1000UL * (CYC) / ((F_CPU) / 1000000))
@@ -555,30 +571,9 @@ void Stepper::set_directions() {
 #if HAS_Z_DIR
 	SET_STEP_DIR(Z); // C
 #endif
-
-#if DISABLED(LIN_ADVANCE)
-#	if ENABLED(MIXING_EXTRUDER)
-	                 // Because this is valid for the whole block we don't know
-	                 // what e-steppers will step. Likely all. Set all.
-	if (motor_direction(E_AXIS)) {
-		MIXER_STEPPER_LOOP(j)
-		REV_E_DIR(j);
-		count_direction.e = -1;
-	} else {
-		MIXER_STEPPER_LOOP(j)
-		NORM_E_DIR(j);
-		count_direction.e = 1;
-	}
-#	else
-	if (motor_direction(E_AXIS)) {
-		REV_E_DIR(stepper_extruder);
-		count_direction.e = -1;
-	} else {
-		NORM_E_DIR(stepper_extruder);
-		count_direction.e = 1;
-	}
-#	endif
-#endif // !LIN_ADVANCE
+#if HAS_A_DIR
+	SET_STEP_DIR(A);
+#endif
 
 #if HAS_L64XX
 	if (L64XX_OK_to_power_up) { // OK to send the direction commands (which powers up the L64XX steppers)
@@ -1613,7 +1608,7 @@ void Stepper::pulse_phase_isr() {
 	bool firstStep = true;
 	USING_TIMED_PULSE();
 #endif
-	xyza_bool_t step_needed { 0, 0, 0 };
+	xyza_bool_t step_needed { 0, 0, 0, 0 };
 
 	do {
 		// If we must abort the current block, do so!
@@ -1786,21 +1781,8 @@ void Stepper::pulse_phase_isr() {
 #if HAS_Z_STEP
 			PULSE_PREP(Z);
 #endif
-
-#if EITHER(LIN_ADVANCE, MIXING_EXTRUDER)
-			delta_error.e += advance_dividend.e;
-			if (delta_error.e >= 0) {
-				count_position.e += count_direction.e;
-#	if ENABLED(LIN_ADVANCE)
-				delta_error.e -= advance_divisor;
-				// Don't step E here - But remember the number of steps to perform
-				motor_direction(E_AXIS) ? --LA_steps : ++LA_steps;
-#	else
-				step_needed.e = true;
-#	endif
-			}
-#elif HAS_E0_STEP
-			PULSE_PREP(E);
+#if HAS_A_STEP
+			PULSE_PREP(A);
 #endif
 		}
 
@@ -1821,14 +1803,8 @@ void Stepper::pulse_phase_isr() {
 #if HAS_Z_STEP
 		PULSE_START(Z);
 #endif
-
-#if DISABLED(LIN_ADVANCE)
-#	if ENABLED(MIXING_EXTRUDER)
-		if (step_needed.e)
-			E_STEP_WRITE(mixer.get_next_stepper(), !INVERT_E_STEP_PIN);
-#	elif HAS_E0_STEP
-		PULSE_START(E);
-#	endif
+#if HAS_A_STEP
+		PULSE_START(A);
 #endif
 
 #if ENABLED(I2S_STEPPER_STREAM)
@@ -1851,16 +1827,8 @@ void Stepper::pulse_phase_isr() {
 #if HAS_Z_STEP
 		PULSE_STOP(Z);
 #endif
-
-#if DISABLED(LIN_ADVANCE)
-#	if ENABLED(MIXING_EXTRUDER)
-		if (delta_error.e >= 0) {
-			delta_error.e -= advance_divisor;
-			E_STEP_WRITE(mixer.get_stepper(), INVERT_E_STEP_PIN);
-		}
-#	elif HAS_E0_STEP
-		PULSE_STOP(E);
-#	endif
+#if HAS_A_STEP
+		PULSE_STOP(A);
 #endif
 
 #if ISR_MULTI_STEPS
@@ -2161,7 +2129,7 @@ uint32_t Stepper::block_phase_isr() {
 #	endif
 #	define Y_MOVE_TEST (S_(1) != S_(2) || (S_(1) > 0 && Y_CMP(D_(1), D_(2))))
 #else
-#	define Y_MOVE_TEST !!current_block->steps.b
+#	define Y_MOVE_TEST !!current_block->steps.y
 #endif
 
 #if CORE_IS_XZ || CORE_IS_YZ
@@ -2179,16 +2147,16 @@ uint32_t Stepper::block_phase_isr() {
 #	endif
 #	define Z_MOVE_TEST (S_(1) != S_(2) || (S_(1) > 0 && Z_CMP(D_(1), D_(2))))
 #else
-#	define Z_MOVE_TEST !!current_block->steps.c
+#	define Z_MOVE_TEST !!current_block->steps.z
 #endif
 
 			uint8_t axis_bits = 0;
 			if (X_MOVE_TEST)
-				SBI(axis_bits, A_AXIS);
+				SBI(axis_bits, X_AXIS);
 			if (Y_MOVE_TEST)
-				SBI(axis_bits, B_AXIS);
+				SBI(axis_bits, Y_AXIS);
 			if (Z_MOVE_TEST)
-				SBI(axis_bits, C_AXIS);
+				SBI(axis_bits, Z_AXIS);
 			// if (!!current_block->steps.e) SBI(axis_bits, E_AXIS);
 			// if (!!current_block->steps.a) SBI(axis_bits, X_HEAD);
 			// if (!!current_block->steps.b) SBI(axis_bits, Y_HEAD);
@@ -2722,24 +2690,8 @@ void Stepper::init() {
  * This allows get_axis_position_mm to correctly
  * derive the current XYZ position later on.
  */
-void Stepper::_set_position(const int32_t& a, const int32_t& b, const int32_t& c, const int32_t& e) {
-#if CORE_IS_XY
-	// corexy positioning
-	// these equations follow the form of the dA and dB equations on https://www.corexy.com/theory.html
-	count_position.set(a + b, CORESIGN(a - b), c);
-#elif CORE_IS_XZ
-	// corexz planning
-	count_position.set(a + c, b, CORESIGN(a - c));
-#elif CORE_IS_YZ
-	// coreyz planning
-	count_position.set(a, b + c, CORESIGN(b - c));
-#elif ENABLED(MARKFORGED_XY)
-	count_position.set(a - b, b, c);
-#else
-	// default non-h-bot planning
-	count_position.set(a, b, c);
-#endif
-	count_position.e = e;
+void Stepper::_set_position(const int32_t& x, const int32_t& y, const int32_t& z, const int32_t& a) {
+	count_position.set(x, y, z, a);
 }
 
 /**

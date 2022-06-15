@@ -148,7 +148,7 @@
 
 // This defines the number of extruders
 // :[0, 1, 2, 3, 4, 5, 6, 7, 8]
-#define EXTRUDERS                    0
+#define EXTRUDERS                    1
 
 #define HAS_TOOL_CHANGE              1
 
@@ -1162,43 +1162,29 @@
 
 // For Inverting Stepper Enable Pins (Active Low) use 0, Non Inverting (Active High) use 1
 // :{ 0:'Low', 1:'High' }
-#define X_ENABLE_ON               1
-#define Y_ENABLE_ON               1
-#define Z_ENABLE_ON               1
-#define E_ENABLE_ON               0 // For all extruders
+#define X_ENABLE_ON  1
+#define Y_ENABLE_ON  1
+#define Z_ENABLE_ON  1
+#define A_ENABLE_ON  1 // For all extruders
 
 // Disable axis steppers immediately when they're not being stepped.
 // WARNING: When motors turn off there is a chance of losing position accuracy!
-#define DISABLE_X                 false
-#define DISABLE_Y                 false
-#define DISABLE_Z                 false
-
+#define DISABLE_X    false
+#define DISABLE_Y    false
+#define DISABLE_Z    false
+#define DISABLE_A    false
 // Turn off the display blinking that warns about possible accuracy reduction
 //#define DISABLE_REDUCED_ACCURACY_WARNING
 
 // @section extruder
 
-#define DISABLE_E                 false // Disable the extruder when not stepping
-#define DISABLE_INACTIVE_EXTRUDER // Keep only the active extruder enabled
-
 // @section machine
 
 // Invert the stepper direction. Change (or reverse the motor connector) if an axis goes the wrong way.
-#define INVERT_X_DIR              false
-#define INVERT_Y_DIR              true
-#define INVERT_Z_DIR              true
-
-// @section extruder
-
-// For direct drive extruder v9 set to true, for geared extruder set to false.
-#define INVERT_E0_DIR             false
-#define INVERT_E1_DIR             false
-#define INVERT_E2_DIR             false
-#define INVERT_E3_DIR             false
-#define INVERT_E4_DIR             false
-#define INVERT_E5_DIR             false
-#define INVERT_E6_DIR             false
-#define INVERT_E7_DIR             false
+#define INVERT_X_DIR false
+#define INVERT_Y_DIR true
+#define INVERT_Z_DIR true
+#define INVERT_A_DIR true
 
 // @section homing
 
@@ -1213,9 +1199,9 @@
 
 // Direction of endstops when homing; 1=MAX, -1=MIN
 // :[-1,1]
-#define X_HOME_DIR                -1
-#define Y_HOME_DIR                1
-#define Z_HOME_DIR                1
+#define X_HOME_DIR   -1
+#define Y_HOME_DIR   1
+#define Z_HOME_DIR   1
 
 // @section machine
 

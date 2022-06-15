@@ -34,29 +34,13 @@ typedef const __FlashStringHelper* progmem_str;
 //
 // Enumerated axis indices
 //
-//  - X_AXIS, Y_AXIS, and Z_AXIS should be used for axes in Cartesian space
-//  - A_AXIS, B_AXIS, and C_AXIS should be used for Steppers, corresponding to XYZ on Cartesians
-//  - X_HEAD, Y_HEAD, and Z_HEAD should be used for Steppers on Core kinematics
-//
 enum AxisEnum : uint8_t {
 	X_AXIS = 0,
-	A_AXIS = 0,
 	Y_AXIS = 1,
-	B_AXIS = 1,
 	Z_AXIS = 2,
-	C_AXIS = 2,
-	E_AXIS = 3,
-	X_HEAD = 4,
-	Y_HEAD = 5,
-	Z_HEAD = 6,
-	E0_AXIS = 3,
-	E1_AXIS,
-	E2_AXIS,
-	E3_AXIS,
-	E4_AXIS,
-	E5_AXIS,
-	E6_AXIS,
-	E7_AXIS,
+	A_AXIS = 3,
+	// B_AXIS = 4,
+	// C_AXIS = 5,
 	ALL_AXES = 0xFE,
 	NO_AXIS = 0xFF
 };
@@ -65,11 +49,8 @@ enum AxisEnum : uint8_t {
 // Loop over XYZA axes
 //
 #define LOOP_XYZ(VAR)    LOOP_S_LE_N(VAR, X_AXIS, Z_AXIS)
-#define LOOP_XYZA(VAR)   LOOP_S_LE_N(VAR, X_AXIS, E_AXIS)
+#define LOOP_XYZA(VAR)   LOOP_S_LE_N(VAR, X_AXIS, A_AXIS)
 #define LOOP_XYZA_N(VAR) LOOP_S_L_N(VAR, X_AXIS, XYZA_N)
-#define LOOP_ABC(VAR)    LOOP_S_LE_N(VAR, A_AXIS, C_AXIS)
-#define LOOP_ABCE(VAR)   LOOP_S_LE_N(VAR, A_AXIS, E_AXIS)
-#define LOOP_ABCE_N(VAR) LOOP_S_L_N(VAR, A_AXIS, XYZA_N)
 
 //
 // Conditional type assignment magic. For example...
@@ -173,10 +154,6 @@ typedef xy_float_t ab_float_t;
 typedef xyz_float_t abc_float_t;
 typedef xyza_float_t abce_float_t;
 
-typedef ab_float_t ab_pos_t;
-typedef abc_float_t abc_pos_t;
-typedef abce_float_t abce_pos_t;
-
 // External conversion methods
 void toLogical(xy_pos_t& raw);
 void toLogical(xyz_pos_t& raw);
@@ -194,9 +171,6 @@ struct XYval {
 		struct {
 			T x, y;
 		};
-		struct {
-			T a, b;
-		};
 		T pos[2];
 	};
 	FI void set(const T px) {
@@ -206,24 +180,18 @@ struct XYval {
 		x = px;
 		y = py;
 	}
-	FI void set(const T (&arr)[XY]) {
+	FI void set(const T (&arr)[XY_N]) {
 		x = arr[0];
 		y = arr[1];
 	}
-	FI void set(const T (&arr)[XYZ]) {
+	FI void set(const T (&arr)[XYZ_N]) {
 		x = arr[0];
 		y = arr[1];
 	}
-	FI void set(const T (&arr)[XYZA]) {
-		x = arr[0];
-		y = arr[1];
-	}
-#if XYZA_N > XYZA
 	FI void set(const T (&arr)[XYZA_N]) {
 		x = arr[0];
 		y = arr[1];
 	}
-#endif
 	FI void reset() {
 		x = y = 0;
 	}
@@ -649,9 +617,6 @@ struct XYZval {
 		struct {
 			T x, y, z;
 		};
-		struct {
-			T a, b, c;
-		};
 		T pos[3];
 	};
 	FI void set(const T px) {
@@ -671,27 +636,20 @@ struct XYZval {
 		y = pxy.y;
 		z = pz;
 	}
-	FI void set(const T (&arr)[XY]) {
+	FI void set(const T (&arr)[XY_N]) {
 		x = arr[0];
 		y = arr[1];
 	}
-	FI void set(const T (&arr)[XYZ]) {
-		x = arr[0];
-		y = arr[1];
-		z = arr[2];
-	}
-	FI void set(const T (&arr)[XYZA]) {
+	FI void set(const T (&arr)[XYZ_N]) {
 		x = arr[0];
 		y = arr[1];
 		z = arr[2];
 	}
-#if XYZA_N > XYZA
 	FI void set(const T (&arr)[XYZA_N]) {
 		x = arr[0];
 		y = arr[1];
 		z = arr[2];
 	}
-#endif
 	FI void reset() {
 		x = y = z = 0;
 	}
@@ -1149,24 +1107,21 @@ template<typename T>
 struct XYZAval {
 	union {
 		struct {
-			T x, y, z, e;
-		};
-		struct {
-			T a, b, c;
+			T x, y, z, a;
 		};
 		T pos[4];
 	};
 	FI void reset() {
-		x = y = z = e = 0;
+		x = y = z = a = 0;
 	}
 	FI T magnitude() const {
-		return (T) sqrtf(x * x + y * y + z * z + e * e);
+		return (T) sqrtf(x * x + y * y + z * z + a * a);
 	}
 	FI operator T*() {
 		return pos;
 	}
 	FI operator bool() {
-		return e || z || x || y;
+		return a || z || x || y;
 	}
 	FI void set(const T px) {
 		x = px;
@@ -1180,11 +1135,11 @@ struct XYZAval {
 		y = py;
 		z = pz;
 	}
-	FI void set(const T px, const T py, const T pz, const T pe) {
+	FI void set(const T px, const T py, const T pz, const T pa) {
 		x = px;
 		y = py;
 		z = pz;
-		e = pe;
+		a = pa;
 	}
 	FI void set(const XYval<T> pxy) {
 		x = pxy.x;
@@ -1200,79 +1155,71 @@ struct XYZAval {
 		y = pxyz.y;
 		z = pxyz.z;
 	}
-	FI void set(const XYval<T> pxy, const T pz, const T pe) {
+	FI void set(const XYval<T> pxy, const T pz, const T pa) {
 		x = pxy.x;
 		y = pxy.y;
 		z = pz;
-		e = pe;
+		a = pa;
 	}
-	FI void set(const XYval<T> pxy, const XYval<T> pze) {
+	FI void set(const XYval<T> pxy, const XYval<T> pza) {
 		x = pxy.x;
 		y = pxy.y;
-		z = pze.z;
-		e = pze.e;
+		z = pza.z;
+		a = pza.a;
 	}
-	FI void set(const XYZval<T> pxyz, const T pe) {
+	FI void set(const XYZval<T> pxyz, const T pa) {
 		x = pxyz.x;
 		y = pxyz.y;
 		z = pxyz.z;
-		e = pe;
+		a = pa;
 	}
-	FI void set(const T (&arr)[XY]) {
+	FI void set(const T (&arr)[XY_N]) {
 		x = arr[0];
 		y = arr[1];
 	}
-	FI void set(const T (&arr)[XYZ]) {
-		x = arr[0];
-		y = arr[1];
-		z = arr[2];
-	}
-	FI void set(const T (&arr)[XYZA]) {
+	FI void set(const T (&arr)[XYZ_N]) {
 		x = arr[0];
 		y = arr[1];
 		z = arr[2];
-		e = arr[3];
 	}
-#if XYZA_N > XYZA
 	FI void set(const T (&arr)[XYZA_N]) {
 		x = arr[0];
 		y = arr[1];
 		z = arr[2];
-		e = arr[3];
+		a = arr[3];
 	}
-#endif
 	FI XYZAval<T> copy() const {
 		return *this;
 	}
 	FI XYZAval<T> ABS() const {
-		return { T(_ABS(x)), T(_ABS(y)), T(_ABS(z)), T(_ABS(e)) };
+		return { T(_ABS(x)), T(_ABS(y)), T(_ABS(z)), T(_ABS(a)) };
 	}
 	FI XYZAval<int16_t> asInt() {
-		return { int16_t(x), int16_t(y), int16_t(z), int16_t(e) };
+		return { int16_t(x), int16_t(y), int16_t(z), int16_t(a) };
 	}
 	FI XYZAval<int16_t> asInt() const {
-		return { int16_t(x), int16_t(y), int16_t(z), int16_t(e) };
+		return { int16_t(x), int16_t(y), int16_t(z), int16_t(a) };
 	}
 	FI XYZAval<int32_t> asLong() {
-		return { int32_t(x), int32_t(y), int32_t(z), int32_t(e) };
+		return { int32_t(x), int32_t(y), int32_t(z), int32_t(a) };
 	}
 	FI XYZAval<int32_t> asLong() const {
-		return { int32_t(x), int32_t(y), int32_t(z), int32_t(e) };
+		return { int32_t(x), int32_t(y), int32_t(z), int32_t(a) };
 	}
 	FI XYZAval<int32_t> ROUNDL() {
-		return { int32_t(LROUND(x)), int32_t(LROUND(y)), int32_t(LROUND(z)), int32_t(LROUND(e)) };
+		return { int32_t(LROUND(x)), int32_t(LROUND(y)), int32_t(LROUND(z)), int32_t(LROUND(a)) };
 	}
 	FI XYZAval<int32_t> ROUNDL() const {
-		return { int32_t(LROUND(x)), int32_t(LROUND(y)), int32_t(LROUND(z)), int32_t(LROUND(e)) };
+		return { int32_t(LROUND(x)), int32_t(LROUND(y)), int32_t(LROUND(z)), int32_t(LROUND(a)) };
 	}
 	FI XYZAval<float> asFloat() {
-		return { float(x), float(y), float(z), float(e) };
+		return { float(x), float(y), float(z), float(a) };
 	}
 	FI XYZAval<float> asFloat() const {
-		return { float(x), float(y), float(z), float(e) };
+		return { float(x), float(y), float(z), float(a) };
 	}
 	FI XYZAval<float> reciprocal() const {
-		return { _RECIP(x), _RECIP(y), _RECIP(z), _RECIP(e) };
+		return { _RECIP(x), _RECIP(y), _RECIP(z), _RECIP(a) };
 	}
 	FI XYZAval<float> asLogical() const {
 		XYZAval<float> o = asFloat();
@@ -1423,7 +1370,7 @@ struct XYZAval {
 		ls.x += rs.x;
 		ls.y += rs.y;
 		ls.z += rs.z;
-		ls.e += rs.e;
+		ls.a += rs.a;
 		return ls;
 	}
 	FI XYZAval<T> operator+(const XYZAval<T>& rs) {
@@ -1431,7 +1378,7 @@ struct XYZAval {
 		ls.x += rs.x;
 		ls.y += rs.y;
 		ls.z += rs.z;
-		ls.e += rs.e;
+		ls.a += rs.a;
 		return ls;
 	}
 	FI XYZAval<T> operator-(const XYZAval<T>& rs) const {
@@ -1439,7 +1386,7 @@ struct XYZAval {
 		ls.x -= rs.x;
 		ls.y -= rs.y;
 		ls.z -= rs.z;
-		ls.e -= rs.e;
+		ls.a -= rs.a;
 		return ls;
 	}
 	FI XYZAval<T> operator-(const XYZAval<T>& rs) {
@@ -1447,7 +1394,7 @@ struct XYZAval {
 		ls.x -= rs.x;
 		ls.y -= rs.y;
 		ls.z -= rs.z;
-		ls.e -= rs.e;
+		ls.a -= rs.a;
 		return ls;
 	}
 	FI XYZAval<T> operator*(const XYZAval<T>& rs) const {
@@ -1455,7 +1402,7 @@ struct XYZAval {
 		ls.x *= rs.x;
 		ls.y *= rs.y;
 		ls.z *= rs.z;
-		ls.e *= rs.e;
+		ls.a *= rs.a;
 		return ls;
 	}
 	FI XYZAval<T> operator*(const XYZAval<T>& rs) {
@@ -1463,7 +1410,7 @@ struct XYZAval {
 		ls.x *= rs.x;
 		ls.y *= rs.y;
 		ls.z *= rs.z;
-		ls.e *= rs.e;
+		ls.a *= rs.a;
 		return ls;
 	}
 	FI XYZAval<T> operator/(const XYZAval<T>& rs) const {
@@ -1471,7 +1418,7 @@ struct XYZAval {
 		ls.x /= rs.x;
 		ls.y /= rs.y;
 		ls.z /= rs.z;
-		ls.e /= rs.e;
+		ls.a /= rs.a;
 		return ls;
 	}
 	FI XYZAval<T> operator/(const XYZAval<T>& rs) {
@@ -1479,7 +1426,7 @@ struct XYZAval {
 		ls.x /= rs.x;
 		ls.y /= rs.y;
 		ls.z /= rs.z;
-		ls.e /= rs.e;
+		ls.a /= rs.a;
 		return ls;
 	}
 	FI XYZAval<T> operator*(const float& v) const {
@@ -1487,7 +1434,7 @@ struct XYZAval {
 		ls.x *= v;
 		ls.y *= v;
 		ls.z *= v;
-		ls.e *= v;
+		ls.a *= v;
 		return ls;
 	}
 	FI XYZAval<T> operator*(const float& v) {
@@ -1495,7 +1442,7 @@ struct XYZAval {
 		ls.x *= v;
 		ls.y *= v;
 		ls.z *= v;
-		ls.e *= v;
+		ls.a *= v;
 		return ls;
 	}
 	FI XYZAval<T> operator*(const int& v) const {
@@ -1503,7 +1450,7 @@ struct XYZAval {
 		ls.x *= v;
 		ls.y *= v;
 		ls.z *= v;
-		ls.e *= v;
+		ls.a *= v;
 		return ls;
 	}
 	FI XYZAval<T> operator*(const int& v) {
@@ -1511,7 +1458,7 @@ struct XYZAval {
 		ls.x *= v;
 		ls.y *= v;
 		ls.z *= v;
-		ls.e *= v;
+		ls.a *= v;
 		return ls;
 	}
 	FI XYZAval<T> operator/(const float& v) const {
@@ -1519,7 +1466,7 @@ struct XYZAval {
 		ls.x /= v;
 		ls.y /= v;
 		ls.z /= v;
-		ls.e /= v;
+		ls.a /= v;
 		return ls;
 	}
 	FI XYZAval<T> operator/(const float& v) {
@@ -1527,7 +1474,7 @@ struct XYZAval {
 		ls.x /= v;
 		ls.y /= v;
 		ls.z /= v;
-		ls.e /= v;
+		ls.a /= v;
 		return ls;
 	}
 	FI XYZAval<T> operator/(const int& v) const {
@@ -1535,7 +1482,7 @@ struct XYZAval {
 		ls.x /= v;
 		ls.y /= v;
 		ls.z /= v;
-		ls.e /= v;
+		ls.a /= v;
 		return ls;
 	}
 	FI XYZAval<T> operator/(const int& v) {
@@ -1543,7 +1490,7 @@ struct XYZAval {
 		ls.x /= v;
 		ls.y /= v;
 		ls.z /= v;
-		ls.e /= v;
+		ls.a /= v;
 		return ls;
 	}
 	FI XYZAval<T> operator>>(const int& v) const {
@@ -1551,7 +1498,7 @@ struct XYZAval {
 		_RS(ls.x);
 		_RS(ls.y);
 		_RS(ls.z);
-		_RS(ls.e);
+		_RS(ls.a);
 		return ls;
 	}
 	FI XYZAval<T> operator>>(const int& v) {
@@ -1559,7 +1506,7 @@ struct XYZAval {
 		_RS(ls.x);
 		_RS(ls.y);
 		_RS(ls.z);
-		_RS(ls.e);
+		_RS(ls.a);
 		return ls;
 	}
 	FI XYZAval<T> operator<<(const int& v) const {
@@ -1567,7 +1514,7 @@ struct XYZAval {
 		_LS(ls.x);
 		_LS(ls.y);
 		_LS(ls.z);
-		_LS(ls.e);
+		_LS(ls.a);
 		return ls;
 	}
 	FI XYZAval<T> operator<<(const int& v) {
@@ -1575,7 +1522,7 @@ struct XYZAval {
 		_LS(ls.x);
 		_LS(ls.y);
 		_LS(ls.z);
-		_LS(ls.e);
+		_LS(ls.a);
 		return ls;
 	}
 	FI XYZAval<T>& operator+=(const XYval<T>& rs) {
@@ -1626,49 +1573,49 @@ struct XYZAval {
 		x += rs.x;
 		y += rs.y;
 		z += rs.z;
-		e += rs.e;
+		a += rs.a;
 		return *this;
 	}
 	FI XYZAval<T>& operator-=(const XYZAval<T>& rs) {
 		x -= rs.x;
 		y -= rs.y;
 		z -= rs.z;
-		e -= rs.e;
+		a -= rs.a;
 		return *this;
 	}
 	FI XYZAval<T>& operator*=(const XYZAval<T>& rs) {
 		x *= rs.x;
 		y *= rs.y;
 		z *= rs.z;
-		e *= rs.e;
+		a *= rs.a;
 		return *this;
 	}
 	FI XYZAval<T>& operator/=(const XYZAval<T>& rs) {
 		x /= rs.x;
 		y /= rs.y;
 		z /= rs.z;
-		e /= rs.e;
+		a /= rs.a;
 		return *this;
 	}
 	FI XYZAval<T>& operator*=(const T& v) {
 		x *= v;
 		y *= v;
 		z *= v;
-		e *= v;
+		a *= v;
 		return *this;
 	}
 	FI XYZAval<T>& operator>>=(const int& v) {
 		_RS(x);
 		_RS(y);
 		_RS(z);
-		_RS(e);
+		_RS(a);
 		return *this;
 	}
 	FI XYZAval<T>& operator<<=(const int& v) {
 		_LS(x);
 		_LS(y);
 		_LS(z);
-		_LS(e);
+		_LS(a);
 		return *this;
 	}
 	FI bool operator==(const XYZval<T>& rs) {
@@ -1678,16 +1625,16 @@ struct XYZAval {
 		return !operator==(rs);
 	}
 	FI bool operator==(const XYZAval<T>& rs) const {
-		return x == rs.x && y == rs.y && z == rs.z && e == rs.e;
+		return x == rs.x && y == rs.y && z == rs.z && a == rs.a;
 	}
 	FI bool operator!=(const XYZAval<T>& rs) const {
 		return !operator==(rs);
 	}
 	FI XYZAval<T> operator-() {
-		return { -x, -y, -z, -e };
+		return { -x, -y, -z, -a };
 	}
 	FI const XYZAval<T> operator-() const {
-		return { -x, -y, -z, -e };
+		return { -x, -y, -z, -a };
 	}
 };
 
@@ -1697,5 +1644,6 @@ struct XYZAval {
 #undef _RS
 #undef FI
 
-const xyza_char_t axis_codes { 'X', 'Y', 'Z', 'E' };
+const xyza_char_t axis_codes { 'X', 'Y', 'Z', 'A' };
 #define XYZ_CHAR(A) ((char) ('X' + A))
+#define ABC_CHAR(A) ((char) ('A' + A - 3))

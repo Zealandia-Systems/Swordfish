@@ -90,7 +90,7 @@ millis_t GcodeSuite::previous_move_ms = 0,
 
 // Relative motion mode for each logical axis
 static constexpr xyza_bool_t ar_init = AXIS_RELATIVE_MODES;
-uint8_t GcodeSuite::axis_relative = ((ar_init.x ? _BV(REL_X) : 0) | (ar_init.y ? _BV(REL_Y) : 0) | (ar_init.z ? _BV(REL_Z) : 0) | (ar_init.e ? _BV(REL_E) : 0));
+uint8_t GcodeSuite::axis_relative = ((ar_init.x ? _BV(REL_X) : 0) | (ar_init.y ? _BV(REL_Y) : 0) | (ar_init.z ? _BV(REL_Z) : 0) | (ar_init.a ? _BV(REL_A) : 0));
 
 #if EITHER(HAS_AUTO_REPORTING, HOST_KEEPALIVE_FEATURE)
 bool GcodeSuite::autoreport_paused; // = false

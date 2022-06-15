@@ -635,17 +635,6 @@
 #	endif
 #endif
 
-/**
- * DISTINCT_E_FACTORS affects how some E factors are accessed
- */
-
-#undef DISTINCT_E_FACTORS
-#define DISTINCT_E   1
-#define XYZA_N       XYZA
-#define E_INDEX_N(E) 0
-#define E_AXIS_N(E)  E_AXIS
-#define UNUSED_E(E)  UNUSED(E)
-
 #if ENABLED(DWIN_CREALITY_LCD)
 #	define SERIAL_CATCHALL 0
 #	ifndef LCD_SERIAL_PORT

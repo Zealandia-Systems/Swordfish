@@ -25,11 +25,9 @@
 #	define __has_include(...) 1
 #endif
 
-#define ABCE           4
-#define XYZA           4
-#define ABC            3
-#define XYZ            3
-#define XY             2
+#define XYZA_N         4
+#define XYZ_N          3
+#define XY_N           2
 
 #define _AXIS(A)       (A##_AXIS)
 

@@ -23,37 +23,20 @@
 #include "../gcode.h"
 #include "../../module/planner.h"
 
-void report_M92(const bool echo = true, const int8_t e = -1) {
+void report_M92(const bool echo = true) {
 	if (echo)
 		SERIAL_ECHO_START();
 	else
 		SERIAL_CHAR(' ');
 	SERIAL_ECHOPAIR_P(PSTR(" M92 X"), LINEAR_UNIT(planner.settings.axis_steps_per_mm[X_AXIS]),
 	                  SP_Y_STR, LINEAR_UNIT(planner.settings.axis_steps_per_mm[Y_AXIS]),
-	                  SP_Z_STR, LINEAR_UNIT(planner.settings.axis_steps_per_mm[Z_AXIS]));
-#if DISABLED(DISTINCT_E_FACTORS)
-	SERIAL_ECHOPAIR_P(SP_E_STR, VOLUMETRIC_UNIT(planner.settings.axis_steps_per_mm[E_AXIS]));
-#endif
+	                  SP_Z_STR, LINEAR_UNIT(planner.settings.axis_steps_per_mm[Z_AXIS]),
+	                  SP_A_STR, VOLUMETRIC_UNIT(planner.settings.axis_steps_per_mm[A_AXIS]));
 	SERIAL_EOL();
-
-#if ENABLED(DISTINCT_E_FACTORS)
-	LOOP_L_N(i, E_STEPPERS) {
-		if (e >= 0 && i != e)
-			continue;
-		if (echo)
-			SERIAL_ECHO_START();
-		else
-			SERIAL_CHAR(' ');
-		SERIAL_ECHOLNPAIR_P(PSTR(" M92 T"), (int) i,
-		                    SP_E_STR, VOLUMETRIC_UNIT(planner.settings.axis_steps_per_mm[E_AXIS_N(i)]));
-	}
-#endif
-
-	UNUSED_E(e);
 }
 
 /**
- * M92: Set axis steps-per-unit for one or more axes, X, Y, Z, and E.
+ * M92: Set axis steps-per-unit for one or more axes, X, Y, Z, and A.
  *      (Follows the same syntax as G92)
  *
  *      With multiple extruders use T to specify which one.
@@ -66,60 +49,16 @@ void report_M92(const bool echo = true, const int8_t e = -1) {
  *      'L' specifies a desired layer height. Nearest good heights are shown.
  */
 void GcodeSuite::M92() {
-
-	const int8_t target_extruder = get_target_extruder_from_command();
-	if (target_extruder < 0)
-		return;
-
 	// No arguments? Show M92 report.
-	if (!parser.seen("XYZE"
-#if ENABLED(MAGIC_NUMBERS_GCODE)
-	                 "HL"
-#endif
-	                 ))
-		return report_M92(true, target_extruder);
+	if (!parser.seen("XYZA")) {
+		return report_M92(true);
+	}
 
 	LOOP_XYZA(i) {
 		if (parser.seenval(axis_codes[i])) {
-			if (i == E_AXIS) {
-				const float value = parser.value_per_axis_units((AxisEnum) (E_AXIS_N(target_extruder)));
-				if (value < 20) {
-					float factor = planner.settings.axis_steps_per_mm[E_AXIS_N(target_extruder)] / value; // increase e constants if M92 E14 is given for netfab.
-#if HAS_CLASSIC_JERK && HAS_CLASSIC_E_JERK
-					planner.max_jerk.e *= factor;
-#endif
-					planner.settings.max_feedrate_mm_s[E_AXIS_N(target_extruder)] *= factor;
-					planner.max_acceleration_steps_per_s2[E_AXIS_N(target_extruder)] *= factor;
-				}
-				planner.settings.axis_steps_per_mm[E_AXIS_N(target_extruder)] = value;
-			} else {
-				planner.settings.axis_steps_per_mm[i] = parser.value_per_axis_units((AxisEnum) i);
-			}
+			planner.settings.axis_steps_per_mm[i] = parser.value_per_axis_units((AxisEnum) i);
 		}
 	}
-	planner.refresh_positioning();
 
-#if ENABLED(MAGIC_NUMBERS_GCODE)
-#	ifndef Z_MICROSTEPS
-#		define Z_MICROSTEPS 16
-#	endif
-	const float wanted = parser.floatval('L');
-	if (parser.seen('H') || wanted) {
-		const uint16_t argH = parser.ushortval('H'),
-									 micro_steps = argH ?: Z_MICROSTEPS;
-		const float z_full_step_mm = micro_steps * planner.steps_to_mm[Z_AXIS];
-		SERIAL_ECHO_START();
-		SERIAL_ECHOPAIR("{ micro_steps:", micro_steps, ", z_full_step_mm:", z_full_step_mm);
-		if (wanted) {
-			const float best = uint16_t(wanted / z_full_step_mm) * z_full_step_mm;
-			SERIAL_ECHOPAIR(", best:[", best);
-			if (best != wanted) {
-				SERIAL_CHAR(',');
-				SERIAL_DECIMAL(best + z_full_step_mm);
-			}
-			SERIAL_CHAR(']');
-		}
-		SERIAL_ECHOLNPGM(" }");
-	}
-#endif
+	planner.refresh_positioning();
 }

@@ -1514,7 +1514,7 @@ static_assert(Y_MAX_LENGTH >= Y_BED_SIZE, "Movement bounds (Y_MIN_POS, Y_MAX_POS
  * Homing
  */
 constexpr float hbm[] = HOMING_BUMP_MM;
-static_assert(COUNT(hbm) == XYZ, "HOMING_BUMP_MM requires X, Y, and Z elements.");
+static_assert(COUNT(hbm) == XYZ_N, "HOMING_BUMP_MM requires X, Y, and Z elements.");
 static_assert(hbm[X_AXIS] >= 0, "HOMING_BUMP_MM.X must be greater than or equal to 0.");
 static_assert(hbm[Y_AXIS] >= 0, "HOMING_BUMP_MM.Y must be greater than or equal to 0.");
 static_assert(hbm[Z_AXIS] >= 0, "HOMING_BUMP_MM.Z must be greater than or equal to 0.");
@@ -1881,23 +1881,6 @@ static_assert(hbm[Z_AXIS] >= 0, "HOMING_BUMP_MM.Z must be greater than or equal 
 #endif
 
 /**
- * Test Heater, Temp Sensor, and Extruder Pins
- */
-#if EXTRUDERS > 0
-#if !HAS_HEATER_0 && EXTRUDERS
-  #error "HEATER_0_PIN not defined for this board."
-#elif !ANY_PIN(TEMP_0, MAX6675_SS)
-  #error "TEMP_0_PIN not defined for this board."
-#elif ((defined(__AVR_ATmega644P__) || defined(__AVR_ATmega1284P__)) && !PINS_EXIST(E0_STEP, E0_DIR))
-  #error "E0_STEP_PIN or E0_DIR_PIN not defined for this board."
-#elif ( !(defined(__AVR_ATmega644P__) || defined(__AVR_ATmega1284P__)) && (!PINS_EXIST(E0_STEP, E0_DIR) || !HAS_E0_ENABLE))
-  #error "E0_STEP_PIN, E0_DIR_PIN, or E0_ENABLE_PIN not defined for this board."
-#elif EXTRUDERS && TEMP_SENSOR_0 == 0
-  #error "TEMP_SENSOR_0 is required if there are any extruders."
-#endif
-#endif
-
-/**
  * Temperature status LEDs
  */
 #if ENABLED(TEMP_STAT_LEDS) && !ANY_PIN(STAT_LED_RED, STAT_LED_BLUE)
@@ -1934,51 +1917,6 @@ static_assert(hbm[Z_AXIS] >= 0, "HOMING_BUMP_MM.Z must be greater than or equal 
     #error "MULTI_NOZZLE_DUPLICATION requires 2 or more hotends."
   #endif
 #endif
-
-/**
- * Test Extruder Stepper Pins
- */
-#if E_STEPPERS
-  #if !(PINS_EXIST(E0_STEP, E0_DIR) && HAS_E0_ENABLE)
-    #error "E0_STEP_PIN, E0_DIR_PIN, or E0_ENABLE_PIN not defined for this board."
-  #endif
-  #if E_STEPPERS > 1
-    #if !(PINS_EXIST(E1_STEP, E1_DIR) && HAS_E1_ENABLE)
-      #error "E1_STEP_PIN, E1_DIR_PIN, or E1_ENABLE_PIN not defined for this board."
-    #endif
-    #if E_STEPPERS > 2
-      #if !(PINS_EXIST(E2_STEP, E2_DIR) && HAS_E2_ENABLE)
-        #error "E2_STEP_PIN, E2_DIR_PIN, or E2_ENABLE_PIN not defined for this board."
-      #endif
-      #if E_STEPPERS > 3
-        #if !(PINS_EXIST(E3_STEP, E3_DIR) && HAS_E3_ENABLE)
-          #error "E3_STEP_PIN, E3_DIR_PIN, or E3_ENABLE_PIN not defined for this board."
-        #endif
-        #if E_STEPPERS > 4
-          #if !(PINS_EXIST(E4_STEP, E4_DIR) && HAS_E4_ENABLE)
-            #error "E4_STEP_PIN, E4_DIR_PIN, or E4_ENABLE_PIN not defined for this board."
-          #endif
-          #if E_STEPPERS > 5
-            #if !(PINS_EXIST(E5_STEP, E5_DIR) && HAS_E5_ENABLE)
-              #error "E5_STEP_PIN, E5_DIR_PIN, or E5_ENABLE_PIN not defined for this board."
-            #endif
-            #if E_STEPPERS > 6
-              #if !(PINS_EXIST(E6_STEP, E6_DIR) && HAS_E6_ENABLE)
-                #error "E6_STEP_PIN, E6_DIR_PIN, or E6_ENABLE_PIN not defined for this board."
-              #endif
-              #if E_STEPPERS > 7
-                #if !(PINS_EXIST(E7_STEP, E7_DIR) && HAS_E7_ENABLE)
-                  #error "E7_STEP_PIN, E7_DIR_PIN, or E7_ENABLE_PIN not defined for this board."
-                #endif
-              #endif // E_STEPPERS > 7
-            #endif // E_STEPPERS > 6
-          #endif // E_STEPPERS > 5
-        #endif // E_STEPPERS > 4
-      #endif // E_STEPPERS > 3
-    #endif // E_STEPPERS > 2
-  #endif // E_STEPPERS > 1
-#endif // E_STEPPERS
-
 /**
  * Endstop Tests
  */
@@ -2445,22 +2383,10 @@ static_assert(hbm[Z_AXIS] >= 0, "HOMING_BUMP_MM.Z must be greater than or equal 
   #error "An SPI driven TMC driver on Z3 requires Z3_CS_PIN."
 #elif INVALID_TMC_SPI(Z4)
   #error "An SPI driven TMC driver on Z4 requires Z4_CS_PIN."
-#elif INVALID_TMC_SPI(E0)
-  #error "An SPI driven TMC driver on E0 requires E0_CS_PIN."
-#elif INVALID_TMC_SPI(E1)
-  #error "An SPI driven TMC driver on E1 requires E1_CS_PIN."
-#elif INVALID_TMC_SPI(E2)
-  #error "An SPI driven TMC driver on E2 requires E2_CS_PIN."
-#elif INVALID_TMC_SPI(E3)
-  #error "An SPI driven TMC driver on E3 requires E3_CS_PIN."
-#elif INVALID_TMC_SPI(E4)
-  #error "An SPI driven TMC driver on E4 requires E4_CS_PIN."
-#elif INVALID_TMC_SPI(E5)
-  #error "An SPI driven TMC driver on E5 requires E5_CS_PIN."
-#elif INVALID_TMC_SPI(E6)
-  #error "An SPI driven TMC driver on E6 requires E6_CS_PIN."
-#elif INVALID_TMC_SPI(E7)
-  #error "An SPI driven TMC driver on E7 requires E7_CS_PIN."
+#elif INVALID_TMC_SPI(A)
+  #error "An SPI driven TMC driver on A requires A_CS_PIN."
+#elif INVALID_TMC_SPI(A2)
+  #error "An SPI driven TMC driver on A2 requires A2_CS_PIN."
 #endif
 #undef INVALID_TMC_SPI
 
@@ -2484,22 +2410,10 @@ static_assert(hbm[Z_AXIS] >= 0, "HOMING_BUMP_MM.Z must be greater than or equal 
   #error "TMC2208 or TMC2209 on Z3 requires Z3_HARDWARE_SERIAL or Z3_SERIAL_(RX|TX)_PIN."
 #elif INVALID_TMC_UART(Z4)
   #error "TMC2208 or TMC2209 on Z4 requires Z4_HARDWARE_SERIAL or Z4_SERIAL_(RX|TX)_PIN."
-#elif INVALID_TMC_UART(E0)
-  #error "TMC2208 or TMC2209 on E0 requires E0_HARDWARE_SERIAL or E0_SERIAL_(RX|TX)_PIN."
-#elif INVALID_TMC_UART(E1)
-  #error "TMC2208 or TMC2209 on E1 requires E1_HARDWARE_SERIAL or E1_SERIAL_(RX|TX)_PIN."
-#elif INVALID_TMC_UART(E2)
-  #error "TMC2208 or TMC2209 on E2 requires E2_HARDWARE_SERIAL or E2_SERIAL_(RX|TX)_PIN."
-#elif INVALID_TMC_UART(E3)
-  #error "TMC2208 or TMC2209 on E3 requires E3_HARDWARE_SERIAL or E3_SERIAL_(RX|TX)_PIN."
-#elif INVALID_TMC_UART(E4)
-  #error "TMC2208 or TMC2209 on E4 requires E4_HARDWARE_SERIAL or E4_SERIAL_(RX|TX)_PIN."
-#elif INVALID_TMC_UART(E5)
-  #error "TMC2208 or TMC2209 on E5 requires E5_HARDWARE_SERIAL or E5_SERIAL_(RX|TX)_PIN."
-#elif INVALID_TMC_UART(E6)
-  #error "TMC2208 or TMC2209 on E6 requires E6_HARDWARE_SERIAL or E6_SERIAL_(RX|TX)_PIN."
-#elif INVALID_TMC_UART(E7)
-  #error "TMC2208 or TMC2209 on E7 requires E7_HARDWARE_SERIAL or E7_SERIAL_(RX|TX)_PIN."
+#elif INVALID_TMC_UART(A)
+  #error "TMC2208 or TMC2209 on A requires A_HARDWARE_SERIAL or A_SERIAL_(RX|TX)_PIN."
+#elif INVALID_TMC_UART(A2)
+  #error "TMC2208 or TMC2209 on A2 requires A2_HARDWARE_SERIAL or A2_SERIAL_(RX|TX)_PIN."
 #endif
 #undef INVALID_TMC_UART
 
@@ -2523,22 +2437,10 @@ static_assert(hbm[Z_AXIS] >= 0, "HOMING_BUMP_MM.Z must be greater than or equal 
   INVALID_TMC_ADDRESS(Z3);
 #elif AXIS_DRIVER_TYPE_Z4(TMC2209)
   INVALID_TMC_ADDRESS(Z4);
-#elif AXIS_DRIVER_TYPE_E0(TMC2209)
-  INVALID_TMC_ADDRESS(E0);
-#elif AXIS_DRIVER_TYPE_E1(TMC2209)
-  INVALID_TMC_ADDRESS(E1);
-#elif AXIS_DRIVER_TYPE_E2(TMC2209)
-  INVALID_TMC_ADDRESS(E2);
-#elif AXIS_DRIVER_TYPE_E3(TMC2209)
-  INVALID_TMC_ADDRESS(E3);
-#elif AXIS_DRIVER_TYPE_E4(TMC2209)
-  INVALID_TMC_ADDRESS(E4);
-#elif AXIS_DRIVER_TYPE_E5(TMC2209)
-  INVALID_TMC_ADDRESS(E5);
-#elif AXIS_DRIVER_TYPE_E6(TMC2209)
-  INVALID_TMC_ADDRESS(E6);
-#elif AXIS_DRIVER_TYPE_E7(TMC2209)
-  INVALID_TMC_ADDRESS(E7);
+#elif AXIS_DRIVER_TYPE_A(TMC2209)
+  INVALID_TMC_ADDRESS(A);
+#elif AXIS_DRIVER_TYPE_A2(TMC2209)
+  INVALID_TMC_ADDRESS(A2);
 #endif
 #undef INVALID_TMC_ADDRESS
 
@@ -2562,22 +2464,10 @@ static_assert(hbm[Z_AXIS] >= 0, "HOMING_BUMP_MM.Z must be greater than or equal 
   INVALID_TMC_MS(Z3)
 #elif !TMC_MICROSTEP_IS_VALID(Z4)
   INVALID_TMC_MS(Z4)
-#elif !TMC_MICROSTEP_IS_VALID(E0)
-  INVALID_TMC_MS(E0)
-#elif !TMC_MICROSTEP_IS_VALID(E1)
-  INVALID_TMC_MS(E1)
-#elif !TMC_MICROSTEP_IS_VALID(E2)
-  INVALID_TMC_MS(E2)
-#elif !TMC_MICROSTEP_IS_VALID(E3)
-  INVALID_TMC_MS(E3)
-#elif !TMC_MICROSTEP_IS_VALID(E4)
-  INVALID_TMC_MS(E4)
-#elif !TMC_MICROSTEP_IS_VALID(E5)
-  INVALID_TMC_MS(E5)
-#elif !TMC_MICROSTEP_IS_VALID(E6)
-  INVALID_TMC_MS(E6)
-#elif !TMC_MICROSTEP_IS_VALID(E7)
-  INVALID_TMC_MS(E7)
+#elif !TMC_MICROSTEP_IS_VALID(A)
+  INVALID_TMC_MS(A)
+#elif !TMC_MICROSTEP_IS_VALID(A2)
+  INVALID_TMC_MS(A2)
 #endif
 #undef INVALID_TMC_MS
 #undef TMC_MICROSTEP_IS_VALID
@@ -2782,22 +2672,19 @@ constexpr float sanity_arr_1[] = DEFAULT_AXIS_STEPS_PER_UNIT,
 
 #define _ARR_TEST(N,I) (sanity_arr_##N[_MIN(I,int(COUNT(sanity_arr_##N))-1)] > 0)
 
-static_assert(COUNT(sanity_arr_1) >= XYZA,   "DEFAULT_AXIS_STEPS_PER_UNIT requires X, Y, Z and A elements.");
-static_assert(COUNT(sanity_arr_1) <= XYZA_N, "DEFAULT_AXIS_STEPS_PER_UNIT has too many elements. (Did you forget to enable DISTINCT_E_FACTORS?)");
+static_assert(COUNT(sanity_arr_1) >= XYZA_N,   "DEFAULT_AXIS_STEPS_PER_UNIT requires X, Y, Z and A elements.");
 static_assert(   _ARR_TEST(1,0) && _ARR_TEST(1,1) && _ARR_TEST(1,2)
               && _ARR_TEST(1,3) && _ARR_TEST(1,4) && _ARR_TEST(1,5)
               && _ARR_TEST(1,6) && _ARR_TEST(1,7) && _ARR_TEST(1,8),
               "DEFAULT_AXIS_STEPS_PER_UNIT values must be positive.");
 
-static_assert(COUNT(sanity_arr_2) >= XYZA,   "DEFAULT_MAX_FEEDRATE requires X, Y, Z and A elements.");
-static_assert(COUNT(sanity_arr_2) <= XYZA_N, "DEFAULT_MAX_FEEDRATE has too many elements. (Did you forget to enable DISTINCT_E_FACTORS?)");
+static_assert(COUNT(sanity_arr_2) >= XYZA_N,   "DEFAULT_MAX_FEEDRATE requires X, Y, Z and A elements.");
 static_assert(   _ARR_TEST(2,0) && _ARR_TEST(2,1) && _ARR_TEST(2,2)
               && _ARR_TEST(2,3) && _ARR_TEST(2,4) && _ARR_TEST(2,5)
               && _ARR_TEST(2,6) && _ARR_TEST(2,7) && _ARR_TEST(2,8),
               "DEFAULT_MAX_FEEDRATE values must be positive.");
 
-static_assert(COUNT(sanity_arr_3) >= XYZA,   "DEFAULT_MAX_ACCELERATION requires X, Y, Z and A elements.");
-static_assert(COUNT(sanity_arr_3) <= XYZA_N, "DEFAULT_MAX_ACCELERATION has too many elements. (Did you forget to enable DISTINCT_E_FACTORS?)");
+static_assert(COUNT(sanity_arr_3) >= XYZA_N,   "DEFAULT_MAX_ACCELERATION requires X, Y, Z and A elements.");
 static_assert(   _ARR_TEST(3,0) && _ARR_TEST(3,1) && _ARR_TEST(3,2)
               && _ARR_TEST(3,3) && _ARR_TEST(3,4) && _ARR_TEST(3,5)
               && _ARR_TEST(3,6) && _ARR_TEST(3,7) && _ARR_TEST(3,8),
@@ -2806,8 +2693,8 @@ static_assert(   _ARR_TEST(3,0) && _ARR_TEST(3,1) && _ARR_TEST(3,2)
 #if ENABLED(LIMITED_MAX_ACCEL_EDITING)
   #ifdef MAX_ACCEL_EDIT_VALUES
     constexpr float sanity_arr_4[] = MAX_ACCEL_EDIT_VALUES;
-    static_assert(COUNT(sanity_arr_4) >= XYZA, "MAX_ACCEL_EDIT_VALUES requires X, Y, Z and A elements.");
-    static_assert(COUNT(sanity_arr_4) <= XYZA, "MAX_ACCEL_EDIT_VALUES has too many elements. X, Y, Z and A elements only.");
+    static_assert(COUNT(sanity_arr_4) >= XYZA_N, "MAX_ACCEL_EDIT_VALUES requires X, Y, Z and A elements.");
+    static_assert(COUNT(sanity_arr_4) <= XYZA_N, "MAX_ACCEL_EDIT_VALUES has too many elements. X, Y, Z and A elements only.");
     static_assert(   _ARR_TEST(4,0) && _ARR_TEST(4,1) && _ARR_TEST(4,2)
                   && _ARR_TEST(4,3) && _ARR_TEST(4,4) && _ARR_TEST(4,5)
                   && _ARR_TEST(4,6) && _ARR_TEST(4,7) && _ARR_TEST(4,8),
@@ -2818,8 +2705,8 @@ static_assert(   _ARR_TEST(3,0) && _ARR_TEST(3,1) && _ARR_TEST(3,2)
 #if ENABLED(LIMITED_MAX_FR_EDITING)
   #ifdef MAX_FEEDRATE_EDIT_VALUES
     constexpr float sanity_arr_5[] = MAX_FEEDRATE_EDIT_VALUES;
-    static_assert(COUNT(sanity_arr_5) >= XYZA, "MAX_FEEDRATE_EDIT_VALUES requires X, Y, Z and A elements.");
-    static_assert(COUNT(sanity_arr_5) <= XYZA, "MAX_FEEDRATE_EDIT_VALUES has too many elements. X, Y, Z and A elements only.");
+    static_assert(COUNT(sanity_arr_5) >= XYZA_N, "MAX_FEEDRATE_EDIT_VALUES requires X, Y, Z and A elements.");
+    static_assert(COUNT(sanity_arr_5) <= XYZA_N, "MAX_FEEDRATE_EDIT_VALUES has too many elements. X, Y, Z and A elements only.");
     static_assert(   _ARR_TEST(5,0) && _ARR_TEST(5,1) && _ARR_TEST(5,2)
                   && _ARR_TEST(5,3) && _ARR_TEST(5,4) && _ARR_TEST(5,5)
                   && _ARR_TEST(5,6) && _ARR_TEST(5,7) && _ARR_TEST(5,8),
@@ -2830,8 +2717,8 @@ static_assert(   _ARR_TEST(3,0) && _ARR_TEST(3,1) && _ARR_TEST(3,2)
 #if ENABLED(LIMITED_JERK_EDITING)
   #ifdef MAX_JERK_EDIT_VALUES
     constexpr float sanity_arr_6[] = MAX_JERK_EDIT_VALUES;
-    static_assert(COUNT(sanity_arr_6) >= XYZA, "MAX_JERK_EDIT_VALUES requires X, Y, Z and A elements.");
-    static_assert(COUNT(sanity_arr_6) <= XYZA, "MAX_JERK_EDIT_VALUES has too many elements. X, Y, Z and A elements only.");
+    static_assert(COUNT(sanity_arr_6) >= XYZA_N, "MAX_JERK_EDIT_VALUES requires X, Y, Z and A elements.");
+    static_assert(COUNT(sanity_arr_6) <= XYZA_N, "MAX_JERK_EDIT_VALUES has too many elements. X, Y, Z and A elements only.");
     static_assert(   _ARR_TEST(6,0) && _ARR_TEST(6,1) && _ARR_TEST(6,2)
                   && _ARR_TEST(6,3) && _ARR_TEST(6,4) && _ARR_TEST(6,5)
                   && _ARR_TEST(6,6) && _ARR_TEST(6,7) && _ARR_TEST(6,8),

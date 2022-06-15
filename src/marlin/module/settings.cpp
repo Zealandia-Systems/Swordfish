@@ -64,8 +64,6 @@ using namespace swordfish::motion;
 #	include "../HAL/shared/eeprom_api.h"
 #endif
 
-#include "probe.h"
-
 #if HAS_LEVELING
 #	include "../feature/bedlevel/bedlevel.h"
 #endif
@@ -658,7 +656,7 @@ bool MarlinSettings::save() {
 
 	_FIELD_TEST(esteppers);
 
-	const uint8_t esteppers = COUNT(planner.settings.axis_steps_per_mm) - XYZ;
+	const uint8_t esteppers = 1;
 	EEPROM_WRITE(esteppers);
 
 	//
@@ -1268,29 +1266,11 @@ bool MarlinSettings::save() {
 #	if AXIS_HAS_STEALTHCHOP(Z4)
 		tmc_stealth_enabled.Z4 = stepperZ4.get_stored_stealthChop();
 #	endif
-#	if AXIS_HAS_STEALTHCHOP(E0)
-		tmc_stealth_enabled.E0 = stepperE0.get_stored_stealthChop();
+#	if AXIS_HAS_STEALTHCHOP(A)
+		tmc_stealth_enabled.A = stepperA.get_stored_stealthChop();
 #	endif
-#	if AXIS_HAS_STEALTHCHOP(E1)
-		tmc_stealth_enabled.E1 = stepperE1.get_stored_stealthChop();
-#	endif
-#	if AXIS_HAS_STEALTHCHOP(E2)
-		tmc_stealth_enabled.E2 = stepperE2.get_stored_stealthChop();
-#	endif
-#	if AXIS_HAS_STEALTHCHOP(E3)
-		tmc_stealth_enabled.E3 = stepperE3.get_stored_stealthChop();
-#	endif
-#	if AXIS_HAS_STEALTHCHOP(E4)
-		tmc_stealth_enabled.E4 = stepperE4.get_stored_stealthChop();
-#	endif
-#	if AXIS_HAS_STEALTHCHOP(E5)
-		tmc_stealth_enabled.E5 = stepperE5.get_stored_stealthChop();
-#	endif
-#	if AXIS_HAS_STEALTHCHOP(E6)
-		tmc_stealth_enabled.E6 = stepperE6.get_stored_stealthChop();
-#	endif
-#	if AXIS_HAS_STEALTHCHOP(E7)
-		tmc_stealth_enabled.E7 = stepperE7.get_stored_stealthChop();
+#	if AXIS_HAS_STEALTHCHOP(A2)
+		tmc_stealth_enabled.A2 = stepperA2.get_stored_stealthChop();
 #	endif
 		EEPROM_WRITE(tmc_stealth_enabled);
 	}
@@ -1544,9 +1524,9 @@ bool MarlinSettings::_load() {
 		{
 			// Get only the number of E stepper parameters previously stored
 			// Any steppers added later are set to their defaults
-			uint32_t tmp1[XYZ + esteppers];
-			float tmp2[XYZ + esteppers];
-			feedRate_t tmp3[XYZ + esteppers];
+			uint32_t tmp1[XYZA_N];
+			float tmp2[XYZA_N];
+			feedRate_t tmp3[XYZ_N];
 			EEPROM_READ(tmp1); // max_acceleration_mm_per_s2
 			EEPROM_READ(planner.settings.min_segment_time_us);
 			EEPROM_READ(tmp2); // axis_steps_per_mm
@@ -1554,10 +1534,9 @@ bool MarlinSettings::_load() {
 
 			if (!validating)
 				LOOP_XYZA_N(i) {
-					const bool in = (i < esteppers + XYZ);
-					planner.settings.max_acceleration_mm_per_s2[i] = in ? tmp1[i] : pgm_read_dword(&_DMA[ALIM(i, _DMA)]);
-					planner.settings.axis_steps_per_mm[i] = in ? tmp2[i] : pgm_read_float(&_DASU[ALIM(i, _DASU)]);
-					planner.settings.max_feedrate_mm_s[i] = in ? tmp3[i] : pgm_read_float(&_DMF[ALIM(i, _DMF)]);
+					planner.settings.max_acceleration_mm_per_s2[i] = pgm_read_dword(&_DMA[ALIM(i, _DMA)]);
+					planner.settings.axis_steps_per_mm[i] = pgm_read_float(&_DASU[ALIM(i, _DASU)]);
+					planner.settings.max_feedrate_mm_s[i] = pgm_read_float(&_DMF[ALIM(i, _DMF)]);
 				}
 
 			EEPROM_READ(planner.settings.acceleration);
@@ -2280,7 +2259,7 @@ EEPROM_READ(toolchange_settings);
 	const xyz_float_t& backlash_distance_mm = backlash.distance_mm;
 	const uint8_t& backlash_correction = backlash.correction;
 #	else
-	float backlash_distance_mm[XYZ];
+	float backlash_distance_mm[XYZ_N];
 	uint8_t backlash_correction;
 #	endif
 #	if ENABLED(BACKLASH_GCODE) && defined(BACKLASH_SMOOTHING_MM)
@@ -3145,7 +3124,7 @@ inline void say_units(const bool colon) {
 		SERIAL_ECHOLNPGM(":");
 }
 
-void report_M92(const bool echo = true, const int8_t e = -1);
+void report_M92(const bool echo = true);
 
 /**
  * M503 - Report current settings in RAM
@@ -3231,7 +3210,7 @@ void MarlinSettings::report(const bool forReplay) {
 			PSTR("  M203 X"), LINEAR_UNIT(MMS_TO_MMM(planner.settings.max_feedrate_mm_s[X_AXIS])), SP_Y_STR, LINEAR_UNIT(MMS_TO_MMM(planner.settings.max_feedrate_mm_s[Y_AXIS])), SP_Z_STR, LINEAR_UNIT(MMS_TO_MMM(planner.settings.max_feedrate_mm_s[Z_AXIS]))
 #	if DISABLED(DISTINCT_E_FACTORS)
 																																																																																													,
-			SP_E_STR, VOLUMETRIC_UNIT(planner.settings.max_feedrate_mm_s[E_AXIS])
+			SP_A_STR, VOLUMETRIC_UNIT(planner.settings.max_feedrate_mm_s[A_AXIS])
 #	endif
 	);
 #	if ENABLED(DISTINCT_E_FACTORS)
@@ -3248,7 +3227,7 @@ void MarlinSettings::report(const bool forReplay) {
 			PSTR("  M201 X"), LINEAR_UNIT(planner.settings.max_acceleration_mm_per_s2[X_AXIS]), SP_Y_STR, LINEAR_UNIT(planner.settings.max_acceleration_mm_per_s2[Y_AXIS]), SP_Z_STR, LINEAR_UNIT(planner.settings.max_acceleration_mm_per_s2[Z_AXIS])
 #	if DISABLED(DISTINCT_E_FACTORS)
 																																																																																										,
-			SP_E_STR, VOLUMETRIC_UNIT(planner.settings.max_acceleration_mm_per_s2[E_AXIS])
+			SP_A_STR, VOLUMETRIC_UNIT(planner.settings.max_acceleration_mm_per_s2[A_AXIS])
 #	endif
 	);
 #	if ENABLED(DISTINCT_E_FACTORS)

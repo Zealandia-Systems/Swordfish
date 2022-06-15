@@ -88,9 +88,9 @@ void plan_arc(
 	// Radius vector from center to current location
 	ab_float_t rvec = -offset;
 
-	const float radius = HYPOT(rvec.a, rvec.b),
-							center_P = current_position[p_axis] - rvec.a,
-							center_Q = current_position[q_axis] - rvec.b,
+	const float radius = HYPOT(rvec.x, rvec.y),
+							center_P = current_position[p_axis] - rvec.x,
+							center_Q = current_position[q_axis] - rvec.y,
 							rt_X = cart[p_axis] - center_P,
 							rt_Y = cart[q_axis] - center_Q,
 							start_L = current_position[l_axis];
@@ -109,7 +109,7 @@ void plan_arc(
 		min_segments = MIN_CIRCLE_SEGMENTS;
 	} else {
 		// Calculate the angle
-		angular_travel = ATAN2(rvec.a * rt_Y - rvec.b * rt_X, rvec.a * rt_X + rvec.b * rt_Y);
+		angular_travel = ATAN2(rvec.x * rt_Y - rvec.y * rt_X, rvec.x * rt_X + rvec.y * rt_Y);
 
 		// Angular travel too small to detect? Just return.
 		if (!angular_travel)
@@ -131,23 +131,19 @@ void plan_arc(
 		min_segments = CEIL((MIN_CIRCLE_SEGMENTS) *portion_of_circle);
 	}
 
-	float linear_travel = cart[l_axis] - start_L,
-				extruder_travel = 0;
+	float linear_travel = cart[l_axis] - start_L;
 
 	// If circling around...
 	if (ENABLED(ARC_P_CIRCLES) && circles) {
 		const float total_angular = angular_travel + circles * RADIANS(360), // Total rotation with all circles and remainder
 				part_per_circle = RADIANS(360) / total_angular, // Each circle's part of the total
-				l_per_circle = linear_travel * part_per_circle, // L movement per circle
-				e_per_circle = extruder_travel * part_per_circle; // E movement per circle
+				l_per_circle = linear_travel * part_per_circle; // L movement per circle
 		xyza_pos_t temp_position = current_position; // for plan_arc to compare to current_position
 		for (uint16_t n = circles; n--;) {
-			temp_position.e += e_per_circle; // Destination E axis
 			temp_position[l_axis] += l_per_circle; // Destination L axis
 			plan_arc(temp_position, offset, clockwise, 0); // Plan a single whole circle
 		}
 		linear_travel = cart[l_axis] - current_position[l_axis];
-		extruder_travel = 0;
 	}
 
 	const float flat_mm = radius * angular_travel,
@@ -202,7 +198,6 @@ void plan_arc(
 	xyza_pos_t raw;
 	const float theta_per_segment = angular_travel / segments,
 							linear_per_segment = linear_travel / segments,
-							extruder_per_segment = extruder_travel / segments,
 							sq_theta_per_segment = sq(theta_per_segment),
 							sin_T = theta_per_segment - sq_theta_per_segment * theta_per_segment / 6,
 							cos_T = 1 - 0.5f * sq_theta_per_segment; // Small angle approximation
@@ -231,9 +226,9 @@ void plan_arc(
 #	if N_ARC_CORRECTION > 1
 		if (--arc_recalc_count) {
 			// Apply vector rotation matrix to previous rvec.a / 1
-			const float r_new_Y = rvec.a * sin_T + rvec.b * cos_T;
-			rvec.a = rvec.a * cos_T - rvec.b * sin_T;
-			rvec.b = r_new_Y;
+			const float r_new_Y = rvec.x * sin_T + rvec.y * cos_T;
+			rvec.x = rvec.x * cos_T - rvec.y * sin_T;
+			rvec.y = r_new_Y;
 		} else
 #	endif
 		{
@@ -246,20 +241,14 @@ void plan_arc(
 			// To reduce stuttering, the sin and cos could be computed at different times.
 			// For now, compute both at the same time.
 			const float cos_Ti = cos(i * theta_per_segment), sin_Ti = sin(i * theta_per_segment);
-			rvec.a = -offset[0] * cos_Ti + offset[1] * sin_Ti;
-			rvec.b = -offset[0] * sin_Ti - offset[1] * cos_Ti;
+			rvec.x = -offset[0] * cos_Ti + offset[1] * sin_Ti;
+			rvec.y = -offset[0] * sin_Ti - offset[1] * cos_Ti;
 		}
 
 		// Update raw location
-		raw[p_axis] = center_P + rvec.a;
-		raw[q_axis] = center_Q + rvec.b;
-#	if ENABLED(AUTO_BED_LEVELING_UBL)
-		raw[l_axis] = start_L;
-		UNUSED(linear_per_segment);
-#	else
+		raw[p_axis] = center_P + rvec.x;
+		raw[q_axis] = center_Q + rvec.y;
 		raw[l_axis] += linear_per_segment;
-#	endif
-		raw.e += extruder_per_segment;
 
 		Eigen::Vector3f raw3f { raw.x, raw.y, raw.z };
 
@@ -378,9 +367,9 @@ void GcodeSuite::G2_G3(const bool clockwise) {
 			constexpr char achar = 'I', bchar = 'J';
 #	endif
 			if (parser.seenval(achar))
-				arc_offset.a = parser.value_linear_units();
+				arc_offset.x = parser.value_linear_units();
 			if (parser.seenval(bchar))
-				arc_offset.b = parser.value_linear_units();
+				arc_offset.y = parser.value_linear_units();
 		}
 
 		if (arc_offset) {

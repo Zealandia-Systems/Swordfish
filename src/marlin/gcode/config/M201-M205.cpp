@@ -44,8 +44,7 @@ void GcodeSuite::M201() {
 
 	LOOP_XYZA(i) {
 		if (parser.seen(axis_codes[i])) {
-			const uint8_t a = (i == E_AXIS ? uint8_t(E_AXIS_N(target_extruder)) : i);
-			planner.set_max_acceleration(a, parser.value_axis_units((AxisEnum) a));
+			planner.set_max_acceleration(i, parser.value_axis_units((AxisEnum) i));
 		}
 	}
 }
@@ -63,8 +62,7 @@ void GcodeSuite::M203() {
 
 	LOOP_XYZA(i)
 	if (parser.seen(axis_codes[i])) {
-		const uint8_t a = (i == E_AXIS ? uint8_t(E_AXIS_N(target_extruder)) : i);
-		planner.set_max_feedrate(a, MMM_TO_MMS(parser.value_axis_units((AxisEnum) a)));
+		planner.set_max_feedrate(i, MMM_TO_MMS(parser.value_axis_units((AxisEnum) i)));
 	}
 }
 

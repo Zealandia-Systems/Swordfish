@@ -25,44 +25,49 @@
 #include "../../module/stepper.h"
 
 #if ENABLED(AUTO_BED_LEVELING_UBL)
-  #include "../../feature/bedlevel/bedlevel.h"
+#	include "../../feature/bedlevel/bedlevel.h"
 #endif
 
 /**
  * M17: Enable stepper motors
  */
 void GcodeSuite::M17() {
-  if (parser.seen("XYZE")) {
-    if (parser.seen('X')) ENABLE_AXIS_X();
-    if (parser.seen('Y')) ENABLE_AXIS_Y();
-    if (parser.seen('Z')) ENABLE_AXIS_Z();
-    if (TERN0(HAS_E_STEPPER_ENABLE, parser.seen('E'))) enable_e_steppers();
-  }
-  else {
-    //LCD_MESSAGEPGM(MSG_NO_MOVE);
-    enable_all_steppers();
-  }
+	if (parser.seen("XYZE")) {
+		if (parser.seen('X'))
+			ENABLE_AXIS_X();
+		if (parser.seen('Y'))
+			ENABLE_AXIS_Y();
+		if (parser.seen('Z'))
+			ENABLE_AXIS_Z();
+		if (parser.seen('A'))
+			ENABLE_AXIS_A();
+	} else {
+		// LCD_MESSAGEPGM(MSG_NO_MOVE);
+		enable_all_steppers();
+	}
 }
 
 /**
  * M18, M84: Disable stepper motors
  */
 void GcodeSuite::M18_M84() {
-  if (parser.seenval('S')) {
-    reset_stepper_timeout();
-    stepper_inactive_time = parser.value_millis_from_seconds();
-  }
-  else {
-    if (parser.seen("XYZE")) {
-      planner.synchronize();
-      if (parser.seen('X')) DISABLE_AXIS_X();
-      if (parser.seen('Y')) DISABLE_AXIS_Y();
-      if (parser.seen('Z')) DISABLE_AXIS_Z();
-      if (TERN0(HAS_E_STEPPER_ENABLE, parser.seen('E'))) disable_e_steppers();
-    }
-    else
-      planner.finish_and_disable();
+	if (parser.seenval('S')) {
+		reset_stepper_timeout();
+		stepper_inactive_time = parser.value_millis_from_seconds();
+	} else {
+		if (parser.seen("XYZE")) {
+			planner.synchronize();
+			if (parser.seen('X'))
+				DISABLE_AXIS_X();
+			if (parser.seen('Y'))
+				DISABLE_AXIS_Y();
+			if (parser.seen('Z'))
+				DISABLE_AXIS_Z();
+			if (parser.seen('A'))
+				DISABLE_AXIS_A();
+		} else
+			planner.finish_and_disable();
 
-    TERN_(AUTO_BED_LEVELING_UBL, ubl.steppers_were_disabled());
-  }
+		TERN_(AUTO_BED_LEVELING_UBL, ubl.steppers_were_disabled());
+	}
 }
