@@ -1026,24 +1026,19 @@ void Stepper::pulse_phase_isr() {
 		} \
 	} while (0)
 
-		// Direct Stepping page?
-		const bool is_page = IS_PAGE(current_block);
-
-		if (!is_page) {
 // Determine if pulses are needed
 #if HAS_X_STEP
-			PULSE_PREP(X);
+		PULSE_PREP(X);
 #endif
 #if HAS_Y_STEP
-			PULSE_PREP(Y);
+		PULSE_PREP(Y);
 #endif
 #if HAS_Z_STEP
-			PULSE_PREP(Z);
+		PULSE_PREP(Z);
 #endif
 #if HAS_A_STEP
-			PULSE_PREP(A);
+		PULSE_PREP(A);
 #endif
-		}
 
 #if ISR_MULTI_STEPS
 		if (firstStep)

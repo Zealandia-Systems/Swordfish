@@ -627,7 +627,7 @@ bool MarlinSettings::save() {
 
 	_FIELD_TEST(esteppers);
 
-	const uint8_t esteppers = 1;
+	const uint8_t esteppers = 0;
 	EEPROM_WRITE(esteppers);
 
 	//
@@ -1495,8 +1495,8 @@ bool MarlinSettings::_load() {
 		{
 			// Get only the number of E stepper parameters previously stored
 			// Any steppers added later are set to their defaults
-			uint32_t tmp1[XYZA_N];
-			float tmp2[XYZA_N];
+			uint32_t tmp1[XYZ_N];
+			float tmp2[XYZ_N];
 			feedRate_t tmp3[XYZ_N];
 			EEPROM_READ(tmp1); // max_acceleration_mm_per_s2
 			EEPROM_READ(planner.settings.min_segment_time_us);
@@ -1504,7 +1504,7 @@ bool MarlinSettings::_load() {
 			EEPROM_READ(tmp3); // max_feedrate_mm_s
 
 			if (!validating)
-				LOOP_XYZA_N(i) {
+				LOOP_XYZ_N(i) {
 					planner.settings.max_acceleration_mm_per_s2[i] = pgm_read_dword(&_DMA[ALIM(i, _DMA)]);
 					planner.settings.axis_steps_per_mm[i] = pgm_read_float(&_DASU[ALIM(i, _DASU)]);
 					planner.settings.max_feedrate_mm_s[i] = pgm_read_float(&_DMF[ALIM(i, _DMF)]);
