@@ -40,7 +40,6 @@ extern bool wifi_custom_command(char* const command_ptr);
 #include "queue.h"
 #include "../module/motion.h"
 #include "../module/stepper.h"
-#include "../feature/spindle_laser.h"
 
 #if ENABLED(PRINTCOUNTER)
 #	include "../module/printcounter.h"
@@ -115,43 +114,6 @@ tool_record_t GcodeSuite::tool_table[MAX_TOOL_OFFSETS];
 #endif
 
 /**
- * Get the target extruder from the T parameter or the active_extruder
- * Return -1 if the T parameter is out of range
- */
-int8_t GcodeSuite::get_target_extruder_from_command() {
-	if (parser.seenval('T')) {
-		const int8_t e = parser.value_byte();
-		if (e < EXTRUDERS)
-			return e;
-		SERIAL_ECHO_START();
-		SERIAL_CHAR('M');
-		SERIAL_ECHO(parser.codenum);
-		SERIAL_ECHOLNPAIR(" " STR_INVALID_EXTRUDER " ", int(e));
-		return -1;
-	}
-	return active_extruder;
-}
-
-/**
- * Get the target e stepper from the T parameter
- * Return -1 if the T parameter is out of range or unspecified
- */
-int8_t GcodeSuite::get_target_e_stepper_from_command() {
-	const int8_t e = parser.intval('T', -1);
-	if (WITHIN(e, 0, E_STEPPERS - 1))
-		return e;
-
-	SERIAL_ECHO_START();
-	SERIAL_CHAR('M');
-	SERIAL_ECHO(parser.codenum);
-	if (e == -1)
-		SERIAL_ECHOLNPGM(" " STR_E_STEPPER_NOT_SPECIFIED);
-	else
-		SERIAL_ECHOLNPAIR(" " STR_INVALID_E_STEPPER " ", int(e));
-	return -1;
-}
-
-/**
  * Set XYZE destination and feedrate from the current GCode command
  *
  *  - Set destination from included axis codes
@@ -179,6 +141,16 @@ void GcodeSuite::get_destination_from_command() {
 				destination[i] = axis_is_relative(AxisEnum(i)) ? current_position[i] + v : motionModule.toNative((AxisEnum) i, v);
 		} else
 			destination[i] = current_position[i];
+	}
+
+	if ((seen[A_AXIS] = parser.seenval('A'))) {
+		const float v = parser.value_axis_units(A_AXIS);
+		if (skip_move)
+			destination[A_AXIS] = current_position[A_AXIS];
+		else
+			destination[A_AXIS] = axis_is_relative(A_AXIS) ? current_position[A_AXIS] + v : motionModule.toNative(A_AXIS, v);
+	} else {
+		destination[A_AXIS] = current_position[A_AXIS];
 	}
 
 #if ENABLED(POWER_LOSS_RECOVERY) && !PIN_EXISTS(POWER_LOSS)

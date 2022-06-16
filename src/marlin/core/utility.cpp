@@ -24,7 +24,6 @@
 
 #include "../MarlinCore.h"
 #include "../module/temperature.h"
-#include "../feature/spindle_laser.h"
 
 void safe_delay(millis_t ms) {
 	while (ms > 50) {
@@ -54,7 +53,6 @@ void serial_delay(const millis_t ms) {
 #	include "../module/motion.h"
 #	include "../module/stepper.h"
 #	include "../libs/numtostr.h"
-#	include "../feature/bedlevel/bedlevel.h"
 
 void log_machine_info() {
 	SERIAL_ECHOLNPGM("Machine Type: " TERN_(DELTA, "Delta")

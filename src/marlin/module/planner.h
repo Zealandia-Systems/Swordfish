@@ -31,6 +31,7 @@
  */
 
 #include "../MarlinCore.h"
+#include <swordfish/debug.h>
 
 #if ENABLED(JD_HANDLE_SMALL_SEGMENTS)
 // Enable this option for perfect accuracy but maximum
@@ -166,14 +167,6 @@ typedef struct block_t {
 	};
 	uint32_t step_event_count; // The number of step events required to complete this block
 
-#if HAS_MULTI_EXTRUDER
-	uint8_t extruder; // The extruder to move (if E move)
-#else
-	static constexpr uint8_t extruder = 0;
-#endif
-
-	TERN_(MIXING_EXTRUDER, MIXER_BLOCK_FIELD); // Normalized color for the mixing steppers
-
 	// Settings for the trapezoid generator
 	uint32_t accelerate_until, // The index of the step event on which to stop acceleration
 			decelerate_after; // The index of the step event on which to start decelerating
@@ -190,39 +183,10 @@ typedef struct block_t {
 
 	uint8_t direction_bits; // The direction bit set for this block (refers to *_DIRECTION_BIT in config.h)
 
-// Advance extrusion
-#if ENABLED(LIN_ADVANCE)
-	bool use_advance_lead;
-	uint16_t advance_speed, // STEP timer value for extruder speed offset ISR
-			max_adv_steps, // max. advance steps to get cruising speed pressure (not always nominal_speed!)
-			final_adv_steps; // advance steps due to exit speed
-	float e_D_ratio;
-#endif
-
 	uint32_t nominal_rate, // The nominal step rate for this block in step_events/sec
 			initial_rate, // The jerk-adjusted step rate at start of block
 			final_rate, // The minimal rate at exit
 			acceleration_steps_per_s2; // acceleration steps/sec^2
-
-#if ENABLED(DIRECT_STEPPING)
-	page_idx_t page_idx; // Page index used for direct stepping
-#endif
-
-#if HAS_CUTTER
-	cutter_power_t cutter_power; // Power level for Spindle, Laser, etc.
-#endif
-
-#if HAS_FAN
-	uint8_t fan_speed[FAN_COUNT];
-#endif
-
-#if ENABLED(BARICUDA)
-	uint8_t valve_pressure, e_to_p_pressure;
-#endif
-
-#if HAS_WIRED_LCD
-	uint32_t segment_time_us;
-#endif
 
 #if ENABLED(POWER_LOSS_RECOVERY)
 	uint32_t sdpos;
@@ -231,7 +195,32 @@ typedef struct block_t {
 #if ENABLED(LASER_POWER_INLINE)
 	block_laser_t laser;
 #endif
-
+	void dump() {
+		swordfish::debug()(
+				"\nblock.flag: ", flag,
+				"\nblock.nominal_speed_sqr: ", nominal_speed_sqr,
+				"\nblock.entry_speed_sqr: ", entry_speed_sqr,
+				"\nblock.max_entry_speed_sqr: ", max_entry_speed_sqr,
+				"\nblock.millimeters: ", millimeters,
+				"\nblock.acceleration: ", acceleration,
+				"\nblock.steps.x: ", steps.x,
+				"\nblock.steps.y: ", steps.y,
+				"\nblock.steps.z: ", steps.z,
+				"\nblock.steps.a: ", steps.a,
+				"\nblock.step_event_count: ", step_event_count,
+				"\nblock.accelerate_until: ", accelerate_until,
+				"\nblock.decelerate_after: ", decelerate_after,
+				"\nblock.cruise_rate: ", cruise_rate,
+				"\nblock.acceleration_time: ", acceleration_time,
+				"\nblock.deceleration_time: ", deceleration_time,
+				"\nblock_acceleration_time_inverse: ", acceleration_time_inverse,
+				"\nblock.deceleration_time_inverse: ", deceleration_time_inverse,
+				"\nblock.direction_bits: ", direction_bits,
+				"\nblock.nominal_rate: ", nominal_rate,
+				"\nblock.initial_rate: ", initial_rate,
+				"\nblock.final_rate: ", final_rate,
+				"\nblock.acceleration_steps_per_s2: ", acceleration_steps_per_s2);
+	}
 } block_t;
 
 #if ANY(LIN_ADVANCE, SCARA_FEEDRATE_SCALING, GRADIENT_MIX, LCD_SHOW_E_TOTAL)
@@ -315,32 +304,6 @@ public:
 			block_buffer_tail; // Index of the busy block, if any
 	static uint16_t cleaning_buffer_counter; // A counter to disable queuing of blocks
 	static uint8_t delay_before_delivering; // This counter delays delivery of blocks when queue becomes empty to allow the opportunity of merging blocks
-
-#if ENABLED(DISTINCT_E_FACTORS)
-	static uint8_t last_extruder; // Respond to extruder change
-#endif
-
-#if ENABLED(DIRECT_STEPPING)
-	static uint32_t last_page_step_rate; // Last page step rate given
-	static xyza_bool_t last_page_dir; // Last page direction given
-#endif
-
-#if EXTRUDERS
-	static int16_t flow_percentage[EXTRUDERS]; // Extrusion factor for each extruder
-	static float e_factor[EXTRUDERS]; // The flow percentage and volumetric multiplier combine to scale E movement
-#endif
-
-#if DISABLED(NO_VOLUMETRICS)
-	static float filament_size[EXTRUDERS], // diameter of filament (in millimeters), typically around 1.75 or 2.85, 0 disables the volumetric calculations for the extruder
-			volumetric_area_nominal, // Nominal cross-sectional area
-			volumetric_multiplier[EXTRUDERS]; // Reciprocal of cross-sectional area of filament (in mm^2). Pre-calculated to reduce computation in the planner
-	                                      // May be auto-adjusted by a filament width sensor
-#endif
-
-#if ENABLED(VOLUMETRIC_EXTRUDER_LIMIT)
-	static float volumetric_extruder_limit[EXTRUDERS], // Maximum mm^3/sec the extruder can handle
-			volumetric_extruder_feedrate_limit[EXTRUDERS]; // Feedrate limit (mm/s) calculated from volume limit
-#endif
 
 	static planner_settings_t settings;
 
@@ -466,98 +429,8 @@ public:
 	static void set_max_feedrate(const uint8_t axis, float targetValue);
 	static void set_max_jerk(const AxisEnum axis, float targetValue);
 
-#if EXTRUDERS
-	FORCE_INLINE static void refresh_e_factor(const uint8_t e) {
-		e_factor[e] = flow_percentage[e] * 0.01f * TERN(NO_VOLUMETRICS, 1.0f, volumetric_multiplier[e]);
-	}
-
-	static inline void set_flow(const uint8_t e, const int16_t flow) {
-		flow_percentage[e] = flow;
-		refresh_e_factor(e);
-	}
-
-#endif
-
 	// Manage fans, paste pressure, etc.
 	static void check_axes_activity();
-
-#if ENABLED(FILAMENT_WIDTH_SENSOR)
-	void apply_filament_width_sensor(const int8_t encoded_ratio);
-
-	static inline float volumetric_percent(const bool vol) {
-		return 100.0f * (vol
-		                     ? volumetric_area_nominal / volumetric_multiplier[FILAMENT_SENSOR_EXTRUDER_NUM]
-		                     : volumetric_multiplier[FILAMENT_SENSOR_EXTRUDER_NUM]);
-	}
-#endif
-
-#if DISABLED(NO_VOLUMETRICS)
-
-	// Update multipliers based on new diameter measurements
-	static void calculate_volumetric_multipliers();
-
-#	if ENABLED(VOLUMETRIC_EXTRUDER_LIMIT)
-	// Update pre calculated extruder feedrate limits based on volumetric values
-	static void calculate_volumetric_extruder_limit(const uint8_t e);
-	static void calculate_volumetric_extruder_limits();
-#	endif
-
-	FORCE_INLINE static void set_filament_size(const uint8_t e, const float& v) {
-		filament_size[e] = v;
-		if (v > 0)
-			volumetric_area_nominal = CIRCLE_AREA(v * 0.5); // TODO: should it be per extruder
-		// make sure all extruders have some sane value for the filament size
-		LOOP_L_N(i, COUNT(filament_size))
-		if (!filament_size[i])
-			filament_size[i] = DEFAULT_NOMINAL_FILAMENT_DIA;
-	}
-
-#endif
-
-#if ENABLED(VOLUMETRIC_EXTRUDER_LIMIT)
-	FORCE_INLINE static void set_volumetric_extruder_limit(const uint8_t e, const float& v) {
-		volumetric_extruder_limit[e] = v;
-		calculate_volumetric_extruder_limit(e);
-	}
-#endif
-
-#if ENABLED(ENABLE_LEVELING_FADE_HEIGHT)
-
-	/**
-	 * Get the Z leveling fade factor based on the given Z height,
-	 * re-calculating only when needed.
-	 *
-	 *  Returns 1.0 if planner.z_fade_height is 0.0.
-	 *  Returns 0.0 if Z is past the specified 'Fade Height'.
-	 */
-	static inline float fade_scaling_factor_for_z(const float& rz) {
-		static float z_fade_factor = 1;
-		if (!z_fade_height)
-			return 1;
-		if (rz >= z_fade_height)
-			return 0;
-		if (last_fade_z != rz) {
-			last_fade_z = rz;
-			z_fade_factor = 1 - rz * inverse_z_fade_height;
-		}
-		return z_fade_factor;
-	}
-
-	FORCE_INLINE static void force_fade_recalc() {
-		last_fade_z = -999.999f;
-	}
-
-	FORCE_INLINE static void set_z_fade_height(const float& zfh) {
-		z_fade_height = zfh > 0 ? zfh : 0;
-		inverse_z_fade_height = RECIPROCAL(z_fade_height);
-		force_fade_recalc();
-	}
-
-	FORCE_INLINE static bool leveling_active_at_z(const float& rz) {
-		return !z_fade_height || rz < z_fade_height;
-	}
-
-#else
 
 	FORCE_INLINE static float fade_scaling_factor_for_z(const float&) {
 		return 1;
@@ -566,8 +439,6 @@ public:
 	FORCE_INLINE static bool leveling_active_at_z(const float&) {
 		return true;
 	}
-
-#endif
 
 #if ENABLED(SKEW_CORRECTION)
 
@@ -601,35 +472,10 @@ public:
 
 #endif // SKEW_CORRECTION
 
-#if HAS_LEVELING
-	/**
-	 * Apply leveling to transform a cartesian position
-	 * as it will be given to the planner and steppers.
-	 */
-	static void apply_leveling(xyz_pos_t& raw);
-	static void unapply_leveling(xyz_pos_t& raw);
-	FORCE_INLINE static void force_unapply_leveling(xyz_pos_t& raw) {
-		leveling_active = true;
-		unapply_leveling(raw);
-		leveling_active = false;
-	}
-#else
 	FORCE_INLINE static void apply_leveling(xyz_pos_t&) {
 	}
 	FORCE_INLINE static void unapply_leveling(xyz_pos_t&) {
 	}
-#endif
-
-#if ENABLED(FWRETRACT)
-	static void apply_retract(float& rz, float& e);
-	FORCE_INLINE static void apply_retract(xyza_pos_t& raw) {
-		apply_retract(raw.z, raw.e);
-	}
-	static void unapply_retract(float& rz, float& e);
-	FORCE_INLINE static void unapply_retract(xyza_pos_t& raw) {
-		unapply_retract(raw.z, raw.e);
-	}
-#endif
 
 #if HAS_POSITION_MODIFIERS
 	FORCE_INLINE static void apply_modifiers(xyza_pos_t& pos, bool leveling = ENABLED(PLANNER_LEVELING)) {

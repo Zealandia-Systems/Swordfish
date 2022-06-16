@@ -9,7 +9,6 @@
 
 #include <marlin/module/planner.h>
 #include <marlin/module/motion.h>
-#include <marlin/feature/spindle_laser.h>
 #include <marlin/module/stepper/indirection.h>
 
 #include <Arduino.h>

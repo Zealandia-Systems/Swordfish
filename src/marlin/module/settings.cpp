@@ -496,40 +496,11 @@ uint16_t MarlinSettings::datasize() {
  * Post-process after Retrieve or Reset
  */
 
-#if ENABLED(ENABLE_LEVELING_FADE_HEIGHT)
-float new_z_fade_height;
-#endif
-
 void MarlinSettings::postprocess() {
 	xyz_pos_t oldpos = current_position;
 
 	// steps per s2 needs to be updated to agree with units per s2
 	planner.reset_acceleration_rates();
-
-	// Make sure delta kinematics are updated before refreshing the
-	// planner position so the stepper counts will be set correctly.
-	TERN_(DELTA, recalc_delta_settings());
-
-	TERN_(PIDTEMP, thermalManager.updatePID());
-
-#if DISABLED(NO_VOLUMETRICS)
-	planner.calculate_volumetric_multipliers();
-#elif EXTRUDERS
-	for (uint8_t i = COUNT(planner.e_factor); i--;)
-		planner.refresh_e_factor(i);
-#endif
-
-	TERN_(ENABLE_LEVELING_FADE_HEIGHT, set_z_fade_height(new_z_fade_height, false)); // false = no report
-
-	TERN_(AUTO_BED_LEVELING_BILINEAR, refresh_bed_level());
-
-	TERN_(HAS_MOTOR_CURRENT_PWM, stepper.refresh_motor_power());
-
-	TERN_(FWRETRACT, fwretract.refresh_autoretract());
-
-	TERN_(HAS_LINEAR_E_JERK, planner.recalculate_max_e_jerk());
-
-	TERN_(CASELIGHT_USES_BRIGHTNESS, caselight.update_brightness());
 
 	// Refresh steps_to_mm with the reciprocal of axis_steps_per_mm
 	// and init stepper.count[], planner.position[] with current_position
@@ -1069,10 +1040,10 @@ bool MarlinSettings::save() {
 
 		const bool volumetric_enabled = false;
 		EEPROM_WRITE(volumetric_enabled);
-		dummyf = DEFAULT_NOMINAL_FILAMENT_DIA;
+		dummyf = 0;
 		for (uint8_t q = EXTRUDERS; q--;)
 			EEPROM_WRITE(dummyf);
-		dummyf = DEFAULT_VOLUMETRIC_EXTRUDER_LIMIT;
+		dummyf = 0;
 		for (uint8_t q = EXTRUDERS; q--;)
 			EEPROM_WRITE(dummyf);
 

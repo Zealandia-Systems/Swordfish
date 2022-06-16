@@ -29,16 +29,15 @@
 #include "../gcode.h"
 
 #include "../../module/motion.h"
-#include "../../MarlinCore.h"     // for wait_for_user_response()
+#include "../../MarlinCore.h" // for wait_for_user_response()
 #include "../../feature/host_actions.h"
-#include "../../feature/spindle_laser.h"
 
 using namespace swordfish::tools;
 
 void GcodeSuite::M6() {
-	if(homing_needed_error(_BV(X_AXIS)|_BV(Y_AXIS)|_BV(Z_AXIS))) {
+	if (homing_needed_error(_BV(X_AXIS) | _BV(Y_AXIS) | _BV(Z_AXIS))) {
 		return;
 	}
-	
+
 	ToolsModule::getInstance().change();
 }

@@ -25,8 +25,6 @@
  * temperature.h - temperature controller
  */
 
-#include "thermistor/thermistors.h"
-
 #include "../inc/MarlinConfig.h"
 
 // Heater identifiers. Positive values are hotends. Negative values are other heaters.

@@ -30,11 +30,6 @@
  *       With multiple extruders use T to specify which one.
  */
 void GcodeSuite::M201() {
-
-	const int8_t target_extruder = get_target_extruder_from_command();
-	if (target_extruder < 0)
-		return;
-
 #ifdef XY_FREQUENCY_LIMIT
 	if (parser.seenval('F'))
 		planner.set_frequency_limit(parser.value_byte());
@@ -55,14 +50,10 @@ void GcodeSuite::M201() {
  *       With multiple extruders use T to specify which one.
  */
 void GcodeSuite::M203() {
-
-	const int8_t target_extruder = get_target_extruder_from_command();
-	if (target_extruder < 0)
-		return;
-
-	LOOP_XYZA(i)
-	if (parser.seen(axis_codes[i])) {
-		planner.set_max_feedrate(i, MMM_TO_MMS(parser.value_axis_units((AxisEnum) i)));
+	LOOP_XYZA(i) {
+		if (parser.seen(axis_codes[i])) {
+			planner.set_max_feedrate(i, MMM_TO_MMS(parser.value_axis_units((AxisEnum) i)));
+		}
 	}
 }
 

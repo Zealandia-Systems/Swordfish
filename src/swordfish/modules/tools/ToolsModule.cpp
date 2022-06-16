@@ -11,7 +11,6 @@
 
 #include <marlin/gcode/gcode.h>
 #include <marlin/feature/host_actions.h>
-#include <marlin/feature/spindle_laser.h>
 #include <marlin/MarlinCore.h>
 #include <marlin/module/motion.h>
 #include <marlin/module/endstops.h>
@@ -54,8 +53,8 @@ namespace swordfish::tools {
 		&(Module::__schema),
 		{__automaticField       },
 		{ __pocketsField, __toolsField,
-                        __driversField,
-                        __driverParametersField }
+		                    __driversField,
+		                    __driverParametersField }
 	};
 
 	void ToolsModule::handleEjectSensor() {
