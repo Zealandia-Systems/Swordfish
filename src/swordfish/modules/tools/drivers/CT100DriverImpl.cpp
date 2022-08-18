@@ -83,9 +83,29 @@ namespace swordfish::tools::drivers {
 	State CT100DriverImpl::readState() const {
 		debug()();
 
-		auto controlState = (uint8_t) readControlState();
+		auto controlState = readControlState();
 
-		return (State) (((controlState & (uint8_t) ControlState::ForwardRunning || controlState & (uint8_t) ControlState::ReverseRunning) ? (uint8_t) State::Running : 0) | (controlState & (uint8_t) ControlState::ForwardRunning ? (uint8_t) State::Forward : 0) | (controlState & (uint8_t) ControlState::Fault ? (uint8_t) State::Fault : 0));
+		switch (controlState) {
+			case ControlState::ForwardRunning: {
+				return (State) ((uint8_t) State::Running | (uint8_t) State::Forward);
+			}
+
+			case ControlState::ReverseRunning: {
+				return State::Running;
+			}
+
+			case ControlState::Standby: {
+				return State::None;
+			}
+
+			case ControlState::Fault: {
+				return State::Fault;
+			}
+
+			default: {
+				return State::Fault;
+			}
+		}
 	}
 
 	uint16_t CT100DriverImpl::readFault() const {
