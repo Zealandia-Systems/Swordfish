@@ -789,7 +789,7 @@
  */
 #define DEFAULT_MAX_FEEDRATE \
 	{ \
-		15000, 15000, 10000, 20000 \
+		208.33333333333333, 208.33333333333333, 133.33333333333333, 333.33333333333333 \
 	}
 
 //#define LIMITED_MAX_FR_EDITING        // Limit edit via M203 or LCD to DEFAULT_MAX_FEEDRATE * 2
@@ -808,7 +808,7 @@
  */
 #define DEFAULT_MAX_ACCELERATION \
 	{ \
-		1500, 1500, 1000, 1000 \
+		1000, 1000, 1000, 1000 \
 	}
 
 //#define LIMITED_MAX_ACCEL_EDITING     // Limit edit via M201 or LCD to DEFAULT_MAX_ACCELERATION * 2
@@ -827,9 +827,9 @@
  *   M204 R    Retract Acceleration
  *   M204 T    Travel Acceleration
  */
-#define DEFAULT_ACCELERATION         1500 // X, Y, Z and E acceleration for printing moves
-#define DEFAULT_RETRACT_ACCELERATION 1500 // E acceleration for retracts
-#define DEFAULT_TRAVEL_ACCELERATION  1500 // X, Y, Z acceleration for travel (non printing) moves
+#define DEFAULT_ACCELERATION         100 // X, Y, Z and E acceleration for printing moves
+#define DEFAULT_RETRACT_ACCELERATION 100 // E acceleration for retracts
+#define DEFAULT_TRAVEL_ACCELERATION  100 // X, Y, Z acceleration for travel (non printing) moves
 
 /**
  * Default Jerk limits (mm/s)

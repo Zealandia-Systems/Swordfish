@@ -54,8 +54,8 @@ namespace swordfish::tools {
 		&(Module::__schema),
 		{__automaticField       },
 		{ __pocketsField, __toolsField,
-                        __driversField,
-                        __driverParametersField }
+		                    __driversField,
+		                    __driverParametersField }
 	};
 
 	void ToolsModule::handleEjectSensor() {
@@ -576,7 +576,7 @@ start:
 
 			planner.synchronize();
 
-			_flags[HomingFlag] = !false;
+			_flags[HomingFlag] = false;
 		}
 	}
 
