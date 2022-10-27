@@ -1544,9 +1544,11 @@ bool MarlinSettings::_load() {
 		{
 			// Get only the number of E stepper parameters previously stored
 			// Any steppers added later are set to their defaults
-			uint32_t tmp1[XYZ + esteppers];
-			float tmp2[XYZ + esteppers];
-			feedRate_t tmp3[XYZ + esteppers];
+
+			uint32_t tmp1[XYZE_N];
+			float tmp2[XYZE_N];
+			feedRate_t tmp3[XYZE_N];
+
 			EEPROM_READ(tmp1); // max_acceleration_mm_per_s2
 			EEPROM_READ(planner.settings.min_segment_time_us);
 			EEPROM_READ(tmp2); // axis_steps_per_mm
