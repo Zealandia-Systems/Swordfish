@@ -595,6 +595,7 @@ start:
 		// move z to top
 		motionModule.setActiveCoordinateSystem(mcs);
 		motionModule.rapidMove({ .z = 0 });
+		motionModule.synchronize();
 
 		motionModule.setActiveCoordinateSystem(tcs);
 
@@ -608,29 +609,32 @@ start:
 
 		if (current_position.x >= nativeClearanceX) {
 			motionModule.rapidMove({ .x = CaddyClearanceX, .y = target(Y) });
+			motionModule.synchronize();
 		} else {
 			motionModule.rapidMove({ .x = CaddyClearanceX });
+			motionModule.synchronize();
 
 			motionModule.rapidMove({ .y = target(Y) });
+			motionModule.synchronize();
 		}
 
 		// move to the tool clip clearance position on the X axis, this is slightly closer to the pocket than
 		// the caddy clearance position.
-		motionModule.move({ .x = ToolClipClearanceX, .feedRate = homing_feedrate(X_AXIS) });
+		motionModule.move({ .x = target(X) + ToolClipClearanceX, .feedRate = homing_feedrate(X_AXIS) });
+		motionModule.synchronize();
 
 		// move z to pocket offset.z
 		motionModule.move({ .z = target(Z), .feedRate = homing_feedrate(Z_AXIS) });
+		motionModule.synchronize();
 
 		// move to x position of pocket offset
 		motionModule.move({ .x = target(X), .feedRate = homing_feedrate(X_AXIS) });
-
 		motionModule.synchronize();
 
 		unlock();
 
 		motionModule.setActiveCoordinateSystem(mcs);
 		motionModule.rapidMove({ .z = 0 });
-
 		motionModule.synchronize();
 
 		lock();
@@ -668,6 +672,7 @@ start:
 			// move z to top
 			motionModule.setActiveCoordinateSystem(mcs);
 			motionModule.move({ .z = 0 });
+			motionModule.synchronize();
 
 			motionModule.setActiveCoordinateSystem(tcs);
 
@@ -677,25 +682,26 @@ start:
 
 			// move to x y of pocket offset
 			motionModule.rapidMove({ .x = target(X), .y = target(Y) });
-
 			motionModule.synchronize();
 
 			unlock();
 
 			// move z to pocket offset.z
 			motionModule.move({ .z = target(Z), .feedRate = homing_feedrate(Z_AXIS) });
-
 			motionModule.synchronize();
 
 			lock();
 
-			motionModule.move({ .x = ToolClipClearanceX, .feedRate = homing_feedrate(X_AXIS) });
+			motionModule.move({ .x = target(X) + ToolClipClearanceX, .feedRate = homing_feedrate(X_AXIS) });
+			motionModule.synchronize();
 
 			motionModule.setActiveCoordinateSystem(mcs);
 			motionModule.move({ .z = 0, .feedRate = homing_feedrate(Z_AXIS) });
+			motionModule.synchronize();
 
 			motionModule.setActiveCoordinateSystem(tcs);
 			motionModule.rapidMove({ .x = CaddyClearanceX });
+			motionModule.synchronize();
 
 			sourcePocket->setToolIndex(-1);
 		}
