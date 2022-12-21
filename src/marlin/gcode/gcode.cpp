@@ -952,7 +952,14 @@ void GcodeSuite::process_parsed_command(const bool no_ok /*=false*/) {
 
 					case 2000:
 						M2000(writeResult);
+
 						return;
+
+					case 2001: {
+						M2001(writeResult);
+
+						return;
+					}
 
 					default:
 						parser.unknown_command_warning();

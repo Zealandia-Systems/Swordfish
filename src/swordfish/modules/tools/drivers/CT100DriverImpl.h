@@ -61,25 +61,25 @@ namespace swordfish::tools::drivers {
 			CurrentDetection = 25
 		};
 
-		uint16_t readFrequencyPercentage() const;
+		uint32_t readFrequencyPercentage() const;
 		void writeControlCommand(ControlCommand controlCommand) const;
 		ControlCommand readControlCommand() const;
 		ControlState readControlState() const;
 
-		virtual uint16_t readMaximumFrequency() const override;
-		virtual uint16_t readFrequencyUpperLimit() const override;
-		virtual uint16_t readFrequencyLowerLimit() const override;
+		virtual uint32_t readMaximumFrequency() const override;
+		virtual uint32_t readFrequencyUpperLimit() const override;
+		virtual uint32_t readFrequencyLowerLimit() const override;
 
-		virtual uint16_t readOutputFrequency() const override;
-		virtual uint16_t readOutputVoltage() const override;
-		virtual uint16_t readOutputCurrent() const override;
-		virtual uint16_t readDCBusVoltage() const override;
+		virtual uint32_t readOutputFrequency() const override;
+		virtual uint32_t readOutputVoltage() const override;
+		virtual uint32_t readOutputCurrent() const override;
+		virtual uint32_t readDCBusVoltage() const override;
 
 		virtual State readState() const override;
 
-		virtual uint16_t readFault() const override;
+		virtual uint32_t readFault() const override;
 
-		virtual void writeTargetFrequency(uint16_t targetFrequency) const override;
+		virtual void writeTargetFrequency(uint32_t targetFrequency) const override;
 		virtual void writeStart(Direction direction) const override;
 		virtual void writeStop() const override;
 	};

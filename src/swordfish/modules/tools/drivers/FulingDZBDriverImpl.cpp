@@ -17,19 +17,19 @@ namespace swordfish::tools::drivers {
 	FulingDZBDriverImpl::ControlCommand FulingDZBDriverImpl::readControlCommand() const {
 		debug()();
 
-		return readHoldingRegister(0x1000, ControlCommand::Unknown);
+		return (ControlCommand) readHoldingRegister(0x1000, (uint16_t) ControlCommand::Unknown);
 	}
 
 	void FulingDZBDriverImpl::writeControlCommand(ControlCommand controlCommand) const {
 		debug()();
 
-		writeHoldingRegister(0x1000, controlCommand);
+		writeHoldingRegister(0x1000, (uint16_t) controlCommand);
 	}
 
 	FulingDZBDriverImpl::ControlState FulingDZBDriverImpl::readControlState() const {
 		debug()();
 
-		return readHoldingRegister(0x1001, ControlState::Unknown);
+		return (ControlState) readHoldingRegister(0x1001, (uint16_t) ControlState::Unknown);
 	}
 
 	uint16_t FulingDZBDriverImpl::readFrequencyPercentage() const {
@@ -38,46 +38,46 @@ namespace swordfish::tools::drivers {
 		return readHoldingRegister(0x2000, (uint16_t) 0);
 	}
 
-	uint16_t FulingDZBDriverImpl::readMaximumFrequency() const {
+	uint32_t FulingDZBDriverImpl::readMaximumFrequency() const {
 		debug()();
 
-		return readHoldingRegister(4, (uint16_t) 0);
+		return (uint32_t) readHoldingRegister(4, (uint16_t) 0);
 	}
 
-	uint16_t FulingDZBDriverImpl::readFrequencyUpperLimit() const {
+	uint32_t FulingDZBDriverImpl::readFrequencyUpperLimit() const {
 		debug()();
 
-		return readHoldingRegister(5, (uint16_t) 0);
+		return (uint32_t) readHoldingRegister(5, (uint16_t) 0);
 	}
 
-	uint16_t FulingDZBDriverImpl::readFrequencyLowerLimit() const {
+	uint32_t FulingDZBDriverImpl::readFrequencyLowerLimit() const {
 		debug()();
 
-		return readHoldingRegister(6, (uint16_t) 0);
+		return (uint32_t) readHoldingRegister(6, (uint16_t) 0);
 	}
 
-	uint16_t FulingDZBDriverImpl::readOutputFrequency() const {
+	uint32_t FulingDZBDriverImpl::readOutputFrequency() const {
 		debug()();
 
-		return readHoldingRegister(0x3001, (uint16_t) 0);
+		return (uint32_t) readHoldingRegister(0x3001, (uint16_t) 0);
 	}
 
-	uint16_t FulingDZBDriverImpl::readOutputVoltage() const {
+	uint32_t FulingDZBDriverImpl::readOutputVoltage() const {
 		debug()();
 
-		return readHoldingRegister(0x3003, 0);
+		return (uint32_t) readHoldingRegister(0x3003, 0);
 	}
 
-	uint16_t FulingDZBDriverImpl::readOutputCurrent() const {
+	uint32_t FulingDZBDriverImpl::readOutputCurrent() const {
 		debug()();
 
-		return readHoldingRegister(0x3002, 0);
+		return (uint32_t) readHoldingRegister(0x3002, 0);
 	}
 
-	uint16_t FulingDZBDriverImpl::readDCBusVoltage() const {
+	uint32_t FulingDZBDriverImpl::readDCBusVoltage() const {
 		debug()();
 
-		return readHoldingRegister(0x3007, 0);
+		return (uint32_t) readHoldingRegister(0x3007, 0);
 	}
 
 	State FulingDZBDriverImpl::readState() const {
@@ -108,7 +108,7 @@ namespace swordfish::tools::drivers {
 		}
 	}
 
-	uint16_t FulingDZBDriverImpl::readFault() const {
+	uint32_t FulingDZBDriverImpl::readFault() const {
 		debug()();
 
 		auto fault = readHoldingRegister(0x5000, 0);
@@ -128,7 +128,7 @@ namespace swordfish::tools::drivers {
 		return fault;
 	}
 
-	void FulingDZBDriverImpl::writeTargetFrequency(uint16_t targetFrequency) const {
+	void FulingDZBDriverImpl::writeTargetFrequency(uint32_t targetFrequency) const {
 		debug()("targetFrequency: ", targetFrequency);
 
 		uint16_t maximumFrequency = readMaximumFrequency();

@@ -113,7 +113,7 @@ namespace swordfish::tools::drivers {
 		return _currentPower;
 	}
 
-	uint16_t PWMLaserDriverImpl::getOutputFrequency() const {
+	uint32_t PWMLaserDriverImpl::getOutputFrequency() const {
 		return _cyclesPerPeriod;
 	}
 

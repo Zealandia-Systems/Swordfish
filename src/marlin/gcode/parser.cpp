@@ -360,7 +360,7 @@ void GCodeParser::parse(char* p) {
 				p++; // Skip spaces between parameters & values
 
 #if ENABLED(GCODE_QUOTED_STRINGS)
-			const bool is_str = (*p == '"'), has_val = is_str || valid_float(p);
+			const bool is_str = (*p == '"'), has_val = is_str || valid_float(p) || valid_hex(p);
 			char* const valptr = has_val ? is_str ? unescape_string(p) : p : nullptr;
 #else
 			const bool has_val = valid_float(p);

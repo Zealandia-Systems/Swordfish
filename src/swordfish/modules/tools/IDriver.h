@@ -59,11 +59,12 @@ namespace swordfish::tools {
 		virtual bool isEnabled() const = 0;
 		virtual void setEnabled(bool enabled) = 0;
 
+		virtual uint32_t getMaximumPower() const = 0;
 		virtual float32_t getTargetPower() const = 0;
 		virtual void setTargetPower(float32_t power) = 0;
 		virtual float32_t getCurrentPower() const = 0;
 
-		virtual uint16_t getOutputFrequency() const = 0;
+		virtual uint32_t getOutputFrequency() const = 0;
 
 		virtual float32_t getPowerOverride() const = 0;
 		virtual void setPowerOverride(float32_t powerOverride) = 0;
@@ -99,6 +100,9 @@ namespace swordfish::tools {
 		}
 		virtual void setEnabled([[maybe_unused]] bool enabled) override {
 		}
+		virtual uint32_t getMaximumPower() const override {
+			return 0;
+		}
 		virtual float32_t getTargetPower() const override {
 			return 0;
 		}
@@ -107,7 +111,7 @@ namespace swordfish::tools {
 		virtual float32_t getCurrentPower() const override {
 			return 0;
 		}
-		virtual uint16_t getOutputFrequency() const override {
+		virtual uint32_t getOutputFrequency() const override {
 			return 0;
 		}
 		virtual float32_t getPowerOverride() const override;

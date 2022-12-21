@@ -11,6 +11,7 @@
 
 #include "drivers/ChangzouH100DriverImpl.h"
 #include "drivers/CT100DriverImpl.h"
+#include "drivers/FolinnH1DriverImpl.h"
 #include "drivers/FulingDZBDriverImpl.h"
 #include "drivers/PWMLaserDriverImpl.h"
 
@@ -23,11 +24,11 @@ namespace swordfish::tools {
 	core::Schema Driver::__schema = {
 		utils::typeName<Driver>(),
 		nullptr,
-		{__indexField,
+		{ __indexField,
 		  __typeField },
 		{
 
-      }
+			}
 	};
 
 	swordfish::tools::IDriver* Driver::createImplementation() {
@@ -54,6 +55,12 @@ namespace swordfish::tools {
 
 			case 3: {
 				implementation = new drivers::CT100DriverImpl();
+
+				break;
+			}
+
+			case 4: {
+				implementation = new drivers::FolinnH1DriverImpl();
 
 				break;
 			}

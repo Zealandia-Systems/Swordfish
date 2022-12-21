@@ -12,57 +12,57 @@
 #include "ChangzouH100DriverImpl.h"
 
 namespace swordfish::tools::drivers {
-	uint16_t ChangzouH100DriverImpl::readMaximumFrequency() const {
+	uint32_t ChangzouH100DriverImpl::readMaximumFrequency() const {
 		debug()();
 
-		return readHoldingRegister(3, (uint16_t) 0);
+		return (uint32_t) readHoldingRegister(3, (uint16_t) 0);
 	}
 
-	uint16_t ChangzouH100DriverImpl::readFrequencyUpperLimit() const {
+	uint32_t ChangzouH100DriverImpl::readFrequencyUpperLimit() const {
 		debug()();
 
-		return readHoldingRegister(5, (uint16_t) 0);
+		return (uint32_t) readHoldingRegister(5, (uint16_t) 0);
 	}
 
-	uint16_t ChangzouH100DriverImpl::readFrequencyLowerLimit() const {
+	uint32_t ChangzouH100DriverImpl::readFrequencyLowerLimit() const {
 		debug()();
 
-		return readHoldingRegister(11, (uint16_t) 0);
+		return (uint32_t) readHoldingRegister(11, (uint16_t) 0);
 	}
 
-	uint16_t ChangzouH100DriverImpl::readOutputFrequency() const {
+	uint32_t ChangzouH100DriverImpl::readOutputFrequency() const {
 		debug()();
 
-		return readInputRegister(0x0000, 0);
+		return (uint32_t) readInputRegister(0x0000, 0);
 	}
 
-	uint16_t ChangzouH100DriverImpl::readOutputVoltage() const {
+	uint32_t ChangzouH100DriverImpl::readOutputVoltage() const {
 		debug()();
 
-		return readInputRegister(0x0005, 0);
+		return (uint32_t) readInputRegister(0x0005, 0);
 	}
 
-	uint16_t ChangzouH100DriverImpl::readOutputCurrent() const {
+	uint32_t ChangzouH100DriverImpl::readOutputCurrent() const {
 		debug()();
 
-		return readInputRegister(0x0002, 0);
+		return (uint32_t) readInputRegister(0x0002, 0);
 	}
 
-	uint16_t ChangzouH100DriverImpl::readDCBusVoltage() const {
+	uint32_t ChangzouH100DriverImpl::readDCBusVoltage() const {
 		debug()();
 
-		return readInputRegister(0x0004, 0);
+		return (uint32_t) readInputRegister(0x0004, 0);
 	}
 
 	ChangzouH100DriverImpl::ControlState ChangzouH100DriverImpl::readControlState() const {
 		debug()();
 
-		const_cast<ChangzouH100DriverImpl*>(this)->_currentControlState = readHoldingRegister(0x0210, ControlState::Unknown);
+		const_cast<ChangzouH100DriverImpl*>(this)->_currentControlState = (ControlState) readHoldingRegister(0x0210, (uint16_t) ControlState::Unknown);
 
 		return _currentControlState;
 	}
 
-	void ChangzouH100DriverImpl::writeTargetFrequency(uint16_t targetFrequency) const {
+	void ChangzouH100DriverImpl::writeTargetFrequency(uint32_t targetFrequency) const {
 		debug()("targetFrequency: ", targetFrequency);
 
 		return writeHoldingRegister(0x0201, targetFrequency * 10);
@@ -96,7 +96,7 @@ namespace swordfish::tools::drivers {
 		return (State) (((controlState & (uint8_t) ControlState::Running || controlState & (uint8_t) ControlState::InRunning) ? (uint8_t) State::Running : 0) | ((controlState & (uint8_t) ControlState::Reverse || controlState & (uint8_t) ControlState::InReverse) ? 0 : (uint8_t) State::Forward) | (controlState & (uint8_t) ControlState::InBraking ? (uint8_t) State::Braking : 0) | ((controlState & (uint8_t) ControlState::Jogging || controlState & (uint8_t) ControlState::InJogging) ? (uint8_t) State::Jogging : 0));
 	}
 
-	uint16_t ChangzouH100DriverImpl::readFault() const {
+	uint32_t ChangzouH100DriverImpl::readFault() const {
 		debug()();
 
 		return readInputRegister(0x000A, 0);
