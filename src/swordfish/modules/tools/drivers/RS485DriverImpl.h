@@ -27,21 +27,21 @@ namespace swordfish::tools::drivers {
 		uint8_t _slaveAddress = 1;
 		uint32_t _baudRate = 9600;
 
-		uint16_t _maxPower = 0;
+		uint32_t _maximumPower = 0;
 		bool _hasFan = false;
 		bool _enabled = false;
 
-		uint16_t _targetFrequency = 0;
+		uint32_t _targetFrequency = 0;
 		Direction _targetDirection = Direction::Forward;
 		float32_t _targetPower = 0; // in RPM
 
 		float32_t _powerOverride = 100.0f;
 
-		uint16_t _outputFrequency = 0;
+		uint32_t _outputFrequency = 0;
 		Direction _outputDirection = Direction::Forward;
-		uint16_t _outputVoltage = 0;
-		uint16_t _outputCurrent = 0;
-		uint16_t _dcBusVoltage = 0;
+		uint32_t _outputVoltage = 0;
+		uint32_t _outputCurrent = 0;
+		uint32_t _dcBusVoltage = 0;
 
 		float32_t _currentPower = 0;
 
@@ -50,11 +50,11 @@ namespace swordfish::tools::drivers {
 
 		template<typename T>
 		T readInputRegister(uint16_t address, T defaultValue) const {
-			uint16_t result;
+			T result;
 
-			debug()("address: ", address);
+			debug()("address: ", reinterpret_cast<void*>(address));
 
-			if (1 != modbus::read_input_registers(_slaveAddress, address, 1, &result)) {
+			if (1 != modbus::read_input_registers(_slaveAddress, address, 1, reinterpret_cast<uint16_t*>(&result))) {
 				debug()("no result");
 
 				return defaultValue;
@@ -64,16 +64,20 @@ namespace swordfish::tools::drivers {
 
 			safe_delay(10);
 
-			return (T) result;
+			return result;
 		}
 
 		template<typename T>
 		T readHoldingRegister(uint16_t address, T defaultValue) const {
-			uint16_t result;
+			T result;
 
-			debug()("address: ", address);
+			debug()("address: ", reinterpret_cast<void*>(address));
 
-			if (1 != modbus::read_holding_registers(_slaveAddress, address, 1, &result)) {
+			auto count = sizeof(T) / 2;
+
+			debug()("count: ", count);
+
+			if (count != modbus::read_holding_registers(_slaveAddress, address, count, reinterpret_cast<uint16_t*>(&result))) {
 				debug()("no result");
 
 				return defaultValue;
@@ -83,14 +87,14 @@ namespace swordfish::tools::drivers {
 
 			safe_delay(10);
 
-			return (T) result;
+			return result;
 		}
 
 		template<typename T>
 		void writeHoldingRegister(uint16_t address, T value) const {
-			debug()("address: ", address);
+			debug()("address: ", reinterpret_cast<void*>(address));
 
-			debug()("value: ", (uint16_t) value);
+			debug()("value: ", value);
 
 			modbus::write_holding_register(_slaveAddress, address, (uint16_t) value);
 
@@ -99,35 +103,35 @@ namespace swordfish::tools::drivers {
 
 		template<typename T>
 		void writeParameter(uint16_t address, T value) const {
-			debug()("address: ", address);
+			debug()("address: ", reinterpret_cast<void*>(address));
 
-			debug()("value: ", (uint16_t) value);
+			debug()("value: ", value);
 
 			modbus::write_parameter(_slaveAddress, address, (uint16_t) value);
 
 			safe_delay(10);
 		}
 
-		virtual uint16_t readMaximumFrequency() const = 0;
-		virtual uint16_t readFrequencyUpperLimit() const = 0;
-		virtual uint16_t readFrequencyLowerLimit() const = 0;
+		virtual uint32_t readMaximumFrequency() const = 0;
+		virtual uint32_t readFrequencyUpperLimit() const = 0;
+		virtual uint32_t readFrequencyLowerLimit() const = 0;
 
-		virtual uint16_t readOutputFrequency() const = 0;
-		virtual uint16_t readOutputCurrent() const = 0;
-		virtual uint16_t readOutputVoltage() const = 0;
-		virtual uint16_t readDCBusVoltage() const = 0;
+		virtual uint32_t readOutputFrequency() const = 0;
+		virtual uint32_t readOutputCurrent() const = 0;
+		virtual uint32_t readOutputVoltage() const = 0;
+		virtual uint32_t readDCBusVoltage() const = 0;
 
 		virtual State readState() const = 0;
 
-		virtual uint16_t readFault() const = 0;
+		virtual uint32_t readFault() const = 0;
 
-		virtual void writeTargetFrequency(uint16_t targetFrequency) const = 0;
+		virtual void writeTargetFrequency(uint32_t targetFrequency) const = 0;
 		virtual void writeStart(Direction targetDirection) const = 0;
 		virtual void writeStop() const = 0;
 
-		virtual uint16_t calculateTargetFrequency() const;
+		virtual uint32_t calculateTargetFrequency() const;
 
-		virtual void waitForSpindle(uint16_t targetFrequency);
+		virtual void waitForSpindle(uint32_t targetFrequency);
 
 		virtual void refresh();
 
@@ -143,7 +147,7 @@ namespace swordfish::tools::drivers {
 
 		uint8_t getSlaveAddress() const;
 
-		uint16_t getMaxPower() const;
+		virtual uint32_t getMaximumPower() const override;
 
 		virtual void idle() override;
 
@@ -165,7 +169,7 @@ namespace swordfish::tools::drivers {
 
 		virtual float32_t getCurrentPower() const override;
 
-		virtual uint16_t getOutputFrequency() const override;
+		virtual uint32_t getOutputFrequency() const override;
 
 		virtual float32_t getPowerOverride() const override;
 

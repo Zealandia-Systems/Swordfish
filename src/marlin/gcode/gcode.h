@@ -293,6 +293,7 @@
  * M995 - Touch screen calibration for TFT display
  * M997 - Perform in-application firmware update
  * M999 - Restart after being stopped by error
+ * M1000 - Modbus
  * M2000 - Enable/disable ATC features.
  * D... - Custom Development G-code. Add hooks to 'gcode_D.cpp' for developers to test features. (Requires MARLIN_DEV_MODE)
  *
@@ -993,6 +994,7 @@ private:
 	TERN_(SDSUPPORT, static void M1001());
 
 	static void M2000(std::function<void(std::function<void(swordfish::io::Writer&)>)> writeResult);
+	static void M2001(std::function<void(std::function<void(swordfish::io::Writer&)>)> writeResult);
 
 	TERN_(MAX7219_GCODE, static void M7219());
 
