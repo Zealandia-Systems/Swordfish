@@ -44,6 +44,7 @@ namespace swordfish::tools {
 	NullDriver ToolsModule::__nullDriver = {};
 
 	core::ValueField<bool> ToolsModule::__automaticField = { "automatic", 0, false };
+	core::ValueField<bool> ToolsModule::__ignoreLockSensorsField = { "ignoreLockSensors", 1, false };
 	core::ObjectField<PocketTable> ToolsModule::__pocketsField = { "pockets", 0 };
 	core::ObjectField<ToolTable> ToolsModule::__toolsField = { "tools", 1 };
 	core::ObjectField<DriverTable> ToolsModule::__driversField = { "drivers", 2 };
@@ -52,7 +53,10 @@ namespace swordfish::tools {
 	core::Schema ToolsModule::__schema = {
 		utils::typeName<ToolsModule>(),
 		&(Module::__schema),
-		{__automaticField       },
+		{
+												__automaticField,
+												__ignoreLockSensorsField,
+												},
 		{ __pocketsField, __toolsField,
 		                    __driversField,
 		                    __driverParametersField }
@@ -178,8 +182,12 @@ start:
 
 		WRITE(ATC_LOCK_PIN, !ATC_LOCK_PIN_INVERTED);
 
-		while (READ(ATC_EJECT_SENSOR_PIN) == ATC_EJECT_SENSOR_PIN_INVERTED) {
-			safe_delay(0);
+		if (ignoreLockSensors()) {
+			safe_delay(5000);
+		} else {
+			while (READ(ATC_EJECT_SENSOR_PIN) == ATC_EJECT_SENSOR_PIN_INVERTED) {
+				safe_delay(0);
+			}
 		}
 
 		_flags[UnlockedFlag] = !manual;
@@ -192,18 +200,19 @@ start:
 			return;
 		}
 
-		// WRITE(ATC_SEAL_PIN, ATC_SEAL_PIN_INVERTED);
 		WRITE(ATC_LOCK_PIN, ATC_LOCK_PIN_INVERTED);
 
-		uint8_t tries = 20;
+		if (ignoreLockSensors()) {
+			safe_delay(5000);
+		} else {
+			uint8_t tries = 20;
 
-		while (READ(ATC_LOCK_SENSOR_PIN) == ATC_LOCK_SENSOR_PIN_INVERTED && tries) {
-			safe_delay(100);
+			while (READ(ATC_LOCK_SENSOR_PIN) == ATC_LOCK_SENSOR_PIN_INVERTED && tries) {
+				safe_delay(100);
 
-			tries--;
+				tries--;
+			}
 		}
-
-		// WRITE(ATC_SEAL_PIN, !ATC_SEAL_PIN_INVERTED);
 
 		_flags[UnlockedFlag] = false;
 	}
