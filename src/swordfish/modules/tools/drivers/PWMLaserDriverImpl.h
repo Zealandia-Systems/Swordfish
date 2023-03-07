@@ -74,7 +74,10 @@ namespace swordfish::tools::drivers {
 		virtual void apply() override;
 
 		virtual void emergencyStop() override {
+			setEnabled(false);
+			apply();
 		}
+
 		virtual void emergencyClear() override {
 		}
 	};
