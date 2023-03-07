@@ -455,6 +455,25 @@ start:
 				moveForManualChange();
 
 				promptUserToExchangeTool(currentToolIndex, nextToolIndex);
+
+				auto& offset = nextTool->getOffset();
+				auto doProbe = nextTool->getNeedsProbe();
+
+				if (doProbe) {
+
+					auto offsetZ = probeTool();
+
+					// Store the tool offset
+					offset.z(offsetZ);
+
+					nextTool->setNeedsProbe(false);
+				}
+
+				// Activate the tool offset
+				motionModule.setToolOffset(offset);
+
+				_spindlePocket->setToolIndex(nextTool->getIndex());
+
 			} else {
 				if (currentTool && !currentTool->isFixed()) {
 					if (freePocket) {
