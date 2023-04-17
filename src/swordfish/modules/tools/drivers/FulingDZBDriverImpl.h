@@ -77,5 +77,7 @@ namespace swordfish::tools::drivers {
 		virtual void writeTargetFrequency(uint32_t targetFrequency) const override;
 		virtual void writeStart(Direction direction) const override;
 		virtual void writeStop() const override;
+
+		virtual void emergencyClear() override;
 	};
 }
