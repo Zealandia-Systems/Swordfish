@@ -168,6 +168,14 @@ namespace swordfish::tools::drivers {
 			}
 
 			safe_delay(10);
+
+			writeTargetFrequency(targetFrequency);
+
+			if (targetFrequency > 0) {
+				writeStart(_targetDirection);
+			} else {
+				writeStop();
+			}
 		}
 	}
 

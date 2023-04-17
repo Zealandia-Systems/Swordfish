@@ -45,6 +45,7 @@ namespace swordfish::tools {
 
 	core::ValueField<bool> ToolsModule::__automaticField = { "automatic", 0, false };
 	core::ValueField<bool> ToolsModule::__ignoreLockSensorsField = { "ignoreLockSensors", 1, false };
+	core::ValueField<bool> ToolsModule::__hasATCDustShoeField = { "hasATCDustShoe", 2, false };
 	core::ObjectField<PocketTable> ToolsModule::__pocketsField = { "pockets", 0 };
 	core::ObjectField<ToolTable> ToolsModule::__toolsField = { "tools", 1 };
 	core::ObjectField<DriverTable> ToolsModule::__driversField = { "drivers", 2 };
@@ -56,6 +57,7 @@ namespace swordfish::tools {
 		{
 												__automaticField,
 												__ignoreLockSensorsField,
+												__hasATCDustShoeField,
 												},
 		{ __pocketsField, __toolsField,
 		                    __driversField,
@@ -481,7 +483,19 @@ start:
 					} else {
 						moveForManualChange();
 
+						if (hasATCDustShoe()) {
+							WRITE(ATC_SEAL_PIN, ATC_SEAL_PIN_INVERTED);
+
+							safe_delay(500);
+						}
+
 						promptUserToRemoveTool(currentToolIndex);
+					}
+				} else {
+					if (hasATCDustShoe()) {
+						WRITE(ATC_SEAL_PIN, ATC_SEAL_PIN_INVERTED);
+
+						safe_delay(500);
 					}
 				}
 
@@ -633,17 +647,29 @@ start:
 		// Otherwise we move to the clearance position in the X axis first, and then move to
 		// the target position in the Y axis.
 
-		auto nativeClearanceX = motionModule.toNative(X_AXIS, CaddyClearanceX);
+		auto caddyClearanceX = CaddyClearanceX;
+
+		if (hasATCDustShoe()) {
+			caddyClearanceX = CaddyDustShoeClearanceX;
+		}
+
+		auto nativeClearanceX = motionModule.toNative(X_AXIS, caddyClearanceX);
 
 		if (current_position.x >= nativeClearanceX) {
-			motionModule.rapidMove({ .x = CaddyClearanceX, .y = target(Y) });
+			motionModule.rapidMove({ .x = caddyClearanceX, .y = target(Y) });
 			motionModule.synchronize();
 		} else {
-			motionModule.rapidMove({ .x = CaddyClearanceX });
+			motionModule.rapidMove({ .x = caddyClearanceX });
 			motionModule.synchronize();
 
 			motionModule.rapidMove({ .y = target(Y) });
 			motionModule.synchronize();
+		}
+
+		if (hasATCDustShoe()) {
+			WRITE(ATC_SEAL_PIN, ATC_SEAL_PIN_INVERTED);
+
+			safe_delay(500);
 		}
 
 		// move to the tool clip clearance position on the X axis, this is slightly closer to the pocket than
@@ -661,6 +687,7 @@ start:
 
 		unlock();
 
+		// move z to top
 		motionModule.setActiveCoordinateSystem(mcs);
 		motionModule.rapidMove({ .z = 0 });
 		motionModule.synchronize();
@@ -686,7 +713,7 @@ start:
 
 		Pocket* sourcePocket = findToolPocket(tool);
 
-		debug()("sourcePocket: ", sourcePocket);
+		debug()("sourcePocket: ", sourcePocket->getIndex());
 
 		if (sourcePocket == nullptr) {
 			debug()("manual tool change");
@@ -699,7 +726,7 @@ start:
 		} else {
 			// move z to top
 			motionModule.setActiveCoordinateSystem(mcs);
-			motionModule.move({ .z = 0 });
+			motionModule.rapidMove({ .z = 0 });
 			motionModule.synchronize();
 
 			motionModule.setActiveCoordinateSystem(tcs);
@@ -720,18 +747,33 @@ start:
 
 			lock();
 
+			// remove tool from pocket
 			motionModule.move({ .x = target(X) + ToolClipClearanceX, .feedRate = homing_feedrate(X_AXIS) });
 			motionModule.synchronize();
 
+			// move z to top
 			motionModule.setActiveCoordinateSystem(mcs);
-			motionModule.move({ .z = 0, .feedRate = homing_feedrate(Z_AXIS) });
+			motionModule.rapidMove({ .z = 0 });
 			motionModule.synchronize();
 
+			auto caddyClearanceX = CaddyClearanceX;
+
+			if (hasATCDustShoe()) {
+				caddyClearanceX = CaddyDustShoeClearanceX;
+			}
+
+			// move to clear caddy
 			motionModule.setActiveCoordinateSystem(tcs);
-			motionModule.rapidMove({ .x = CaddyClearanceX });
+			motionModule.rapidMove({ .x = caddyClearanceX });
 			motionModule.synchronize();
 
 			sourcePocket->setToolIndex(-1);
+		}
+
+		if (hasATCDustShoe()) {
+			WRITE(ATC_SEAL_PIN, !ATC_SEAL_PIN_INVERTED);
+
+			safe_delay(500);
 		}
 
 		auto& offset = tool.getOffset();

@@ -2011,9 +2011,17 @@ bool Planner::_populate_block(
 	}
 #endif // EXTRUDERS
 
-	// NOMORE(fr_mm_s, settings.max_feedrate_mm_s[X_AXIS]);
-	// NOMORE(fr_mm_s, settings.max_feedrate_mm_s[Y_AXIS]);
-	// NOMORE(fr_mm_s, settings.max_feedrate_mm_s[Z_AXIS]);
+	if (block->steps.x) {
+		NOMORE(fr_mm_s, settings.max_feedrate_mm_s[X_AXIS]);
+	}
+
+	if (block->steps.y) {
+		NOMORE(fr_mm_s, settings.max_feedrate_mm_s[Y_AXIS]);
+	}
+
+	if (block->steps.z) {
+		NOMORE(fr_mm_s, settings.max_feedrate_mm_s[Z_AXIS]);
+	}
 
 	debug()("max_feedrate_mm_s[X_AXIS]: ", settings.max_feedrate_mm_s[X_AXIS]);
 	debug()("max_feedrate_mm_s[Y_AXIS]: ", settings.max_feedrate_mm_s[Y_AXIS]);
@@ -2190,6 +2198,7 @@ bool Planner::_populate_block(
 #define LIMIT_ACCEL_FLOAT(AXIS, INDX) \
 	do { \
 		if (block->steps[AXIS] && max_acceleration_steps_per_s2[AXIS + INDX] < accel) { \
+			debug()("max_acceleration_steps_per_s2[", axis_codes[AXIS], "]: ", max_acceleration_steps_per_s2[AXIS + INDX]); \
 			const float comp = (float) max_acceleration_steps_per_s2[AXIS + INDX] * (float) block->step_event_count; \
 			if ((float) accel * (float) block->steps[AXIS] > comp) \
 				accel = comp / (float) block->steps[AXIS]; \
@@ -2250,8 +2259,13 @@ bool Planner::_populate_block(
 		LIMIT_ACCEL_FLOAT(E_AXIS, E_INDEX_N(extruder));
 		//}
 	}
+
 	block->acceleration_steps_per_s2 = accel;
 	block->acceleration = accel / steps_per_mm;
+
+	debug()("block->acceleration_steps_per_s2: ", block->acceleration_steps_per_s2);
+	debug()("block->acceleration: ", block->acceleration);
+
 #if DISABLED(S_CURVE_ACCELERATION)
 	block->acceleration_rate = (uint32_t) (accel * (4096.0f * 4096.0f / (STEPPER_TIMER_RATE)));
 #endif
@@ -2950,10 +2964,10 @@ void Planner::set_max_jerk(const AxisEnum axis, float targetValue) {
 #		ifdef MAX_JERK_EDIT_VALUES
 			MAX_JERK_EDIT_VALUES
 #		else
-	{(DEFAULT_XJERK) *2,
-	 (DEFAULT_YJERK) *2,
-	 (DEFAULT_ZJERK) *2,
-	 (DEFAULT_EJERK) *2 }
+			{ (DEFAULT_XJERK) *2,
+		    (DEFAULT_YJERK) *2,
+		    (DEFAULT_ZJERK) *2,
+		    (DEFAULT_EJERK) *2 }
 #		endif
 			;
 	limit_and_warn(targetValue, axis, PSTR("Jerk"), max_jerk_edit);
