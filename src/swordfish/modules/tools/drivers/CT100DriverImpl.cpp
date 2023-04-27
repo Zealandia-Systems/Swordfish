@@ -128,6 +128,12 @@ namespace swordfish::tools::drivers {
 		return fault;
 	}
 
+	void CT100DriverImpl::clearFault() const {
+		debug()();
+
+		// TODO: Clear fault
+	}
+
 	void CT100DriverImpl::writeTargetFrequency(uint32_t targetFrequency) const {
 		debug()("targetFrequency: ", targetFrequency);
 

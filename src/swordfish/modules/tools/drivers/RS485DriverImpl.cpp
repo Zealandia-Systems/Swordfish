@@ -168,14 +168,6 @@ namespace swordfish::tools::drivers {
 			}
 
 			safe_delay(10);
-
-			writeTargetFrequency(targetFrequency);
-
-			if (targetFrequency > 0) {
-				writeStart(_targetDirection);
-			} else {
-				writeStop();
-			}
 		}
 	}
 
@@ -228,6 +220,7 @@ namespace swordfish::tools::drivers {
 
 	void RS485DriverImpl::refresh() {
 		if (_doReset) {
+			clearFault();
 			writeTargetFrequency(0);
 			writeStop();
 

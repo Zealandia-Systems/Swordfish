@@ -158,7 +158,7 @@ namespace swordfish::tools::drivers {
 		writeHoldingRegister(0x1000, 0x0005);
 	}
 
-	void FulingDZBDriverImpl::emergencyClear() {
+	void FulingDZBDriverImpl::clearFault() const {
 		writeHoldingRegister(0x1000, 0x0007);
 	}
 } // namespace swordfish::tools::drivers
