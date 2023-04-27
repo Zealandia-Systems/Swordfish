@@ -101,4 +101,10 @@ namespace swordfish::tools::drivers {
 
 		return readInputRegister(0x000A, 0);
 	}
+
+	void ChangzouH100DriverImpl::clearFault() const {
+		debug()();
+
+		// TODO: Clear fault
+	}
 } // namespace swordfish::tools::drivers

@@ -78,6 +78,6 @@ namespace swordfish::tools::drivers {
 		virtual void writeStart(Direction direction) const override;
 		virtual void writeStop() const override;
 
-		virtual void emergencyClear() override;
+		virtual void clearFault() const override;
 	};
 }
