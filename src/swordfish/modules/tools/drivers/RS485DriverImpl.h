@@ -23,6 +23,8 @@ namespace swordfish::tools::drivers {
 		int32_t _fanOffTime = 0;
 		bool _doReset = true;
 
+		void resetIfNeeded();
+
 	protected:
 		uint8_t _slaveAddress = 1;
 		uint32_t _baudRate = 9600;
@@ -124,7 +126,6 @@ namespace swordfish::tools::drivers {
 		virtual State readState() const = 0;
 
 		virtual uint32_t readFault() const = 0;
-		virtual void clearFault() const = 0;
 
 		virtual void writeTargetFrequency(uint32_t targetFrequency) const = 0;
 		virtual void writeStart(Direction targetDirection) const = 0;
