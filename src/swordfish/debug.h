@@ -26,7 +26,9 @@ namespace swordfish {
 
 		template<typename... TArgs>
 		void operator()(TArgs&&... args) {
-			out << _location.file_name() << ":(" << _location.line() << ") [" << _location.function_name() << "] ";
+			auto time = micros();
+
+			out << _location.file_name() << ":(" << _location.line() << ") " << time << " [" << _location.function_name() << "] ";
 
 			((out << std::forward<TArgs>(args)), ...);
 

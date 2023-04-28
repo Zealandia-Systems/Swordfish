@@ -36,7 +36,7 @@ namespace swordfish::estop {
 	EStopModule::EStopModule(core::Object* parent) :
 			Module(parent),
 			_pack(__schema, *this, &(Module::_pack)),
-			_estopISR(std::bind(&EStopModule::handleEStop, this), ESTOP_PIN, CHANGE) {
+			_estopISR(std::bind(&EStopModule::handleEStop, this), ESTOP_PIN, CHANGE, true) {
 	}
 
 	void EStopModule::handleEStop() {

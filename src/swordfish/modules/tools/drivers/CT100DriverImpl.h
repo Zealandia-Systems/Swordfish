@@ -78,7 +78,6 @@ namespace swordfish::tools::drivers {
 		virtual State readState() const override;
 
 		virtual uint32_t readFault() const override;
-		virtual void clearFault() const override;
 
 		virtual void writeTargetFrequency(uint32_t targetFrequency) const override;
 		virtual void writeStart(Direction direction) const override;

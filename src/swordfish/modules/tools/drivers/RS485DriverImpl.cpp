@@ -219,13 +219,7 @@ namespace swordfish::tools::drivers {
 	}
 
 	void RS485DriverImpl::refresh() {
-		if (_doReset) {
-			clearFault();
-			writeTargetFrequency(0);
-			writeStop();
-
-			_doReset = false;
-		}
+		resetIfNeeded();
 
 		_state = readState();
 		_fault = readFault();
@@ -292,5 +286,14 @@ namespace swordfish::tools::drivers {
 	// called in interrupt context
 	void RS485DriverImpl::emergencyClear() {
 		_doReset = true;
+	}
+
+	void RS485DriverImpl::resetIfNeeded() {
+		if (_doReset) {
+			writeTargetFrequency(0);
+			writeStop();
+
+			_doReset = false;
+		}
 	}
 } // namespace swordfish::tools::drivers

@@ -158,7 +158,18 @@ namespace swordfish::tools::drivers {
 		writeHoldingRegister(0x1000, 0x0005);
 	}
 
-	void FulingDZBDriverImpl::clearFault() const {
-		writeHoldingRegister(0x1000, 0x0007);
+	void FulingDZBDriverImpl::refresh() {
+		RS485DriverImpl::refresh();
+
+		debug()();
+
+		auto& estopModule = EStopModule::getInstance();
+
+		debug()("estop: ", estopModule.isTriggered());
+		debug()("_fault: ", _fault);
+
+		if (!estopModule.isTriggered() && (_fault & 0x100) == 0x100) {
+			writeHoldingRegister(0x1000, 0x0007);
+		}
 	}
 } // namespace swordfish::tools::drivers

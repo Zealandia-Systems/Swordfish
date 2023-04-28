@@ -122,12 +122,6 @@ namespace swordfish::tools::drivers {
 		return (uint32_t) fault;
 	}
 
-	void FolinnH1DriverImpl::clearFault() const {
-		debug()();
-
-		// TODO: clear fault
-	}
-
 	void FolinnH1DriverImpl::writeTargetFrequency(uint32_t targetFrequency) const {
 		debug()("targetFrequency: ", targetFrequency);
 
