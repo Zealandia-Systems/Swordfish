@@ -23,6 +23,8 @@
 #include "FormatException.h"
 #include "DuplicateIndexException.h"
 
+#include <marlin/gcode/parser.h>
+
 namespace swordfish::core {
 	namespace _ {
 		template<typename T>
@@ -105,7 +107,7 @@ namespace swordfish::core {
 
 		virtual void init(Pack& pack) = 0;
 
-		virtual void set(Pack& pack, std::string_view value) = 0;
+		virtual void readJson(Pack& pack, std::string_view value) = 0;
 	};
 
 	template<
@@ -158,14 +160,38 @@ namespace swordfish::core {
 			safe->value_ = value;
 		}
 
-		void set(Pack& pack, std::string_view value) {
+		/*virtual void set(Pack& pack, std::string_view value) {
+		  _::convertSet<T>(value, [&](T value) {
+		    set(pack, value);
+		  });
+		}*/
+
+		virtual void readJson(Pack& pack, std::string_view value) {
 			_::convertSet<T>(value, [&](T value) {
 				set(pack, value);
 			});
 		}
 
-		void writeJson(io::Writer& out, [[maybe_unused]] Object& object, Pack& pack) {
+		virtual void writeJson(io::Writer& out, [[maybe_unused]] Object& object, Pack& pack) {
 			out << get(pack);
+		}
+	};
+
+	template<typename T>
+	class LinearValueField : public ValueField<T> {
+	public:
+		LinearValueField(const char* name, uint32_t byteOffset, T defaultValue) :
+				ValueField<T>::ValueField(name, byteOffset, defaultValue) {
+		}
+
+		virtual void readJson(Pack& pack, std::string_view value) {
+			_::convertSet<T>(value, [&](T value) {
+				this->set(pack, value * parser.linear_unit_factor);
+			});
+		}
+
+		virtual void writeJson(io::Writer& out, [[maybe_unused]] Object& object, Pack& pack) {
+			out << ValueField<T>::get(pack) / parser.linear_unit_factor;
 		}
 	};
 
@@ -233,7 +259,7 @@ namespace swordfish::core {
 			pack._values[byteOffset] = ((pack._values[byteOffset] & ~(1 << bit)) | (value << bit));
 		}
 
-		void set(Pack& pack, std::string_view value) {
+		void readJson(Pack& pack, std::string_view value) {
 			if (strncmp("true", value.data(), value.size()) == 0) {
 				set(pack, true);
 			} else {

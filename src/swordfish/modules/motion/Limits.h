@@ -14,7 +14,7 @@
 #include <swordfish/utils/TypeInfo.h>
 
 namespace swordfish::motion {
-	class Limits : public core::Boundary<core::Vector3> {
+	class Limits : public core::Boundary<core::LinearVector3> {
 	private:
 		bool _enabled;
 
@@ -28,8 +28,8 @@ namespace swordfish::motion {
 		}
 
 	public:
-		Limits(core::Object* parent) : core::Boundary<core::Vector3>(parent), _enabled(true), _pack(__schema, *this, &(core::Boundary<core::Vector3>::_pack)) {
-
+		Limits(core::Object* parent) :
+				core::Boundary<core::LinearVector3>(parent), _enabled(true), _pack(__schema, *this, &(core::Boundary<core::LinearVector3>::_pack)) {
 		}
 
 		bool areEnabled() const {
@@ -43,4 +43,4 @@ namespace swordfish::motion {
 		void clamp(Eigen::Vector3f& vector);
 		void throwIfOutside(const Eigen::Vector3f& vector);
 	};
-}
+} // namespace swordfish::motion

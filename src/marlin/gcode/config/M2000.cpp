@@ -179,7 +179,7 @@ protected:
 		if (_tableIndex >= 0) {
 
 		} else {
-			parent->setValue(_objectProperty, value);
+			parent->setValueFromJson(_objectProperty, value);
 		}
 	}
 

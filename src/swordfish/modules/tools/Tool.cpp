@@ -18,20 +18,20 @@ namespace swordfish::tools {
 	core::ValueField<uint8_t> Tool::__driverIndexField = { "driver", 40, 0 };
 	core::ObjectField<ToolGeometry> Tool::__geometryField = { "geometry", 0 };
 	core::ObjectField<core::String> Tool::__descriptionField = { "description", 1 };
-	core::ObjectField<core::Vector3> Tool::__offsetField = { "offset", 2 };
+	core::ObjectField<core::LinearVector3> Tool::__offsetField = { "offset", 2 };
 	core::TransientField<Tool, int16_t> Tool::__pocketField = { "pocket", getPocketIndex, setPocketIndex };
 
 	core::Schema Tool::__schema = {
 		utils::typeName<Tool>(),
 		nullptr,
-		{   __indexField,
+		{ __indexField,
 		  __fixedField,
 		  __needsProbeField,
 		  __driverIndexField },
-		{__geometryField,
+		{ __geometryField,
 		  __descriptionField,
 		  __offsetField },
-		{  __pocketField }
+		{ __pocketField }
 	};
 
 	void Tool::validateIndex(int16_t oldValue, int16_t newValue) {

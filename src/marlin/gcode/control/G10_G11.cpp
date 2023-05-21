@@ -38,7 +38,7 @@ using namespace swordfish::motion;
 #	include "../gcode.h"
 #	include "../../module/motion.h"
 
-//#define DEBUG_CNC_G10
+// #define DEBUG_CNC_G10
 
 template<typename TRecord, typename TTable>
 static TRecord& getRecord(Table<TRecord, TTable>& table, uint16_t index, bool& created) {
@@ -146,7 +146,7 @@ void GcodeSuite::G10() {
 
 			LOOP_XYZ(i) {
 				if (parser.seenval(XYZ_CHAR(i))) {
-					const float v = parser.value_axis_units((AxisEnum) i);
+					const float v = parser.value_linear_units();
 
 					offset[i] = axis_is_relative((AxisEnum) i) ? toLogical(current_position[i], (AxisEnum) i) + v : v;
 				} else {
@@ -210,15 +210,15 @@ void GcodeSuite::G10() {
 			auto& offset = coordinateSystem->getOffset();
 
 			if (parser.seenval('X')) {
-				offset.x(parser.value_float());
+				offset.x(parser.value_linear_units());
 			}
 
 			if (parser.seenval('Y')) {
-				offset.y(parser.value_float());
+				offset.y(parser.value_linear_units());
 			}
 
 			if (parser.seenval('Z')) {
-				offset.z(parser.value_float());
+				offset.z(parser.value_linear_units());
 			}
 
 			Controller::getInstance().save();
@@ -278,11 +278,11 @@ void GcodeSuite::G10() {
 			auto& geometry = tool.getGeometry();
 
 			if (parser.seenval('W')) {
-				geometry.diameter(parser.value_float());
+				geometry.diameter(parser.value_linear_units());
 			}
 
 			if (parser.seenval('H')) {
-				geometry.length(parser.value_float());
+				geometry.length(parser.value_linear_units());
 			}
 
 			if (parser.seenval('D')) {
@@ -362,17 +362,17 @@ void GcodeSuite::G10() {
 			}
 
 			if (parser.seenval('D')) {
-				pocket.setDepth(parser.value_float());
+				pocket.setDepth(parser.value_linear_units());
 			}
 
 			auto& offset = pocket.getOffset();
 
 			if (parser.seenval('X')) {
-				offset.x(parser.value_float());
+				offset.x(parser.value_linear_units());
 			}
 
 			if (parser.seenval('Y')) {
-				auto yVal = parser.value_float();
+				auto yVal = parser.value_linear_units();
 
 				debug()("y: ", (float32_t) yVal);
 
@@ -380,7 +380,7 @@ void GcodeSuite::G10() {
 			}
 
 			if (parser.seenval('Z')) {
-				offset.z(parser.value_float());
+				offset.z(parser.value_linear_units());
 			}
 
 			Controller::getInstance().save();

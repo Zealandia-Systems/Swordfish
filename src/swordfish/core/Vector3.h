@@ -19,11 +19,14 @@
 #include <swordfish/core/Schema.h>
 
 namespace swordfish::core {
-	class Vector3 : public Object {
+	template<bool const IS_LINEAR>
+	class Vector3Base : public Object {
 	private:
-		static ValueField<float32_t> __xField;
-		static ValueField<float32_t> __yField;
-		static ValueField<float32_t> __zField;
+		using Field = typename std::conditional<IS_LINEAR, LinearValueField<float32_t>, ValueField<float32_t>>::type;
+
+		static Field __xField;
+		static Field __yField;
+		static Field __zField;
 
 	protected:
 		static Schema __schema;
@@ -35,8 +38,8 @@ namespace swordfish::core {
 		}
 
 	public:
-		Vector3(Object* parent) : Object(parent), _pack(__schema, *this) {
-
+		Vector3Base(Object* parent) :
+				Object(parent), _pack(__schema, *this) {
 		}
 
 		inline float32_t x() {
@@ -73,4 +76,7 @@ namespace swordfish::core {
 			return { x(), y(), z() };
 		}
 	};
-}
+
+	using Vector3 = Vector3Base<false>;
+	using LinearVector3 = Vector3Base<true>;
+} // namespace swordfish::core

@@ -19,7 +19,7 @@ using namespace Eigen;
 namespace swordfish::motion {
 	core::Schema Limits::__schema = {
 		utils::typeName<Limits>(),
-		&(core::Boundary<core::Vector3>::__schema),
+		&(core::Boundary<core::LinearVector3>::__schema),
 		{
 
 		},
