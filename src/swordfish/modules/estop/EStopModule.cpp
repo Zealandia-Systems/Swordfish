@@ -40,12 +40,10 @@ namespace swordfish::estop {
 	}
 
 	void EStopModule::handleEStop() {
-		_triggered = READ(ESTOP_PIN) != ESTOP_ENDSTOP_INVERTING;
-
 		auto& toolsModule = ToolsModule::getInstance();
 		auto& driver = toolsModule.getCurrentDriver();
 
-		if (_triggered) {
+		if (isTriggered()) {
 			debug()("estop triggered");
 
 			driver.emergencyStop();
@@ -53,6 +51,7 @@ namespace swordfish::estop {
 			DISABLE_AXIS_Z();
 
 			planner.quick_stop();
+			queue.clear();
 
 			set_axis_never_homed(X_AXIS);
 			set_axis_never_homed(Y_AXIS);
@@ -66,8 +65,6 @@ namespace swordfish::estop {
 
 	void EStopModule::init() {
 		SET_INPUT_PULLDOWN(ESTOP_PIN);
-
-		_triggered = READ(ESTOP_PIN) != ESTOP_ENDSTOP_INVERTING;
 
 		_estopISR.attach();
 	}
