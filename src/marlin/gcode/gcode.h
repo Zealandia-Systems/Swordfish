@@ -679,6 +679,7 @@ private:
 
 	static void M114();
 	static void M115();
+	static void M117();
 	static void M118();
 	static void M119();
 	static void M120();
