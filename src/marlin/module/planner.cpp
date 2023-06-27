@@ -63,8 +63,10 @@
  */
 
 #include <swordfish/debug.h>
+#include <swordfish/modules/estop/EStopModule.h>
 
 using namespace swordfish;
+using namespace swordfish::estop;
 
 #include "planner.h"
 #include "stepper.h"
@@ -1787,6 +1789,7 @@ bool Planner::_populate_block(
 		const float& millimeters /* = 0.0*/,
 		float32_t accel_mm_s2 /* = 0.0*/
 ) {
+	EStopModule::getInstance().throwIfTriggered();
 
 	const int32_t da = target.a - position.a,
 								db = target.b - position.b,
