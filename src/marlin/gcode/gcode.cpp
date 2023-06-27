@@ -758,6 +758,9 @@ void GcodeSuite::process_parsed_command(const bool no_ok /*=false*/) {
 					case 115:
 						M115();
 						break; // M115: Report capabilities
+					case 117:
+						M117();
+						break; // M117: Section name
 					case 118:
 						M118();
 						break; // M118: Display a message in the host console
