@@ -693,7 +693,7 @@ bool MarlinSettings::save() {
 #	else
 		// #if !HAS_HOME_OFFSET
 		const xyz_pos_t home_offset { 0, 0, 0 };
-		//#endif
+		// #endif
 		EEPROM_WRITE(home_offset);
 #	endif
 	}
@@ -1590,9 +1590,9 @@ bool MarlinSettings::_load() {
 #	if HAS_SCARA_OFFSET
 			EEPROM_READ(scara_home_offset);
 #	else
-			//#if !HAS_HOME_OFFSET
+			// #if !HAS_HOME_OFFSET
 			xyz_pos_t home_offset;
-			//#endif
+			// #endif
 			EEPROM_READ(home_offset);
 #	endif
 		}
@@ -2795,9 +2795,9 @@ void MarlinSettings::reset() {
 	//
 	// BLTOUCH
 	//
-	//#if ENABLED(BLTOUCH)
+	// #if ENABLED(BLTOUCH)
 	//  bltouch.last_written_mode;
-	//#endif
+	// #endif
 
 	//
 	// Endstop Adjustments
@@ -3261,10 +3261,10 @@ void MarlinSettings::report(const bool forReplay) {
 	}
 #	endif
 
-	CONFIG_ECHO_HEADING("Acceleration (units/s2): P<print_accel> R<retract_accel> T<travel_accel>");
+	CONFIG_ECHO_HEADING("Acceleration (units/s2): P<print_accel> T<travel_accel>");
 	CONFIG_ECHO_START();
 	SERIAL_ECHOLNPAIR_P(
-			PSTR("  M204 P"), LINEAR_UNIT(planner.settings.acceleration), PSTR(" R"), LINEAR_UNIT(planner.settings.retract_acceleration), SP_T_STR, LINEAR_UNIT(planner.settings.travel_acceleration));
+			PSTR("  M204 P"), LINEAR_UNIT(planner.settings.acceleration), SP_T_STR, LINEAR_UNIT(planner.settings.travel_acceleration));
 
 	CONFIG_ECHO_HEADING(
 			"Advanced: B<min_segment_time_us> S<min_feedrate> T<min_travel_feedrate>"
