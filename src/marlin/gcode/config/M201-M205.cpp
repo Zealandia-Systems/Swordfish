@@ -72,23 +72,17 @@ void GcodeSuite::M203() {
  * M204: Set Accelerations in units/sec^2 (M204 P1200 R3000 T3000)
  *
  *    P = Printing moves
- *    R = Retract only (no X, Y, Z) moves
  *    T = Travel (non printing) moves
  */
 void GcodeSuite::M204() {
 	if (!parser.seen("PRST")) {
 		SERIAL_ECHOPAIR("Acceleration: P", planner.settings.acceleration);
-		SERIAL_ECHOPAIR(" R", planner.settings.retract_acceleration);
 		SERIAL_ECHOLNPAIR_P(SP_T_STR, planner.settings.travel_acceleration);
 	} else {
 		// planner.synchronize();
 		//  'S' for legacy compatibility. Should NOT BE USED for new development
-		if (parser.seenval('S'))
-			planner.settings.travel_acceleration = planner.settings.acceleration = parser.value_linear_units();
 		if (parser.seenval('P'))
 			planner.settings.acceleration = parser.value_linear_units();
-		if (parser.seenval('R'))
-			planner.settings.retract_acceleration = parser.value_linear_units();
 		if (parser.seenval('T'))
 			planner.settings.travel_acceleration = parser.value_linear_units();
 	}
