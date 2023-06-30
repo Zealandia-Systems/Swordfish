@@ -134,7 +134,7 @@ namespace swordfish::motion {
 		  throw;
 		}*/
 
-		EStopModule::getInstance().throwIfTriggered();
+		// EStopModule::getInstance().throwIfTriggered();
 
 		Vector4f currentNative { current_position.x, current_position.y, current_position.z, 1 };
 		Vector4f currentLogical = _logicalTransform * currentNative;

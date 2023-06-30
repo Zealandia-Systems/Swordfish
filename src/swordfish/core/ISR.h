@@ -18,13 +18,16 @@ namespace swordfish::core {
 	class ISR {
 	private:
 		static std::function<void()> __handlers[16];
+		static uint32_t __pins[16];
 		static bool __debounce[16];
 		static uint32_t __last_time[16];
 
 		static void __handler() {
+			__disable_irq();
+
 			uint8_t active = (SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk) - 14 + NonMaskableInt_IRQn;
 
-			debug()("active: ", active);
+			debug()("irq: active=", active, " pin=", __pins[active]);
 
 			if (__debounce[active]) {
 				auto const time = micros();
@@ -40,6 +43,8 @@ namespace swordfish::core {
 			if (__handlers[active]) {
 				__handlers[active]();
 			}
+
+			__enable_irq();
 		}
 
 		const uint32_t _pin;
@@ -51,6 +56,7 @@ namespace swordfish::core {
 			auto const index = g_APinDescription[pin].ulExtInt;
 
 			__handlers[index] = handler;
+			__pins[index] = pin;
 			__debounce[index] = debounce;
 		}
 

@@ -285,7 +285,17 @@ void GcodeSuite::process_parsed_command(const bool no_ok /*=false*/) {
 #endif
 
 #if HAS_ESTOP
-	if (estop_engaged()) {
+	/*if (estop_engaged()) {
+	  SERIAL_ECHO_MSG(STR_ESTOP_ENGAGED);
+
+	  if (!no_ok) {
+	    queue.ok_to_send();
+	  }
+
+	  return;
+	}*/
+
+	if (!EStopModule::getInstance().checkOrClear()) {
 		SERIAL_ECHO_MSG(STR_ESTOP_ENGAGED);
 
 		if (!no_ok) {
@@ -1066,7 +1076,7 @@ void GcodeSuite::process_subcommands_now(char* gcode) {
 }
 
 const char* GcodeSuite::get_state() {
-	if (estop_engaged()) {
+	if (!EStopModule::getInstance().checkOrClear()) {
 		return "estop";
 	}
 
