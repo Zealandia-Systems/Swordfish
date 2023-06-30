@@ -9,6 +9,7 @@
 
 namespace swordfish::core {
 	std::function<void()> ISR::__handlers[16] = {};
+	uint32_t ISR::__pins[16] = { 0 };
 	bool ISR::__debounce[16] = { false };
 	uint32_t ISR::__last_time[16] = { 0 };
 } // namespace swordfish::core

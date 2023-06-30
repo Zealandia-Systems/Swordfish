@@ -32,6 +32,11 @@ namespace swordfish::estop {
 
 	private:
 		core::ISR _estopISR;
+		bool _triggered;
+
+		bool readPin() {
+			return READ(ESTOP_PIN) != ESTOP_ENDSTOP_INVERTING;
+		}
 
 	public:
 		virtual ~EStopModule() {
@@ -43,14 +48,11 @@ namespace swordfish::estop {
 		virtual void init() override;
 
 		bool isTriggered() {
-			return READ(ESTOP_PIN) != ESTOP_ENDSTOP_INVERTING;
+			return _triggered;
 		}
 
-		void throwIfTriggered() {
-			if (isTriggered()) {
-				throw EStopException();
-			}
-		}
+		bool checkOrClear();
+		void throwIfTriggered();
 
 		static EStopModule& getInstance(core::Object* parent = nullptr);
 	};

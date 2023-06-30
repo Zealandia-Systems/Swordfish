@@ -9,6 +9,7 @@
 
 #include <marlin/module/planner.h>
 #include <marlin/module/motion.h>
+#include <marlin/module/stepper.h>
 #include <marlin/feature/spindle_laser.h>
 #include <marlin/module/stepper/indirection.h>
 
@@ -36,30 +37,63 @@ namespace swordfish::estop {
 	EStopModule::EStopModule(core::Object* parent) :
 			Module(parent),
 			_pack(__schema, *this, &(Module::_pack)),
-			_estopISR(std::bind(&EStopModule::handleEStop, this), ESTOP_PIN, CHANGE, true) {
+			_estopISR(std::bind(&EStopModule::handleEStop, this), ESTOP_PIN, CHANGE, false),
+			_triggered(readPin()) {
 	}
 
 	void EStopModule::handleEStop() {
 		auto& toolsModule = ToolsModule::getInstance();
 		auto& driver = toolsModule.getCurrentDriver();
 
-		if (isTriggered()) {
+		if (!_triggered && readPin()) {
 			debug()("estop triggered");
 
 			driver.emergencyStop();
 
 			DISABLE_AXIS_Z();
 
+			stepper.suspend();
 			planner.quick_stop();
+			planner.clear_block_buffer();
 			queue.clear();
 
 			set_axis_never_homed(X_AXIS);
 			set_axis_never_homed(Y_AXIS);
 			set_axis_never_homed(Z_AXIS);
-		} else {
-			debug()("estop cleared");
 
+			_triggered = true;
+		} else if (_triggered && !readPin()) {
+			debug()("estop cleared");
+		}
+	}
+
+	bool EStopModule::checkOrClear() {
+		__disable_irq();
+
+		if (_triggered && readPin()) {
+			__enable_irq();
+
+			return false;
+		}
+
+		if (_triggered) {
+			_triggered = false;
+
+			auto& toolsModule = ToolsModule::getInstance();
+			auto& driver = toolsModule.getCurrentDriver();
+
+			stepper.wake_up();
 			driver.emergencyClear();
+		}
+
+		__enable_irq();
+
+		return true;
+	}
+
+	void EStopModule::throwIfTriggered() {
+		if (_triggered && readPin()) {
+			throw EStopException();
 		}
 	}
 

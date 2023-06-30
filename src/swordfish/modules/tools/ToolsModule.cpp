@@ -362,6 +362,7 @@ start:
 
 		auto& tools = getTools();
 		auto& motionModule = MotionModule::getInstance();
+		auto& estopModule = EStopModule::getInstance();
 		auto& oldWCS = motionModule.getActiveCoordinateSystem();
 		auto currentToolIndex = getCurrentToolIndex();
 		auto nextToolIndex = getNextToolIndex();
@@ -380,6 +381,8 @@ start:
 
 		moveForManualChange();
 
+		estopModule.throwIfTriggered();
+
 		if (currentToolIndex >= 0 && nextToolIndex >= 0) {
 			promptUserToExchangeTool(currentToolIndex, nextToolIndex);
 		} else if (nextToolIndex >= 0) {
@@ -390,7 +393,11 @@ start:
 			wait_for_user_response(0);
 		}
 
+		estopModule.throwIfTriggered();
+
 		auto offsetZ = probeTool();
+
+		estopModule.throwIfTriggered();
 
 		// Activate the tool offset
 		motionModule.setToolOffset({ .x = 0, .y = 0, .z = offsetZ });
