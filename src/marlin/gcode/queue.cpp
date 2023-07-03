@@ -787,9 +787,11 @@ void GCodeQueue::advance() {
 #endif // SDSUPPORT
 
 		// The queue may be reset by a command handler or by code invoked by idle() within a handler
-		--length;
-		if (++index_r >= BUFSIZE)
-			index_r = 0;
+		if (length > 0) {
+			--length;
+			if (++index_r >= BUFSIZE)
+				index_r = 0;
+		}
 	} catch (const Exception& e) {
 		clear();
 	}
