@@ -25,6 +25,7 @@
 #include "CoordinateSystem.h"
 #include "CoordinateSystemTable.h"
 #include "Limits.h"
+#include "NotHomedException.h"
 
 #include <marlin/core/types.h>
 
