@@ -32,7 +32,7 @@ namespace swordfish::estop {
 
 	private:
 		core::ISR _estopISR;
-		bool _triggered;
+		volatile bool _triggered;
 
 		bool readPin() {
 			return READ(ESTOP_PIN) != ESTOP_ENDSTOP_INVERTING;

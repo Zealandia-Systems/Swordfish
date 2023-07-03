@@ -46,6 +46,8 @@ namespace swordfish::estop {
 		auto& driver = toolsModule.getCurrentDriver();
 
 		if (!_triggered && readPin()) {
+			_triggered = true;
+
 			debug()("estop triggered");
 
 			driver.emergencyStop();
@@ -60,10 +62,6 @@ namespace swordfish::estop {
 			set_axis_never_homed(X_AXIS);
 			set_axis_never_homed(Y_AXIS);
 			set_axis_never_homed(Z_AXIS);
-
-			_triggered = true;
-		} else if (_triggered && !readPin()) {
-			debug()("estop cleared");
 		}
 	}
 
@@ -84,6 +82,8 @@ namespace swordfish::estop {
 
 			stepper.wake_up();
 			driver.emergencyClear();
+
+			debug()("estop cleared");
 		}
 
 		__enable_irq();
@@ -92,7 +92,7 @@ namespace swordfish::estop {
 	}
 
 	void EStopModule::throwIfTriggered() {
-		if (_triggered && readPin()) {
+		if (!checkOrClear()) {
 			throw EStopException();
 		}
 	}
