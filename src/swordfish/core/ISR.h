@@ -27,7 +27,7 @@ namespace swordfish::core {
 
 			uint8_t active = (SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk) - 14 + NonMaskableInt_IRQn;
 
-			debug()("irq: active=", active, " pin=", __pins[active]);
+			debug()("irq: active=", active, ", pin=", __pins[active]);
 
 			if (__debounce[active]) {
 				auto const time = micros();
