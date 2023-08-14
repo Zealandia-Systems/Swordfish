@@ -1484,6 +1484,9 @@ void homeaxis(const AxisEnum axis) {
 		}
 	}
 
+	// move 1mm away from the sensors
+	do_homing_move(axis, -1.0 * axis_home_dir, homing_feedrate(axis), !use_probe_bump);
+
 #if HAS_EXTRA_ENDSTOPS
 	// Set flags for X, Y, Z motor locking
 	switch (axis) {
