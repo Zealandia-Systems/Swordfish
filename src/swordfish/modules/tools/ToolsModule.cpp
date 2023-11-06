@@ -720,7 +720,7 @@ start:
 
 		Pocket* sourcePocket = findToolPocket(tool);
 
-		debug()("sourcePocket: ", sourcePocket->getIndex());
+		debug()("sourcePocket: ", sourcePocket);
 
 		if (sourcePocket == nullptr) {
 			debug()("manual tool change");
