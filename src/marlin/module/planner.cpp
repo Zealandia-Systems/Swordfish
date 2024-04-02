@@ -1165,9 +1165,9 @@ bool Planner::_populate_block(
 
 #define LIMIT_ACCEL_FLOAT(AXIS) \
 	do { \
-		if (block->steps[AXIS] && max_acceleration_steps_per_s2[AXIS + INDX] < accel) { \
-			debug()("max_acceleration_steps_per_s2[", axis_codes[AXIS], "]: ", max_acceleration_steps_per_s2[AXIS + INDX]); \
-			const float comp = (float) max_acceleration_steps_per_s2[AXIS + INDX] * (float) block->step_event_count; \
+		if (block->steps[AXIS] && max_acceleration_steps_per_s2[AXIS] < accel) { \
+			debug()("max_acceleration_steps_per_s2[", axis_codes[AXIS], "]: ", max_acceleration_steps_per_s2[AXIS]); \
+			const float comp = (float) max_acceleration_steps_per_s2[AXIS] * (float) block->step_event_count; \
 			if ((float) accel * (float) block->steps[AXIS] > comp) \
 				accel = comp / (float) block->steps[AXIS]; \
 		} \
