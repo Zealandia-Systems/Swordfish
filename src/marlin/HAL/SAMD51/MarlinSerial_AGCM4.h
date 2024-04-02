@@ -21,27 +21,30 @@
 #pragma once
 
 #if ENABLED(EMERGENCY_PARSER)
-	#include <swordfish/debug.h>
-	#include "../../feature/e_parser.h"
+#	include "../../feature/e_parser.h"
 #endif
 
 class EmergencySerial : public Serial_ {
-	public:
-		EmergencySerial(USBDeviceClass &usb) : Serial_(usb), emergency_state(EmergencyParser::State::EP_RESET) { }
-		
-		#if ENABLED(EMERGENCY_PARSER)
-		int read(void) override {
-			int c = Serial_::read();
-			
-			emergency_parser.update(emergency_state, c);
-			
-			return c; // do not discard character
-		}
+public:
+	EmergencySerial(USBDeviceClass& usb) :
+			Serial_(usb), emergency_state(EmergencyParser::State::EP_RESET) {
+	}
 
-		EmergencyParser::State emergency_state;
-		static inline bool emergency_parser_enabled() { return true; }
-		#endif
-	};
+#if ENABLED(EMERGENCY_PARSER)
+	int read(void) override {
+		int c = Serial_::read();
+
+		emergency_parser.update(emergency_state, c);
+
+		return c; // do not discard character
+	}
+
+	EmergencyParser::State emergency_state;
+	static inline bool emergency_parser_enabled() {
+		return true;
+	}
+#endif
+};
 
 #if ENABLED(EMERGENCY_PARSER)
 extern EmergencySerial ESerial;

@@ -43,7 +43,7 @@ namespace swordfish::tools::drivers {
 				(void) ptr;
 				(void) ec;
 			} else if (id == IDriver::Parameter::MaxPower) {
-				auto [ptr, ec] = std::from_chars(value.data(), value.data() + value.size(), _maxPower);
+				auto [ptr, ec] = std::from_chars(value.data(), value.data() + value.size(), _maximumPower);
 
 				(void) ptr;
 				(void) ec;
@@ -69,8 +69,8 @@ namespace swordfish::tools::drivers {
 		return _slaveAddress;
 	}
 
-	uint16_t RS485DriverImpl::getMaxPower() const {
-		return _maxPower;
+	uint32_t RS485DriverImpl::getMaximumPower() const {
+		return _maximumPower;
 	}
 
 	void RS485DriverImpl::idle() {
@@ -127,7 +127,7 @@ namespace swordfish::tools::drivers {
 		return _currentPower;
 	}
 
-	uint16_t RS485DriverImpl::getOutputFrequency() const {
+	uint32_t RS485DriverImpl::getOutputFrequency() const {
 		return _outputFrequency;
 	}
 
@@ -139,9 +139,9 @@ namespace swordfish::tools::drivers {
 		_powerOverride = powerOverride;
 	}
 
-	void RS485DriverImpl::waitForSpindle(uint16_t targetFrequency) {
+	void RS485DriverImpl::waitForSpindle(uint32_t targetFrequency) {
 		auto& estop = EStopModule::getInstance();
-		uint16_t lastFrequency = _outputFrequency;
+		uint32_t lastFrequency = _outputFrequency;
 		uint8_t retryCount = 0;
 
 		while (!estop.isTriggered()) {
@@ -171,28 +171,30 @@ namespace swordfish::tools::drivers {
 		}
 	}
 
-	uint16_t RS485DriverImpl::calculateTargetFrequency() const {
+	uint32_t RS485DriverImpl::calculateTargetFrequency() const {
 		float32_t overiddenPower = _targetPower * 0.01f * _powerOverride;
 
-		uint16_t maximumFrequency = readMaximumFrequency();
+		uint32_t maximumFrequency = readMaximumFrequency();
 
 		if (maximumFrequency == 0) {
 			return 0;
 		}
 
-		uint16_t frequencyUpperLimit = readFrequencyUpperLimit();
+		uint32_t frequencyUpperLimit = readFrequencyUpperLimit();
 
 		if (frequencyUpperLimit > maximumFrequency) {
 			frequencyUpperLimit = maximumFrequency;
 		}
 
-		uint16_t frequencyLowerLimit = readFrequencyLowerLimit();
+		uint32_t frequencyLowerLimit = readFrequencyLowerLimit();
 
 		if (frequencyLowerLimit > maximumFrequency) {
 			frequencyLowerLimit = 0;
 		}
 
-		debug()("maxPower:", _maxPower, ", overriddenPower: ", overiddenPower, ", maximumFrequency: ", maximumFrequency, ", upperLimit: ", frequencyUpperLimit, ", lowerLimit: ", frequencyLowerLimit);
+		auto maximumPower = getMaximumPower();
+
+		debug()("maxPower:", maximumPower, ", overriddenPower: ", overiddenPower, ", maximumFrequency: ", maximumFrequency, ", upperLimit: ", frequencyUpperLimit, ", lowerLimit: ", frequencyLowerLimit);
 		/*
 		SERIAL_ECHOLNPAIR("maxPower: ", _maxPower);
 		SERIAL_ECHOLNPAIR("overriddenPower: ", overiddenPower);
@@ -201,7 +203,7 @@ namespace swordfish::tools::drivers {
 		SERIAL_ECHOLNPAIR("lowerLimit: ", frequencyLowerLimit);
 		*/
 		// scale overriddenPower to targetFrequency
-		uint32_t targetFrequency = (uint16_t) (((float32_t) maximumFrequency / (float32_t) _maxPower) * overiddenPower);
+		uint32_t targetFrequency = (uint16_t) (((float32_t) maximumFrequency / (float32_t) maximumPower) * overiddenPower);
 
 		debug()("targetFrequency: ", targetFrequency);
 		// SERIAL_ECHOLNPAIR("targetFrequency: ", targetFrequency);
@@ -217,17 +219,13 @@ namespace swordfish::tools::drivers {
 	}
 
 	void RS485DriverImpl::refresh() {
-		if (_doReset) {
-			writeTargetFrequency(0);
-			writeStop();
-
-			_doReset = false;
-		}
+		resetIfNeeded();
 
 		_state = readState();
 		_fault = readFault();
 
 		auto maximumFrequency = readMaximumFrequency();
+		auto maximumPower = getMaximumPower();
 
 		_outputFrequency = readOutputFrequency();
 		_outputDirection = (uint8_t) _state & (uint8_t) State::Running ? ((uint8_t) _state & (uint8_t) State::Forward ? Direction::Forward : Direction::Reverse) : Direction::Forward;
@@ -236,7 +234,7 @@ namespace swordfish::tools::drivers {
 		_outputVoltage = readOutputVoltage();
 		_dcBusVoltage = readDCBusVoltage();
 
-		_currentPower = ((((float32_t) _maxPower) * 1.0f) / (float32_t) maximumFrequency) * (float32_t) _outputFrequency;
+		_currentPower = ((((float32_t) maximumPower) * 1.0f) / (float32_t) maximumFrequency) * (float32_t) _outputFrequency;
 	}
 
 	void RS485DriverImpl::apply() {
@@ -288,5 +286,14 @@ namespace swordfish::tools::drivers {
 	// called in interrupt context
 	void RS485DriverImpl::emergencyClear() {
 		_doReset = true;
+	}
+
+	void RS485DriverImpl::resetIfNeeded() {
+		if (_doReset) {
+			writeTargetFrequency(0);
+			writeStop();
+
+			_doReset = false;
+		}
 	}
 } // namespace swordfish::tools::drivers

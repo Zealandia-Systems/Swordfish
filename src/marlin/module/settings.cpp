@@ -662,7 +662,7 @@ bool MarlinSettings::save() {
 #	else
 		// #if !HAS_HOME_OFFSET
 		const xyz_pos_t home_offset { 0, 0, 0 };
-		//#endif
+		// #endif
 		EEPROM_WRITE(home_offset);
 #	endif
 	}
@@ -1495,16 +1495,16 @@ bool MarlinSettings::_load() {
 		{
 			// Get only the number of E stepper parameters previously stored
 			// Any steppers added later are set to their defaults
-			uint32_t tmp1[XYZ_N];
-			float tmp2[XYZ_N];
-			feedRate_t tmp3[XYZ_N];
+			uint32_t tmp1[XYZA_N];
+			float tmp2[XYZA_N];
+			feedRate_t tmp3[XYZA_N];
 			EEPROM_READ(tmp1); // max_acceleration_mm_per_s2
 			EEPROM_READ(planner.settings.min_segment_time_us);
 			EEPROM_READ(tmp2); // axis_steps_per_mm
 			EEPROM_READ(tmp3); // max_feedrate_mm_s
 
 			if (!validating)
-				LOOP_XYZ_N(i) {
+				LOOP_XYZA_N(i) {
 					planner.settings.max_acceleration_mm_per_s2[i] = pgm_read_dword(&_DMA[ALIM(i, _DMA)]);
 					planner.settings.axis_steps_per_mm[i] = pgm_read_float(&_DASU[ALIM(i, _DASU)]);
 					planner.settings.max_feedrate_mm_s[i] = pgm_read_float(&_DMF[ALIM(i, _DMF)]);
@@ -1538,9 +1538,9 @@ bool MarlinSettings::_load() {
 #	if HAS_SCARA_OFFSET
 			EEPROM_READ(scara_home_offset);
 #	else
-			//#if !HAS_HOME_OFFSET
+			// #if !HAS_HOME_OFFSET
 			xyz_pos_t home_offset;
-			//#endif
+			// #endif
 			EEPROM_READ(home_offset);
 #	endif
 		}
@@ -2743,9 +2743,9 @@ void MarlinSettings::reset() {
 	//
 	// BLTOUCH
 	//
-	//#if ENABLED(BLTOUCH)
+	// #if ENABLED(BLTOUCH)
 	//  bltouch.last_written_mode;
-	//#endif
+	// #endif
 
 	//
 	// Endstop Adjustments
@@ -3209,10 +3209,10 @@ void MarlinSettings::report(const bool forReplay) {
 	}
 #	endif
 
-	CONFIG_ECHO_HEADING("Acceleration (units/s2): P<print_accel> R<retract_accel> T<travel_accel>");
+	CONFIG_ECHO_HEADING("Acceleration (units/s2): P<print_accel> T<travel_accel>");
 	CONFIG_ECHO_START();
 	SERIAL_ECHOLNPAIR_P(
-			PSTR("  M204 P"), LINEAR_UNIT(planner.settings.acceleration), PSTR(" R"), LINEAR_UNIT(planner.settings.retract_acceleration), SP_T_STR, LINEAR_UNIT(planner.settings.travel_acceleration));
+			PSTR("  M204 P"), LINEAR_UNIT(planner.settings.acceleration), SP_T_STR, LINEAR_UNIT(planner.settings.travel_acceleration));
 
 	CONFIG_ECHO_HEADING(
 			"Advanced: B<min_segment_time_us> S<min_feedrate> T<min_travel_feedrate>"

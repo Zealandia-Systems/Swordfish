@@ -257,7 +257,17 @@ void GcodeSuite::process_parsed_command(const bool no_ok /*=false*/) {
 #endif
 
 #if HAS_ESTOP
-	if (estop_engaged()) {
+	/*if (estop_engaged()) {
+	  SERIAL_ECHO_MSG(STR_ESTOP_ENGAGED);
+
+	  if (!no_ok) {
+	    queue.ok_to_send();
+	  }
+
+	  return;
+	}*/
+
+	if (!EStopModule::getInstance().checkOrClear()) {
 		SERIAL_ECHO_MSG(STR_ESTOP_ENGAGED);
 
 		if (!no_ok) {
@@ -730,6 +740,9 @@ void GcodeSuite::process_parsed_command(const bool no_ok /*=false*/) {
 					case 115:
 						M115();
 						break; // M115: Report capabilities
+					case 117:
+						M117();
+						break; // M117: Section name
 					case 118:
 						M118();
 						break; // M118: Display a message in the host console
@@ -924,7 +937,14 @@ void GcodeSuite::process_parsed_command(const bool no_ok /*=false*/) {
 
 					case 2000:
 						M2000(writeResult);
+
 						return;
+
+					case 2001: {
+						M2001(writeResult);
+
+						return;
+					}
 
 					default:
 						parser.unknown_command_warning();
@@ -1028,7 +1048,7 @@ void GcodeSuite::process_subcommands_now(char* gcode) {
 }
 
 const char* GcodeSuite::get_state() {
-	if (estop_engaged()) {
+	if (!EStopModule::getInstance().checkOrClear()) {
 		return "estop";
 	}
 

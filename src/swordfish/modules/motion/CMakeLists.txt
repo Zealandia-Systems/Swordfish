@@ -10,4 +10,6 @@ target_sources(${PROJECT_NAME}.elf
 		Limits.h
 		MotionModule.cpp
 		MotionModule.h
+		NotHomedException.h
+		NotHomedException.cpp
 )

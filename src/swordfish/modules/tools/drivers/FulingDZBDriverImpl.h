@@ -3,7 +3,7 @@
  *
  * Created: 12/10/2021 9:35:12 am
  *  Author: smohekey
- */ 
+ */
 
 #pragma once
 
@@ -23,7 +23,7 @@ namespace swordfish::tools::drivers {
 			FaultReset = 0x0007,
 			JoggingStop = 0x0008
 		};
-		
+
 		enum class ControlState : uint16_t {
 			Unknown = 0x0000,
 			ForwardRunning = 0x0001,
@@ -31,7 +31,7 @@ namespace swordfish::tools::drivers {
 			Standby = 0x0003,
 			Fault = 0x0004
 		};
-		
+
 		enum class Fault : uint16_t {
 			None = 0x0000,
 			DCBusUnderVoltage = 0x0001,
@@ -55,27 +55,29 @@ namespace swordfish::tools::drivers {
 			SelfLearning = 0x0016,
 			Communication = 0x0018
 		};
-		
+
 		uint16_t readFrequencyPercentage() const;
 		void writeControlCommand(ControlCommand controlCommand) const;
 		ControlCommand readControlCommand() const;
 		ControlState readControlState() const;
-		
-		virtual uint16_t readMaximumFrequency() const override;
-		virtual uint16_t readFrequencyUpperLimit() const override;
-		virtual uint16_t readFrequencyLowerLimit() const override;
 
-		virtual uint16_t readOutputFrequency() const override;
-		virtual uint16_t readOutputVoltage() const override;
-		virtual uint16_t readOutputCurrent() const override;
-		virtual uint16_t readDCBusVoltage() const override;
+		virtual uint32_t readMaximumFrequency() const override;
+		virtual uint32_t readFrequencyUpperLimit() const override;
+		virtual uint32_t readFrequencyLowerLimit() const override;
+
+		virtual uint32_t readOutputFrequency() const override;
+		virtual uint32_t readOutputVoltage() const override;
+		virtual uint32_t readOutputCurrent() const override;
+		virtual uint32_t readDCBusVoltage() const override;
 
 		virtual State readState() const override;
-		
-		virtual uint16_t readFault() const override;
 
-		virtual void writeTargetFrequency(uint16_t targetFrequency) const override;
+		virtual uint32_t readFault() const override;
+
+		virtual void writeTargetFrequency(uint32_t targetFrequency) const override;
 		virtual void writeStart(Direction direction) const override;
 		virtual void writeStop() const override;
+
+		virtual void refresh() override;
 	};
 }

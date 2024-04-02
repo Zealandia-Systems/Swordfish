@@ -25,7 +25,7 @@
 #include "Pocket.h"
 #include "ToolTable.h"
 #include "Tool.h"
-//#include "Driver.h"
+// #include "Driver.h"
 #include "DriverTable.h"
 #include "DriverParameter.h"
 #include "DriverParameterTable.h"
@@ -44,9 +44,12 @@ namespace swordfish::tools {
 		inline static constexpr uint32_t IgnoreCaddySensorFlag = 6;
 
 		inline static constexpr float32_t CaddyClearanceX = 50.0f;
+		inline static constexpr float32_t CaddyDustShoeClearanceX = 100.0f;
 		inline static constexpr float32_t ToolClipClearanceX = 30.0f;
 
 		static core::ValueField<bool> __automaticField;
+		static core::ValueField<bool> __ignoreLockSensorsField;
+		static core::ValueField<bool> __hasATCDustShoeField;
 		static core::ObjectField<PocketTable> __pocketsField;
 		static core::ObjectField<ToolTable> __toolsField;
 		static core::ObjectField<DriverTable> __driversField;
@@ -117,6 +120,14 @@ namespace swordfish::tools {
 
 		void setAutomatic(bool automatic) {
 			__automaticField.set(_pack, automatic);
+		}
+
+		bool ignoreLockSensors() {
+			return __ignoreLockSensorsField.get(_pack);
+		}
+
+		bool hasATCDustShoe() {
+			return __hasATCDustShoeField.get(_pack);
 		}
 
 		int16_t getCurrentToolIndex();

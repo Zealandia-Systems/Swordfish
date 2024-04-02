@@ -5,7 +5,7 @@
  *  Author: smohekey
  */
 
-//#undef DEBUG
+#undef DEBUG
 #include <swordfish/debug.h>
 #include <swordfish/utils/TypeInfo.h>
 

@@ -29,6 +29,7 @@
 
 #include "../inc/MarlinConfig.h"
 
+#include "../core/serial.h"
 #include <string_view>
 #include <stdlib.h>
 
@@ -125,9 +126,8 @@ public:
 		return valid_signless(p) || ((p[0] == '-' || p[0] == '+') && valid_signless(&p[1])); // [-+]?.?[0-9]
 	}
 
-	FORCE_INLINE static bool valid_number(const char* const p) {
-		// TODO: With MARLIN_DEV_MODE allow HEX values starting with "x"
-		return valid_float(p);
+	FORCE_INLINE static bool valid_hex(const char* const p) {
+		return p[0] == 'x';
 	}
 
 #if ENABLED(FASTER_GCODE_PARSER)
@@ -327,10 +327,43 @@ public:
 
 	// Code value as a long or ulong
 	static inline int32_t value_long() {
-		return value_ptr ? strtol(value_ptr, nullptr, 10) : 0L;
+		switch (*value_ptr) {
+			case '\0': {
+				return 0;
+			}
+
+			case 'x': {
+				int32_t out = 0;
+				for (char* vp = value_ptr + 1; HEXCHR(*vp) >= 0; vp++) {
+					out = ((out) << 4) | HEXCHR(*vp);
+				}
+				return out;
+			}
+
+			default: {
+				return strtol(value_ptr, nullptr, 10);
+			}
+		}
 	}
+
 	static inline uint32_t value_ulong() {
-		return value_ptr ? strtoul(value_ptr, nullptr, 10) : 0UL;
+		switch (*value_ptr) {
+			case '\0': {
+				return 0;
+			}
+
+			case 'x': {
+				uint32_t out = 0;
+				for (char* vp = value_ptr + 1; HEXCHR(*vp) >= 0; vp++) {
+					out = ((out) << 4) | HEXCHR(*vp);
+				}
+				return out;
+			}
+
+			default: {
+				return strtoul(value_ptr, nullptr, 10);
+			}
+		}
 	}
 
 	// Code value for use as time
@@ -546,27 +579,24 @@ public:
 		return seenval(c) ? value_celsius() : dval;
 	}
 
-#if ENABLED(MARLIN_DEV_MODE)
-
 	static inline uint8_t* hex_adr_val(const char c, uint8_t* const dval = nullptr) {
 		if (!seen(c) || *value_ptr != 'x')
 			return dval;
 		uint8_t* out = nullptr;
 		for (char* vp = value_ptr + 1; HEXCHR(*vp) >= 0; vp++)
-			out = (uint8_t*) ((uintptr_t(out) << 8) | HEXCHR(*vp));
+			out = (uint8_t*) ((uintptr_t(out) << 4) | HEXCHR(*vp));
 		return out;
 	}
 
 	static inline uint16_t hex_val(const char c, uint16_t const dval = 0) {
 		if (!seen(c) || *value_ptr != 'x')
 			return dval;
+
 		uint16_t out = 0;
 		for (char* vp = value_ptr + 1; HEXCHR(*vp) >= 0; vp++)
-			out = ((out) << 8) | HEXCHR(*vp);
+			out = ((out) << 4) | HEXCHR(*vp);
 		return out;
 	}
-
-#endif
 };
 
 extern GCodeParser parser;

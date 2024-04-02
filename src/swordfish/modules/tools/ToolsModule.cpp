@@ -43,6 +43,8 @@ namespace swordfish::tools {
 	NullDriver ToolsModule::__nullDriver = {};
 
 	core::ValueField<bool> ToolsModule::__automaticField = { "automatic", 0, false };
+	core::ValueField<bool> ToolsModule::__ignoreLockSensorsField = { "ignoreLockSensors", 1, false };
+	core::ValueField<bool> ToolsModule::__hasATCDustShoeField = { "hasATCDustShoe", 2, false };
 	core::ObjectField<PocketTable> ToolsModule::__pocketsField = { "pockets", 0 };
 	core::ObjectField<ToolTable> ToolsModule::__toolsField = { "tools", 1 };
 	core::ObjectField<DriverTable> ToolsModule::__driversField = { "drivers", 2 };
@@ -51,7 +53,11 @@ namespace swordfish::tools {
 	core::Schema ToolsModule::__schema = {
 		utils::typeName<ToolsModule>(),
 		&(Module::__schema),
-		{__automaticField       },
+		{
+												__automaticField,
+												__ignoreLockSensorsField,
+												__hasATCDustShoeField,
+												},
 		{ __pocketsField, __toolsField,
 		                    __driversField,
 		                    __driverParametersField }
@@ -177,8 +183,12 @@ start:
 
 		WRITE(ATC_LOCK_PIN, !ATC_LOCK_PIN_INVERTED);
 
-		while (READ(ATC_EJECT_SENSOR_PIN) == ATC_EJECT_SENSOR_PIN_INVERTED) {
-			safe_delay(0);
+		if (ignoreLockSensors()) {
+			safe_delay(5000);
+		} else {
+			while (READ(ATC_EJECT_SENSOR_PIN) == ATC_EJECT_SENSOR_PIN_INVERTED) {
+				safe_delay(0);
+			}
 		}
 
 		_flags[UnlockedFlag] = !manual;
@@ -191,18 +201,19 @@ start:
 			return;
 		}
 
-		// WRITE(ATC_SEAL_PIN, ATC_SEAL_PIN_INVERTED);
 		WRITE(ATC_LOCK_PIN, ATC_LOCK_PIN_INVERTED);
 
-		uint8_t tries = 20;
+		if (ignoreLockSensors()) {
+			safe_delay(5000);
+		} else {
+			uint8_t tries = 20;
 
-		while (READ(ATC_LOCK_SENSOR_PIN) == ATC_LOCK_SENSOR_PIN_INVERTED && tries) {
-			safe_delay(100);
+			while (READ(ATC_LOCK_SENSOR_PIN) == ATC_LOCK_SENSOR_PIN_INVERTED && tries) {
+				safe_delay(100);
 
-			tries--;
+				tries--;
+			}
 		}
-
-		// WRITE(ATC_SEAL_PIN, !ATC_SEAL_PIN_INVERTED);
 
 		_flags[UnlockedFlag] = false;
 	}
@@ -350,6 +361,7 @@ start:
 
 		auto& tools = getTools();
 		auto& motionModule = MotionModule::getInstance();
+		auto& estopModule = EStopModule::getInstance();
 		auto& oldWCS = motionModule.getActiveCoordinateSystem();
 		auto currentToolIndex = getCurrentToolIndex();
 		auto nextToolIndex = getNextToolIndex();
@@ -368,6 +380,8 @@ start:
 
 		moveForManualChange();
 
+		estopModule.throwIfTriggered();
+
 		if (currentToolIndex >= 0 && nextToolIndex >= 0) {
 			promptUserToExchangeTool(currentToolIndex, nextToolIndex);
 		} else if (nextToolIndex >= 0) {
@@ -378,7 +392,11 @@ start:
 			wait_for_user_response(0);
 		}
 
+		estopModule.throwIfTriggered();
+
 		auto offsetZ = probeTool();
+
+		estopModule.throwIfTriggered();
 
 		// Activate the tool offset
 		motionModule.setToolOffset({ .x = 0, .y = 0, .z = offsetZ });
@@ -445,6 +463,25 @@ start:
 				moveForManualChange();
 
 				promptUserToExchangeTool(currentToolIndex, nextToolIndex);
+
+				auto& offset = nextTool->getOffset();
+				auto doProbe = nextTool->getNeedsProbe();
+
+				if (doProbe) {
+
+					auto offsetZ = probeTool();
+
+					// Store the tool offset
+					offset.z(offsetZ);
+
+					nextTool->setNeedsProbe(false);
+				}
+
+				// Activate the tool offset
+				motionModule.setToolOffset(offset);
+
+				_spindlePocket->setToolIndex(nextTool->getIndex());
+
 			} else {
 				if (currentTool && !currentTool->isFixed()) {
 					if (freePocket) {
@@ -452,7 +489,19 @@ start:
 					} else {
 						moveForManualChange();
 
+						if (hasATCDustShoe()) {
+							WRITE(ATC_SEAL_PIN, ATC_SEAL_PIN_INVERTED);
+
+							safe_delay(500);
+						}
+
 						promptUserToRemoveTool(currentToolIndex);
+					}
+				} else {
+					if (hasATCDustShoe()) {
+						WRITE(ATC_SEAL_PIN, ATC_SEAL_PIN_INVERTED);
+
+						safe_delay(500);
 					}
 				}
 
@@ -575,7 +624,7 @@ start:
 
 			planner.synchronize();
 
-			_flags[HomingFlag] = !false;
+			_flags[HomingFlag] = false;
 		}
 	}
 
@@ -594,6 +643,7 @@ start:
 		// move z to top
 		motionModule.setActiveCoordinateSystem(mcs);
 		motionModule.rapidMove({ .z = 0 });
+		motionModule.synchronize();
 
 		motionModule.setActiveCoordinateSystem(tcs);
 
@@ -603,33 +653,49 @@ start:
 		// Otherwise we move to the clearance position in the X axis first, and then move to
 		// the target position in the Y axis.
 
-		auto nativeClearanceX = motionModule.toNative(X_AXIS, CaddyClearanceX);
+		auto caddyClearanceX = CaddyClearanceX;
+
+		if (hasATCDustShoe()) {
+			caddyClearanceX = CaddyDustShoeClearanceX;
+		}
+
+		auto nativeClearanceX = motionModule.toNative(X_AXIS, caddyClearanceX);
 
 		if (current_position.x >= nativeClearanceX) {
-			motionModule.rapidMove({ .x = CaddyClearanceX, .y = target(Y) });
+			motionModule.rapidMove({ .x = caddyClearanceX, .y = target(Y) });
+			motionModule.synchronize();
 		} else {
-			motionModule.rapidMove({ .x = CaddyClearanceX });
+			motionModule.rapidMove({ .x = caddyClearanceX });
+			motionModule.synchronize();
 
 			motionModule.rapidMove({ .y = target(Y) });
+			motionModule.synchronize();
+		}
+
+		if (hasATCDustShoe()) {
+			WRITE(ATC_SEAL_PIN, ATC_SEAL_PIN_INVERTED);
+
+			safe_delay(500);
 		}
 
 		// move to the tool clip clearance position on the X axis, this is slightly closer to the pocket than
 		// the caddy clearance position.
-		motionModule.move({ .x = ToolClipClearanceX, .feedRate = homing_feedrate(X_AXIS) });
+		motionModule.move({ .x = target(X) + ToolClipClearanceX, .feedRate = homing_feedrate(X_AXIS) });
+		motionModule.synchronize();
 
 		// move z to pocket offset.z
 		motionModule.move({ .z = target(Z), .feedRate = homing_feedrate(Z_AXIS) });
+		motionModule.synchronize();
 
 		// move to x position of pocket offset
 		motionModule.move({ .x = target(X), .feedRate = homing_feedrate(X_AXIS) });
-
 		motionModule.synchronize();
 
 		unlock();
 
+		// move z to top
 		motionModule.setActiveCoordinateSystem(mcs);
 		motionModule.rapidMove({ .z = 0 });
-
 		motionModule.synchronize();
 
 		lock();
@@ -666,7 +732,8 @@ start:
 		} else {
 			// move z to top
 			motionModule.setActiveCoordinateSystem(mcs);
-			motionModule.move({ .z = 0 });
+			motionModule.rapidMove({ .z = 0 });
+			motionModule.synchronize();
 
 			motionModule.setActiveCoordinateSystem(tcs);
 
@@ -676,27 +743,43 @@ start:
 
 			// move to x y of pocket offset
 			motionModule.rapidMove({ .x = target(X), .y = target(Y) });
-
 			motionModule.synchronize();
 
 			unlock();
 
 			// move z to pocket offset.z
 			motionModule.move({ .z = target(Z), .feedRate = homing_feedrate(Z_AXIS) });
-
 			motionModule.synchronize();
 
 			lock();
 
-			motionModule.move({ .x = ToolClipClearanceX, .feedRate = homing_feedrate(X_AXIS) });
+			// remove tool from pocket
+			motionModule.move({ .x = target(X) + ToolClipClearanceX, .feedRate = homing_feedrate(X_AXIS) });
+			motionModule.synchronize();
 
+			// move z to top
 			motionModule.setActiveCoordinateSystem(mcs);
-			motionModule.move({ .z = 0, .feedRate = homing_feedrate(Z_AXIS) });
+			motionModule.rapidMove({ .z = 0 });
+			motionModule.synchronize();
 
+			auto caddyClearanceX = CaddyClearanceX;
+
+			if (hasATCDustShoe()) {
+				caddyClearanceX = CaddyDustShoeClearanceX;
+			}
+
+			// move to clear caddy
 			motionModule.setActiveCoordinateSystem(tcs);
-			motionModule.rapidMove({ .x = CaddyClearanceX });
+			motionModule.rapidMove({ .x = caddyClearanceX });
+			motionModule.synchronize();
 
 			sourcePocket->setToolIndex(-1);
+		}
+
+		if (hasATCDustShoe()) {
+			WRITE(ATC_SEAL_PIN, !ATC_SEAL_PIN_INVERTED);
+
+			safe_delay(500);
 		}
 
 		auto& offset = tool.getOffset();

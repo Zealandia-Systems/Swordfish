@@ -4,6 +4,7 @@ target_sources(${PROJECT_NAME}.elf
     M113.cpp
     M114.cpp
     M115.cpp
+		M117.cpp
     M118.cpp
     M119.cpp
     M154.cpp

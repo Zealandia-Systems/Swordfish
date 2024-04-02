@@ -63,8 +63,10 @@
  */
 
 #include <swordfish/debug.h>
+#include <swordfish/modules/estop/EStopModule.h>
 
 using namespace swordfish;
+using namespace swordfish::estop;
 
 #include "planner.h"
 #include "stepper.h"
@@ -954,6 +956,7 @@ bool Planner::_populate_block(
 		const float& millimeters /* = 0.0*/,
 		float32_t accel_mm_s2 /* = 0.0*/
 ) {
+	EStopModule::getInstance().throwIfTriggered();
 
 	const int32_t dx = target.x - position.x,
 								dy = target.y - position.y,
@@ -1046,9 +1049,17 @@ bool Planner::_populate_block(
 	if (block->steps.a)
 		ENABLE_AXIS_A();
 
-	// NOMORE(fr_mm_s, settings.max_feedrate_mm_s[X_AXIS]);
-	// NOMORE(fr_mm_s, settings.max_feedrate_mm_s[Y_AXIS]);
-	// NOMORE(fr_mm_s, settings.max_feedrate_mm_s[Z_AXIS]);
+	if (block->steps.x) {
+		NOMORE(fr_mm_s, settings.max_feedrate_mm_s[X_AXIS]);
+	}
+
+	if (block->steps.y) {
+		NOMORE(fr_mm_s, settings.max_feedrate_mm_s[Y_AXIS]);
+	}
+
+	if (block->steps.z) {
+		NOMORE(fr_mm_s, settings.max_feedrate_mm_s[Z_AXIS]);
+	}
 
 	debug()("max_feedrate_mm_s[X_AXIS]: ", settings.max_feedrate_mm_s[X_AXIS]);
 	debug()("max_feedrate_mm_s[Y_AXIS]: ", settings.max_feedrate_mm_s[Y_AXIS]);
@@ -1154,8 +1165,9 @@ bool Planner::_populate_block(
 
 #define LIMIT_ACCEL_FLOAT(AXIS) \
 	do { \
-		if (block->steps[AXIS] && max_acceleration_steps_per_s2[AXIS] < accel) { \
-			const float comp = (float) max_acceleration_steps_per_s2[AXIS] * (float) block->step_event_count; \
+		if (block->steps[AXIS] && max_acceleration_steps_per_s2[AXIS + INDX] < accel) { \
+			debug()("max_acceleration_steps_per_s2[", axis_codes[AXIS], "]: ", max_acceleration_steps_per_s2[AXIS + INDX]); \
+			const float comp = (float) max_acceleration_steps_per_s2[AXIS + INDX] * (float) block->step_event_count; \
 			if ((float) accel * (float) block->steps[AXIS] > comp) \
 				accel = comp / (float) block->steps[AXIS]; \
 		} \
@@ -1178,8 +1190,13 @@ bool Planner::_populate_block(
 		LIMIT_ACCEL_FLOAT(A_AXIS);
 		//}
 	}
+
 	block->acceleration_steps_per_s2 = accel;
 	block->acceleration = accel / steps_per_mm;
+
+	debug()("block->acceleration_steps_per_s2: ", block->acceleration_steps_per_s2);
+	debug()("block->acceleration: ", block->acceleration);
+
 #if DISABLED(S_CURVE_ACCELERATION)
 	block->acceleration_rate = (uint32_t) (accel * (4096.0f * 4096.0f / (STEPPER_TIMER_RATE)));
 #endif

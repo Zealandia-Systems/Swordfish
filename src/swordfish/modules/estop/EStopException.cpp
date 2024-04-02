@@ -3,7 +3,7 @@
  *
  * Created: 30/09/2021 2:47:36 pm
  *  Author: smohekey
- */ 
+ */
 
 #include <swordfish/io/Writer.h>
 

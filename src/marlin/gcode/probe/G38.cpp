@@ -69,7 +69,7 @@ void GcodeSuite::G38(const int8_t subcode) {
 				feedrate_mm_s = parser.seenval('F') ? parser.value_feedrate() : (homing_feedrate((AxisEnum) i) * 0.5);
 				float retract = parser.seenval('R') ? parser.value_float() : 5;
 
-				if (!run_probe((AxisEnum) i, WORK_PROBE, v, retract))
+				if (!run_probe((AxisEnum) i, WORK_PROBE, v, retract) && error_on_fail)
 					SERIAL_ERROR_MSG("Failed to reach target");
 
 				endstops.enable_work_probe((AxisEnum) i, false);

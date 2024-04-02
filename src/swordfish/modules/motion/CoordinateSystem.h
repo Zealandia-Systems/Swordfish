@@ -20,7 +20,7 @@ namespace swordfish::motion {
 	private:
 		static core::ValueField<int16_t> __indexField;
 
-		static core::ObjectField<core::Vector3> __offsetField;
+		static core::ObjectField<core::LinearVector3> __offsetField;
 		static core::ObjectField<core::Vector3> __rotationField;
 
 	protected:
@@ -43,14 +43,14 @@ namespace swordfish::motion {
 			__indexField.set(_pack, value);
 		}
 
-		core::Vector3& getOffset() {
+		core::LinearVector3& getOffset() {
 			return __offsetField.get(_pack);
 		}
 
-		//void offset(math::Vector3f value);
+		// void offset(math::Vector3f value);
 
 		core::Vector3& getRotation() {
 			return __rotationField.get(_pack);
 		}
 	};
-}
+} // namespace swordfish::motion

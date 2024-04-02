@@ -4,6 +4,8 @@ target_sources(${PROJECT_NAME}.elf
 		ChangzouH100DriverImpl.h
 		CT100DriverImpl.cpp
 		CT100DriverImpl.h
+		FolinnH1DriverImpl.cpp
+		FolinnH1DriverImpl.h
 		FulingDZBDriverImpl.cpp
 		FulingDZBDriverImpl.h
 		PWMLaserDriverImpl.cpp

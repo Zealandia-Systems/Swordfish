@@ -55,13 +55,17 @@ namespace swordfish::tools::drivers {
 			return Direction::Forward;
 		}
 
+		virtual uint32_t getMaximumPower() const override {
+			return 100;
+		}
+
 		virtual float32_t getTargetPower() const override;
 
 		virtual void setTargetPower(float32_t targetPower) override;
 
 		virtual float32_t getCurrentPower() const override;
 
-		virtual uint16_t getOutputFrequency() const override;
+		virtual uint32_t getOutputFrequency() const override;
 
 		virtual float32_t getPowerOverride() const override;
 
@@ -70,7 +74,10 @@ namespace swordfish::tools::drivers {
 		virtual void apply() override;
 
 		virtual void emergencyStop() override {
+			setEnabled(false);
+			apply();
 		}
+
 		virtual void emergencyClear() override {
 		}
 	};

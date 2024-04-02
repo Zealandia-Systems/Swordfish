@@ -17,83 +17,103 @@ namespace swordfish::tools::drivers {
 	CT100DriverImpl::ControlCommand CT100DriverImpl::readControlCommand() const {
 		debug()();
 
-		return readHoldingRegister(0x1000, ControlCommand::Unknown);
+		return (ControlCommand) readHoldingRegister(0x1000, (uint16_t) ControlCommand::Unknown);
 	}
 
 	void CT100DriverImpl::writeControlCommand(ControlCommand controlCommand) const {
 		debug()();
 
-		writeHoldingRegister(0x1000, controlCommand);
+		writeHoldingRegister(0x1000, (uint16_t) controlCommand);
 	}
 
 	CT100DriverImpl::ControlState CT100DriverImpl::readControlState() const {
 		debug()();
 
-		return readHoldingRegister(0x1001, ControlState::Unknown);
+		return (ControlState) readHoldingRegister(0x1001, (uint16_t) ControlState::Unknown);
 	}
 
-	uint16_t CT100DriverImpl::readFrequencyPercentage() const {
+	uint32_t CT100DriverImpl::readFrequencyPercentage() const {
 		debug()();
 
-		return readHoldingRegister(0x2000, (uint16_t) 0);
+		return (uint32_t) readHoldingRegister(0x2000, (uint16_t) 0);
 	}
 
-	uint16_t CT100DriverImpl::readMaximumFrequency() const {
+	uint32_t CT100DriverImpl::readMaximumFrequency() const {
 		debug()();
 
-		return readHoldingRegister(6, (uint16_t) 0);
+		return (uint32_t) readHoldingRegister(6, (uint16_t) 0);
 	}
 
-	uint16_t CT100DriverImpl::readFrequencyUpperLimit() const {
+	uint32_t CT100DriverImpl::readFrequencyUpperLimit() const {
 		debug()();
 
-		return readHoldingRegister(7, (uint16_t) 0);
+		return (uint32_t) readHoldingRegister(7, (uint16_t) 0);
 	}
 
-	uint16_t CT100DriverImpl::readFrequencyLowerLimit() const {
+	uint32_t CT100DriverImpl::readFrequencyLowerLimit() const {
 		debug()();
 
-		return readHoldingRegister(8, (uint16_t) 0);
+		return (uint32_t) readHoldingRegister(8, (uint16_t) 0);
 	}
 
-	uint16_t CT100DriverImpl::readOutputFrequency() const {
+	uint32_t CT100DriverImpl::readOutputFrequency() const {
 		debug()();
 
-		return readHoldingRegister(0x3000, (uint16_t) 0);
+		return (uint32_t) readHoldingRegister(0x3000, (uint16_t) 0);
 	}
 
-	uint16_t CT100DriverImpl::readOutputVoltage() const {
+	uint32_t CT100DriverImpl::readOutputVoltage() const {
 		debug()();
 
-		return readHoldingRegister(0x3003, 0);
+		return (uint32_t) readHoldingRegister(0x3003, 0);
 	}
 
-	uint16_t CT100DriverImpl::readOutputCurrent() const {
+	uint32_t CT100DriverImpl::readOutputCurrent() const {
 		debug()();
 
-		return readHoldingRegister(0x3002, 0);
+		return (uint32_t) readHoldingRegister(0x3002, 0);
 	}
 
-	uint16_t CT100DriverImpl::readDCBusVoltage() const {
+	uint32_t CT100DriverImpl::readDCBusVoltage() const {
 		debug()();
 
-		return readHoldingRegister(0x3005, 0);
+		return (uint32_t) readHoldingRegister(0x3005, 0);
 	}
 
 	State CT100DriverImpl::readState() const {
 		debug()();
 
-		auto controlState = (uint8_t) readControlState();
+		auto controlState = readControlState();
 
-		return (State) (((controlState & (uint8_t) ControlState::ForwardRunning || controlState & (uint8_t) ControlState::ReverseRunning) ? (uint8_t) State::Running : 0) | (controlState & (uint8_t) ControlState::ForwardRunning ? (uint8_t) State::Forward : 0) | (controlState & (uint8_t) ControlState::Fault ? (uint8_t) State::Fault : 0));
+		switch (controlState) {
+			case ControlState::ForwardRunning: {
+				return (State) ((uint8_t) State::Running | (uint8_t) State::Forward);
+			}
+
+			case ControlState::ReverseRunning: {
+				return State::Running;
+			}
+
+			case ControlState::Standby: {
+				return State::None;
+			}
+
+			case ControlState::Fault: {
+				return State::Fault;
+			}
+
+			default: {
+				return State::Fault;
+			}
+		}
 	}
 
-	uint16_t CT100DriverImpl::readFault() const {
+	uint32_t CT100DriverImpl::readFault() const {
 		debug()();
 
 		auto fault = readHoldingRegister(0x5000, 0);
 
-		debug()("fault: ", fault);
+		debug()("fault: ", (uint32_t) fault);
 
 		/*if (fault == 17) {
 		  auto& estopModule = EStopModule::getInstance();
@@ -108,7 +128,7 @@ namespace swordfish::tools::drivers {
 		return fault;
 	}
 
-	void CT100DriverImpl::writeTargetFrequency(uint16_t targetFrequency) const {
+	void CT100DriverImpl::writeTargetFrequency(uint32_t targetFrequency) const {
 		debug()("targetFrequency: ", targetFrequency);
 
 		uint16_t maximumFrequency = readMaximumFrequency();

@@ -895,23 +895,7 @@ uint8_t axes_should_home(uint8_t axis_bits /*=0x07*/) {
 
 bool homing_needed_error(uint8_t axis_bits /*=0x07*/) {
 	if ((axis_bits = axes_should_home(axis_bits))) {
-		SERIAL_ECHO_START();
-		SERIAL_ECHO("Home ");
-
-		if (TEST(axis_bits, X_AXIS)) {
-			SERIAL_ECHO("X");
-		}
-
-		if (TEST(axis_bits, X_AXIS)) {
-			SERIAL_ECHO("Y");
-		}
-
-		if (TEST(axis_bits, X_AXIS)) {
-			SERIAL_ECHO("Z");
-		}
-		SERIAL_ECHOLN(" first.");
-		TERN_(HAS_DISPLAY, ui.set_status(msg));
-		return true;
+		throw NotHomedException {};
 	}
 	return false;
 }
@@ -1438,6 +1422,9 @@ void homeaxis(const AxisEnum axis) {
 				break;
 		}
 	}
+
+	// move 1mm away from the sensors
+	do_homing_move(axis, -1.0 * axis_home_dir, homing_feedrate(axis), !use_probe_bump);
 
 #if HAS_EXTRA_ENDSTOPS
 	// Set flags for X, Y, Z motor locking
