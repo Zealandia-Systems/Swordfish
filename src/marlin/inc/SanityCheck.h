@@ -1515,9 +1515,9 @@ static_assert(Y_MAX_LENGTH >= Y_BED_SIZE, "Movement bounds (Y_MIN_POS, Y_MAX_POS
  */
 constexpr float hbm[] = HOMING_BUMP_MM;
 static_assert(COUNT(hbm) == XYZ, "HOMING_BUMP_MM requires X, Y, and Z elements.");
-static_assert(hbm[X_AXIS] >= 0, "HOMING_BUMP_MM.X must be greater than or equal to 0.");
-static_assert(hbm[Y_AXIS] >= 0, "HOMING_BUMP_MM.Y must be greater than or equal to 0.");
-static_assert(hbm[Z_AXIS] >= 0, "HOMING_BUMP_MM.Z must be greater than or equal to 0.");
+static_assert(hbm[Axis::X()] >= 0, "HOMING_BUMP_MM.X must be greater than or equal to 0.");
+static_assert(hbm[Axis::Y()] >= 0, "HOMING_BUMP_MM.Y must be greater than or equal to 0.");
+static_assert(hbm[Axis::Z()] >= 0, "HOMING_BUMP_MM.Z must be greater than or equal to 0.");
 
 #if ENABLED(CODEPENDENT_XY_HOMING)
   #if ENABLED(QUICK_HOME)
@@ -2445,22 +2445,12 @@ static_assert(hbm[Z_AXIS] >= 0, "HOMING_BUMP_MM.Z must be greater than or equal 
   #error "An SPI driven TMC driver on Z3 requires Z3_CS_PIN."
 #elif INVALID_TMC_SPI(Z4)
   #error "An SPI driven TMC driver on Z4 requires Z4_CS_PIN."
-#elif INVALID_TMC_SPI(E0)
-  #error "An SPI driven TMC driver on E0 requires E0_CS_PIN."
-#elif INVALID_TMC_SPI(E1)
-  #error "An SPI driven TMC driver on E1 requires E1_CS_PIN."
-#elif INVALID_TMC_SPI(E2)
-  #error "An SPI driven TMC driver on E2 requires E2_CS_PIN."
-#elif INVALID_TMC_SPI(E3)
-  #error "An SPI driven TMC driver on E3 requires E3_CS_PIN."
-#elif INVALID_TMC_SPI(E4)
-  #error "An SPI driven TMC driver on E4 requires E4_CS_PIN."
-#elif INVALID_TMC_SPI(E5)
-  #error "An SPI driven TMC driver on E5 requires E5_CS_PIN."
-#elif INVALID_TMC_SPI(E6)
-  #error "An SPI driven TMC driver on E6 requires E6_CS_PIN."
-#elif INVALID_TMC_SPI(E7)
-  #error "An SPI driven TMC driver on E7 requires E7_CS_PIN."
+#elif INVALID_TMC_SPI(A)
+  #error "An SPI driven TMC driver on A requires A_CS_PIN."
+#elif INVALID_TMC_SPI(B)
+  #error "An SPI driven TMC driver on B requires B_CS_PIN."
+#elif INVALID_TMC_SPI(C)
+  #error "An SPI driven TMC driver on C requires C_CS_PIN."
 #endif
 #undef INVALID_TMC_SPI
 
@@ -2484,22 +2474,12 @@ static_assert(hbm[Z_AXIS] >= 0, "HOMING_BUMP_MM.Z must be greater than or equal 
   #error "TMC2208 or TMC2209 on Z3 requires Z3_HARDWARE_SERIAL or Z3_SERIAL_(RX|TX)_PIN."
 #elif INVALID_TMC_UART(Z4)
   #error "TMC2208 or TMC2209 on Z4 requires Z4_HARDWARE_SERIAL or Z4_SERIAL_(RX|TX)_PIN."
-#elif INVALID_TMC_UART(E0)
-  #error "TMC2208 or TMC2209 on E0 requires E0_HARDWARE_SERIAL or E0_SERIAL_(RX|TX)_PIN."
-#elif INVALID_TMC_UART(E1)
-  #error "TMC2208 or TMC2209 on E1 requires E1_HARDWARE_SERIAL or E1_SERIAL_(RX|TX)_PIN."
-#elif INVALID_TMC_UART(E2)
-  #error "TMC2208 or TMC2209 on E2 requires E2_HARDWARE_SERIAL or E2_SERIAL_(RX|TX)_PIN."
-#elif INVALID_TMC_UART(E3)
-  #error "TMC2208 or TMC2209 on E3 requires E3_HARDWARE_SERIAL or E3_SERIAL_(RX|TX)_PIN."
-#elif INVALID_TMC_UART(E4)
-  #error "TMC2208 or TMC2209 on E4 requires E4_HARDWARE_SERIAL or E4_SERIAL_(RX|TX)_PIN."
-#elif INVALID_TMC_UART(E5)
-  #error "TMC2208 or TMC2209 on E5 requires E5_HARDWARE_SERIAL or E5_SERIAL_(RX|TX)_PIN."
-#elif INVALID_TMC_UART(E6)
-  #error "TMC2208 or TMC2209 on E6 requires E6_HARDWARE_SERIAL or E6_SERIAL_(RX|TX)_PIN."
-#elif INVALID_TMC_UART(E7)
-  #error "TMC2208 or TMC2209 on E7 requires E7_HARDWARE_SERIAL or E7_SERIAL_(RX|TX)_PIN."
+#elif INVALID_TMC_UART(A)
+  #error "TMC2208 or TMC2209 on A requires A_HARDWARE_SERIAL or A_SERIAL_(RX|TX)_PIN."
+#elif INVALID_TMC_UART(B)
+  #error "TMC2208 or TMC2209 on B requires B_HARDWARE_SERIAL or B_SERIAL_(RX|TX)_PIN."
+#elif INVALID_TMC_UART(C)
+  #error "TMC2208 or TMC2209 on C requires C_HARDWARE_SERIAL or C_SERIAL_(RX|TX)_PIN."
 #endif
 #undef INVALID_TMC_UART
 
@@ -2523,22 +2503,12 @@ static_assert(hbm[Z_AXIS] >= 0, "HOMING_BUMP_MM.Z must be greater than or equal 
   INVALID_TMC_ADDRESS(Z3);
 #elif AXIS_DRIVER_TYPE_Z4(TMC2209)
   INVALID_TMC_ADDRESS(Z4);
-#elif AXIS_DRIVER_TYPE_E0(TMC2209)
-  INVALID_TMC_ADDRESS(E0);
-#elif AXIS_DRIVER_TYPE_E1(TMC2209)
-  INVALID_TMC_ADDRESS(E1);
-#elif AXIS_DRIVER_TYPE_E2(TMC2209)
-  INVALID_TMC_ADDRESS(E2);
-#elif AXIS_DRIVER_TYPE_E3(TMC2209)
-  INVALID_TMC_ADDRESS(E3);
-#elif AXIS_DRIVER_TYPE_E4(TMC2209)
-  INVALID_TMC_ADDRESS(E4);
-#elif AXIS_DRIVER_TYPE_E5(TMC2209)
-  INVALID_TMC_ADDRESS(E5);
-#elif AXIS_DRIVER_TYPE_E6(TMC2209)
-  INVALID_TMC_ADDRESS(E6);
-#elif AXIS_DRIVER_TYPE_E7(TMC2209)
-  INVALID_TMC_ADDRESS(E7);
+#elif AXIS_DRIVER_TYPE_A(TMC2209)
+  INVALID_TMC_ADDRESS(A);
+#elif AXIS_DRIVER_TYPE_B(TMC2209)
+  INVALID_TMC_ADDRESS(B);
+#elif AXIS_DRIVER_TYPE_C(TMC2209)
+  INVALID_TMC_ADDRESS(C);
 #endif
 #undef INVALID_TMC_ADDRESS
 
@@ -2562,22 +2532,12 @@ static_assert(hbm[Z_AXIS] >= 0, "HOMING_BUMP_MM.Z must be greater than or equal 
   INVALID_TMC_MS(Z3)
 #elif !TMC_MICROSTEP_IS_VALID(Z4)
   INVALID_TMC_MS(Z4)
-#elif !TMC_MICROSTEP_IS_VALID(E0)
-  INVALID_TMC_MS(E0)
-#elif !TMC_MICROSTEP_IS_VALID(E1)
-  INVALID_TMC_MS(E1)
-#elif !TMC_MICROSTEP_IS_VALID(E2)
-  INVALID_TMC_MS(E2)
-#elif !TMC_MICROSTEP_IS_VALID(E3)
-  INVALID_TMC_MS(E3)
-#elif !TMC_MICROSTEP_IS_VALID(E4)
-  INVALID_TMC_MS(E4)
-#elif !TMC_MICROSTEP_IS_VALID(E5)
-  INVALID_TMC_MS(E5)
-#elif !TMC_MICROSTEP_IS_VALID(E6)
-  INVALID_TMC_MS(E6)
-#elif !TMC_MICROSTEP_IS_VALID(E7)
-  INVALID_TMC_MS(E7)
+#elif !TMC_MICROSTEP_IS_VALID(A)
+  INVALID_TMC_MS(A)
+#elif !TMC_MICROSTEP_IS_VALID(B)
+  INVALID_TMC_MS(B)
+#elif !TMC_MICROSTEP_IS_VALID(C)
+  INVALID_TMC_MS(C)
 #endif
 #undef INVALID_TMC_MS
 #undef TMC_MICROSTEP_IS_VALID
@@ -2782,22 +2742,22 @@ constexpr float sanity_arr_1[] = DEFAULT_AXIS_STEPS_PER_UNIT,
 
 #define _ARR_TEST(N,I) (sanity_arr_##N[_MIN(I,int(COUNT(sanity_arr_##N))-1)] > 0)
 
-static_assert(COUNT(sanity_arr_1) >= XYZE,   "DEFAULT_AXIS_STEPS_PER_UNIT requires X, Y, Z and E elements.");
-static_assert(COUNT(sanity_arr_1) <= XYZE_N, "DEFAULT_AXIS_STEPS_PER_UNIT has too many elements. (Did you forget to enable DISTINCT_E_FACTORS?)");
+static_assert(COUNT(sanity_arr_1) >= 4,   "DEFAULT_AXIS_STEPS_PER_UNIT requires X, Y, Z and E elements.");
+static_assert(COUNT(sanity_arr_1) <= 5, "DEFAULT_AXIS_STEPS_PER_UNIT has too many elements. (Did you forget to enable DISTINCT_E_FACTORS?)");
 static_assert(   _ARR_TEST(1,0) && _ARR_TEST(1,1) && _ARR_TEST(1,2)
               && _ARR_TEST(1,3) && _ARR_TEST(1,4) && _ARR_TEST(1,5)
               && _ARR_TEST(1,6) && _ARR_TEST(1,7) && _ARR_TEST(1,8),
               "DEFAULT_AXIS_STEPS_PER_UNIT values must be positive.");
 
-static_assert(COUNT(sanity_arr_2) >= XYZE,   "DEFAULT_MAX_FEEDRATE requires X, Y, Z and E elements.");
-static_assert(COUNT(sanity_arr_2) <= XYZE_N, "DEFAULT_MAX_FEEDRATE has too many elements. (Did you forget to enable DISTINCT_E_FACTORS?)");
+static_assert(COUNT(sanity_arr_2) >= 4,   "DEFAULT_MAX_FEEDRATE requires X, Y, Z and E elements.");
+static_assert(COUNT(sanity_arr_2) <= 5, "DEFAULT_MAX_FEEDRATE has too many elements. (Did you forget to enable DISTINCT_E_FACTORS?)");
 static_assert(   _ARR_TEST(2,0) && _ARR_TEST(2,1) && _ARR_TEST(2,2)
               && _ARR_TEST(2,3) && _ARR_TEST(2,4) && _ARR_TEST(2,5)
               && _ARR_TEST(2,6) && _ARR_TEST(2,7) && _ARR_TEST(2,8),
               "DEFAULT_MAX_FEEDRATE values must be positive.");
 
-static_assert(COUNT(sanity_arr_3) >= XYZE,   "DEFAULT_MAX_ACCELERATION requires X, Y, Z and E elements.");
-static_assert(COUNT(sanity_arr_3) <= XYZE_N, "DEFAULT_MAX_ACCELERATION has too many elements. (Did you forget to enable DISTINCT_E_FACTORS?)");
+static_assert(COUNT(sanity_arr_3) >= 4,   "DEFAULT_MAX_ACCELERATION requires X, Y, Z and E elements.");
+static_assert(COUNT(sanity_arr_3) <= 5, "DEFAULT_MAX_ACCELERATION has too many elements. (Did you forget to enable DISTINCT_E_FACTORS?)");
 static_assert(   _ARR_TEST(3,0) && _ARR_TEST(3,1) && _ARR_TEST(3,2)
               && _ARR_TEST(3,3) && _ARR_TEST(3,4) && _ARR_TEST(3,5)
               && _ARR_TEST(3,6) && _ARR_TEST(3,7) && _ARR_TEST(3,8),

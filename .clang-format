@@ -56,9 +56,8 @@ SpacesInConditionalStatement: false
 SpacesInContainerLiterals: false
 SpacesInParentheses: false
 SpacesInSquareBrackets: false
-Standard: Cpp20
+Standard: C++20
 SortIncludes: false
-Standard: c++17
 TabWidth: 2
 UseCRLF: false
 UseTab: AlignWithSpaces

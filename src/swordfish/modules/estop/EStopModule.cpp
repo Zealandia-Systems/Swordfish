@@ -59,9 +59,9 @@ namespace swordfish::estop {
 			planner.clear_block_buffer();
 			queue.clear();
 
-			set_axis_never_homed(X_AXIS);
-			set_axis_never_homed(Y_AXIS);
-			set_axis_never_homed(Z_AXIS);
+			set_axis_never_homed(Axis::X());
+			set_axis_never_homed(Axis::Y());
+			set_axis_never_homed(Axis::Z());
 		}
 	}
 

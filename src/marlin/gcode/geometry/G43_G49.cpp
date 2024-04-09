@@ -43,12 +43,12 @@ void GcodeSuite::G43() {
 			return;
 		}
 
-		offset(Z) = -tool->getGeometry().length();
+		offset[Axis::Z()] = -tool->getGeometry().length();
 	}
 
-	LOOP_XYZ(i) {
-		if (parser.seenval(XYZ_CHAR(i))) {
-			offset(i) += parser.value_axis_units((AxisEnum) i);
+	for (auto i : linear_axes) {
+		if (parser.seenval(i.to_char())) {
+			offset[i] += parser.value_axis_units(i);
 		}
 	}
 

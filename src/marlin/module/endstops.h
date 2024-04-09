@@ -28,7 +28,7 @@
 #include "../inc/MarlinConfig.h"
 #include <stdint.h>
 
-enum EndstopEnum : char {
+/*enum EndstopEnum : char {
   X_MIN       = 0,
 	Y_MIN       = 1,
 	Z_MIN       = 2,
@@ -49,14 +49,14 @@ enum EndstopEnum : char {
 	Z3_MAX      = 17,
   Z4_MIN      = 18,
 	Z4_MAX      = 19
-};
+};*/
 
-#define X_ENDSTOP			(X_HOME_DIR < 0 ? X_MIN : X_MAX)
-#define X2_ENDSTOP		(X_HOME_DIR < 0 ? X2_MIN : X2_MAX)
-#define Y_ENDSTOP			(Y_HOME_DIR < 0 ? Y_MIN : Y_MAX)
-#define Y2_ENDSTOP		(Y_HOME_DIR < 0 ? Y2_MIN : Y2_MAX)
-#define Z_ENDSTOP			(Z_HOME_DIR < 0 ? TERN(HOMING_Z_WITH_PROBE, Z_MIN, Z_MIN_PROBE) : Z_MAX)
-#define WORK_ENDSTOP	WORK_PROBE
+#define X_ENDSTOP			(X_HOME_DIR < 0 ? EndstopValue::X_MIN : EndstopValue::X_MAX)
+#define X2_ENDSTOP		(X_HOME_DIR < 0 ? EndstopValue::X2_MIN : EndstopValue::X2_MAX)
+#define Y_ENDSTOP			(Y_HOME_DIR < 0 ? EndstopValue::Y_MIN : EndstopValue::Y_MAX)
+#define Y2_ENDSTOP		(Y_HOME_DIR < 0 ? EndstopValue::Y2_MIN : EndstopValue::Y2_MAX)
+#define Z_ENDSTOP			(Z_HOME_DIR < 0 ? EndstopValue::Z_MIN : EndstopValue::Z_MAX)
+#define WORK_ENDSTOP	EndstopValue::WORK_PROBE
 
 class Endstops {
   public:
@@ -174,19 +174,19 @@ class Endstops {
       static volatile bool z_probe_enabled;
       static void enable_z_probe(const bool onoff=true);
     #endif
-		
+
 		#if HAS_TOOL_PROBE
 			static bool tool_probe_enabled;
-			
+
 			static void enable_tool_probe(const bool enabled) {
 				tool_probe_enabled = enabled;
 			}
 		#endif
-		
+
 		#if HAS_WORK_PROBE
 			static xyz_bool_t work_probe_enabled;
-			
-			static void enable_work_probe(const AxisEnum axis, const bool enabled = true) {
+
+			static void enable_work_probe(const Axis axis, const bool enabled = true) {
 				work_probe_enabled[axis] = enabled;
 			}
 		#endif

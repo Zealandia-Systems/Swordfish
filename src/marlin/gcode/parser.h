@@ -418,17 +418,17 @@ public:
 		volumetric_unit_factor = POW(linear_unit_factor, 3);
 	}
 
-	static inline float axis_unit_factor(const AxisEnum axis) {
-		return (axis >= E_AXIS && volumetric_enabled ? volumetric_unit_factor : linear_unit_factor);
+	static inline float axis_unit_factor(const Axis axis) {
+		return linear_unit_factor;
 	}
 
 	static inline float linear_value_to_mm(const float v) {
 		return v * linear_unit_factor;
 	}
-	static inline float axis_value_to_mm(const AxisEnum axis, const float v) {
+	static inline float axis_value_to_mm(const Axis axis, const float v) {
 		return v * axis_unit_factor(axis);
 	}
-	static inline float per_axis_value(const AxisEnum axis, const float v) {
+	static inline float per_axis_value(const Axis axis, const float v) {
 		return v / axis_unit_factor(axis);
 	}
 
@@ -465,10 +465,10 @@ public:
 	static inline float value_linear_units() {
 		return linear_value_to_mm(value_float());
 	}
-	static inline float value_axis_units(const AxisEnum axis) {
+	static inline float value_axis_units(const Axis axis) {
 		return axis_value_to_mm(axis, value_float());
 	}
-	static inline float value_per_axis_units(const AxisEnum axis) {
+	static inline float value_per_axis_units(const Axis axis) {
 		return per_axis_value(axis, value_float());
 	}
 

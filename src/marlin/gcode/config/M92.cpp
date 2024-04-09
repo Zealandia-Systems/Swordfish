@@ -25,11 +25,11 @@
 
 void report_M92(const bool echo=true, const int8_t e=-1) {
   if (echo) SERIAL_ECHO_START(); else SERIAL_CHAR(' ');
-  SERIAL_ECHOPAIR_P(PSTR(" M92 X"), LINEAR_UNIT(planner.settings.axis_steps_per_mm[X_AXIS]),
-                          SP_Y_STR, LINEAR_UNIT(planner.settings.axis_steps_per_mm[Y_AXIS]),
-                          SP_Z_STR, LINEAR_UNIT(planner.settings.axis_steps_per_mm[Z_AXIS]));
+  SERIAL_ECHOPAIR_P(PSTR(" M92 X"), LINEAR_UNIT(planner.settings.axis_steps_per_mm[Axis::X()]),
+                          SP_Y_STR, LINEAR_UNIT(planner.settings.axis_steps_per_mm[Axis::Y()]),
+                          SP_Z_STR, LINEAR_UNIT(planner.settings.axis_steps_per_mm[Axis::Z()]));
   #if DISABLED(DISTINCT_E_FACTORS)
-    SERIAL_ECHOPAIR_P(SP_E_STR, VOLUMETRIC_UNIT(planner.settings.axis_steps_per_mm[E_AXIS]));
+    SERIAL_ECHOPAIR_P(SP_E_STR, VOLUMETRIC_UNIT(planner.settings.axis_steps_per_mm[Axis::A()]));
   #endif
   SERIAL_EOL();
 
@@ -41,8 +41,6 @@ void report_M92(const bool echo=true, const int8_t e=-1) {
                         SP_E_STR, VOLUMETRIC_UNIT(planner.settings.axis_steps_per_mm[E_AXIS_N(i)]));
     }
   #endif
-
-  UNUSED_E(e);
 }
 
 /**
@@ -70,23 +68,9 @@ void GcodeSuite::M92() {
     #endif
   )) return report_M92(true, target_extruder);
 
-  LOOP_XYZE(i) {
-    if (parser.seenval(axis_codes[i])) {
-      if (i == E_AXIS) {
-        const float value = parser.value_per_axis_units((AxisEnum)(E_AXIS_N(target_extruder)));
-        if (value < 20) {
-          float factor = planner.settings.axis_steps_per_mm[E_AXIS_N(target_extruder)] / value; // increase e constants if M92 E14 is given for netfab.
-          #if HAS_CLASSIC_JERK && HAS_CLASSIC_E_JERK
-            planner.max_jerk.e *= factor;
-          #endif
-          planner.settings.max_feedrate_mm_s[E_AXIS_N(target_extruder)] *= factor;
-          planner.max_acceleration_steps_per_s2[E_AXIS_N(target_extruder)] *= factor;
-        }
-        planner.settings.axis_steps_per_mm[E_AXIS_N(target_extruder)] = value;
-      }
-      else {
-        planner.settings.axis_steps_per_mm[i] = parser.value_per_axis_units((AxisEnum)i);
-      }
+  for (auto i : all_axes) {
+    if (parser.seenval(i.to_char())) {
+      planner.settings.axis_steps_per_mm[i] = parser.value_per_axis_units(i);
     }
   }
   planner.refresh_positioning();

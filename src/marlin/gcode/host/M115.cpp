@@ -88,15 +88,15 @@ void GcodeSuite::M115() {
 			",\"area\":{"
 			"\"full\":{"
 			"\"min\":{\"x\":",
-			lmin(X), ",\"y\":", lmin(Y), ",\"z\":", lmin(Z), "},"
+			lmin.x(), ",\"y\":", lmin.y(), ",\"z\":", lmin.z(), "},"
 																											 "\"max\":{\"x\":",
-			lmax(X), ",\"y\":", lmax(Y), ",\"z\":", lmax(Z), "}"
+			lmax.x(), ",\"y\":", lmax.y(), ",\"z\":", lmax.z(), "}"
 																											 "},"
 																											 "\"work\":{"
 																											 "\"min\":{\"x\":",
-			wmin(X), ",\"y\":", wmin(Y), ",\"z\":", wmin(Z), "},"
+			wmin.x(), ",\"y\":", wmin.y(), ",\"z\":", wmin.z(), "},"
 																											 "\"max\":{\"x\":",
-			wmax(X), ",\"y\":", wmax(Y), ",\"z\":", wmax(Z), "}",
+			wmax.x(), ",\"y\":", wmax.y(), ",\"z\":", wmax.z(), "}",
 			"}"
 			"}"
 			"}");

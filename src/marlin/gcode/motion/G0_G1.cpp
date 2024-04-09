@@ -46,9 +46,9 @@ void GcodeSuite::G0_G1(const bool fast_move/* = false*/) {
   if (IsRunning()
     #if ENABLED(NO_MOTION_BEFORE_HOMING)
       && !homing_needed_error(
-          (parser.seen('X') ? _BV(X_AXIS) : 0)
-        | (parser.seen('Y') ? _BV(Y_AXIS) : 0)
-        | (parser.seen('Z') ? _BV(Z_AXIS) : 0) )
+          (parser.seen('X') ? _BV(Axis::X()) : 0)
+        | (parser.seen('Y') ? _BV(Axis::Y()) : 0)
+        | (parser.seen('Z') ? _BV(Axis::Z()) : 0) )
     #endif
   ) {
 
@@ -59,7 +59,7 @@ void GcodeSuite::G0_G1(const bool fast_move/* = false*/) {
         feedrate_mm_s = rapidrate_mm_s * 0.01f * rapidrate_percentage;       // Get G0 feedrate from last usage
       }
     #endif
-    
+
     get_destination_from_command();                 // Get X Y Z E F (and set cutter power)
 
     if (fast_move) {
@@ -70,12 +70,12 @@ void GcodeSuite::G0_G1(const bool fast_move/* = false*/) {
         feedrate_mm_s = MMM_TO_MMS(G0_FEEDRATE);  // Get the fixed G0 feedrate
       #endif
     }
-    
+
 		debug()("accel_mm_s2: ", fast_move ? planner.settings.travel_acceleration : planner.settings.acceleration);
 		debug()("feedrate_mm_s: ", feedrate_mm_s);
-		
+
     prepare_line_to_destination(fast_move ? planner.settings.travel_acceleration : planner.settings.acceleration);
-    
+
 		// Restore the motion mode feedrate
     if (fast_move) {
 			feedrate_mm_s = old_feedrate;

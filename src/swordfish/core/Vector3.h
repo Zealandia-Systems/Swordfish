@@ -9,6 +9,7 @@
 
 #include <Eigen/Core>
 
+#include <swordfish/math.h>
 #include <swordfish/types.h>
 #include <swordfish/debug.h>
 #include <swordfish/io/Writer.h>
@@ -42,37 +43,37 @@ namespace swordfish::core {
 				Object(parent), _pack(__schema, *this) {
 		}
 
-		inline float32_t x() {
+		inline f32 x() {
 			return __xField.get(_pack);
 		}
 
-		inline void x(float32_t value) {
+		inline void x(f32 value) {
 			__xField.set(_pack, value);
 		}
 
-		inline float32_t y() {
+		inline f32 y() {
 			return __yField.get(_pack);
 		}
 
-		inline void y(float32_t value) {
+		inline void y(f32 value) {
 			__yField.set(_pack, value);
 		}
 
-		inline float32_t z() {
+		inline f32 z() {
 			return __zField.get(_pack);
 		}
 
-		inline void z(float32_t value) {
+		inline void z(f32 value) {
 			__zField.set(_pack, value);
 		}
 
-		void set(Eigen::Vector3f& value) {
-			x(value(X));
-			y(value(Y));
-			z(value(Z));
+		void set(swordfish::math::Vector3f32& value) {
+			x(value(Axis::X()));
+			y(value(Axis::Y()));
+			z(value(Axis::Z()));
 		}
 
-		inline operator Eigen::Vector3f() {
+		inline operator swordfish::math::Vector3f32() {
 			return { x(), y(), z() };
 		}
 	};

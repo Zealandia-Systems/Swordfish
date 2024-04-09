@@ -90,7 +90,7 @@ millis_t GcodeSuite::previous_move_ms = 0,
 
 // Relative motion mode for each logical axis
 static constexpr xyze_bool_t ar_init = AXIS_RELATIVE_MODES;
-uint8_t GcodeSuite::axis_relative = ((ar_init.x ? _BV(REL_X) : 0) | (ar_init.y ? _BV(REL_Y) : 0) | (ar_init.z ? _BV(REL_Z) : 0) | (ar_init.e ? _BV(REL_E) : 0));
+uint8_t GcodeSuite::axis_relative = ((ar_init.x ? _BV((u8)AxisRelative::X) : 0) | (ar_init.y ? _BV((u8)AxisRelative::Y) : 0) | (ar_init.z ? _BV((u8)AxisRelative::Z) : 0) | (ar_init.e ? _BV((u8)AxisRelative::A) : 0));
 
 #if EITHER(HAS_AUTO_REPORTING, HOST_KEEPALIVE_FEATURE)
 bool GcodeSuite::autoreport_paused; // = false
@@ -170,15 +170,19 @@ void GcodeSuite::get_destination_from_command() {
 #endif
 
 	// Get new XYZ position, whether absolute or relative
-	LOOP_XYZ(i) {
-		if ((seen[i] = parser.seenval(XYZ_CHAR(i)))) {
-			const float v = parser.value_axis_units((AxisEnum) i);
-			if (skip_move)
+	for (auto i : all_axes) {
+		seen[i] = parser.seenval(i.to_char());
+
+		if (seen[i]) {
+			const float v = parser.value_axis_units(i);
+			if (skip_move) {
 				destination[i] = current_position[i];
-			else
-				destination[i] = axis_is_relative(AxisEnum(i)) ? current_position[i] + v : motionModule.toNative((AxisEnum) i, v);
-		} else
+			} else {
+				destination[i] = axis_is_relative(i) ? current_position[i] + v : motionModule.toNative(i, v);
+			}
+		} else {
 			destination[i] = current_position[i];
+		}
 	}
 
 #if ENABLED(POWER_LOSS_RECOVERY) && !PIN_EXISTS(POWER_LOSS)
@@ -1102,8 +1106,8 @@ const char* GcodeSuite::get_state() {
 	}
 }
 
-inline void report_position_json(const xyz_pos_t& pos) {
-	SERIAL_PRINTF("{\"x\":%lf,\"y\":%lf,\"z\":%lf}", pos.x, pos.y, pos.z);
+inline void report_position_json(const Vector6f32& pos) {
+	SERIAL_PRINTF("{\"x\":%lf,\"y\":%lf,\"z\":%lf,\"a\":%lf,\"b\":%lf,\"c\":%lf}", pos.x(), pos.y(), pos.z(), pos.a(), pos.b(), pos.c());
 }
 
 extern int16_t rapidrate_percentage;
@@ -1111,7 +1115,7 @@ extern int16_t rapidrate_percentage;
 void GcodeSuite::report_state() {
 	// get_cartesian_from_steppers();
 
-	xyz_pos_t pos = current_position;
+	Vector6f32 pos = current_position;
 	// xyz_pos_t pos = cartes;
 
 	const char* state = get_state();
@@ -1124,7 +1128,7 @@ void GcodeSuite::report_state() {
 	SERIAL_ECHO("\",\"mpos\":");
 	report_position_json(pos);
 	SERIAL_ECHO(",\"wpos\":");
-	report_position_json(pos.asLogical());
+	report_position_json(toLogical(pos));
 	// SERIAL_ECHO(",\"spos\":");
 	// SERIAL_PRINTF("{\"x\":%lf,\"y\":%lf,\"z\":%lf}", Stepper::count_position.x, Stepper::count_position.y, Stepper::count_position.z);
 	SERIAL_PRINTF(",\"wcs\":%ld", motionManager.getActiveCoordinateSystem().getIndex() + 1);

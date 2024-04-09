@@ -87,6 +87,10 @@ Stepper stepper; // Singleton
 #	include "speed_lookuptable.h"
 #endif
 
+#include <swordfish/math.h>
+
+using namespace swordfish::math;
+
 #include "endstops.h"
 #include "planner.h"
 #include "motion.h"
@@ -183,9 +187,9 @@ uint8_t Stepper::steps_per_isr;
 IF_DISABLED(ADAPTIVE_STEP_SMOOTHING, constexpr)
 uint8_t Stepper::oversampling_factor;
 
-xyze_long_t Stepper::delta_error { 0, 0, 0 };
+Vector6i32 Stepper::delta_error { 0, 0, 0, 0, 0, 0 };
 
-xyze_ulong_t Stepper::advance_dividend { 0, 0, 0 };
+Vector6u32 Stepper::advance_dividend { 0, 0, 0, 0, 0, 0 };
 uint32_t Stepper::advance_divisor = 0,
 				 Stepper::step_events_completed = 0, // The number of step events executed in the current block
 		Stepper::accelerate_until, // The count at which to stop accelerating
@@ -555,30 +559,6 @@ void Stepper::set_directions() {
 #if HAS_Z_DIR
 	SET_STEP_DIR(Z); // C
 #endif
-
-#if DISABLED(LIN_ADVANCE)
-#	if ENABLED(MIXING_EXTRUDER)
-	                 // Because this is valid for the whole block we don't know
-	                 // what e-steppers will step. Likely all. Set all.
-	if (motor_direction(E_AXIS)) {
-		MIXER_STEPPER_LOOP(j)
-		REV_E_DIR(j);
-		count_direction.e = -1;
-	} else {
-		MIXER_STEPPER_LOOP(j)
-		NORM_E_DIR(j);
-		count_direction.e = 1;
-	}
-#	else
-	if (motor_direction(E_AXIS)) {
-		REV_E_DIR(stepper_extruder);
-		count_direction.e = -1;
-	} else {
-		NORM_E_DIR(stepper_extruder);
-		count_direction.e = 1;
-	}
-#	endif
-#endif // !LIN_ADVANCE
 
 #if HAS_L64XX
 	if (L64XX_OK_to_power_up) { // OK to send the direction commands (which powers up the L64XX steppers)
@@ -2141,9 +2121,9 @@ uint32_t Stepper::block_phase_isr() {
 #	endif
 #	define X_MOVE_TEST (S_(1) != S_(2) || (S_(1) > 0 && X_CMP(D_(1), D_(2))))
 #elif ENABLED(MARKFORGED_XY)
-#	define X_MOVE_TEST (current_block->steps.a != current_block->steps.b)
+#	define X_MOVE_TEST (current_block->steps.x() != current_block->steps.b)
 #else
-#	define X_MOVE_TEST !!current_block->steps.a
+#	define X_MOVE_TEST !!current_block->steps.x()
 #endif
 
 #if CORE_IS_XY || CORE_IS_YZ
@@ -2161,7 +2141,7 @@ uint32_t Stepper::block_phase_isr() {
 #	endif
 #	define Y_MOVE_TEST (S_(1) != S_(2) || (S_(1) > 0 && Y_CMP(D_(1), D_(2))))
 #else
-#	define Y_MOVE_TEST !!current_block->steps.b
+#	define Y_MOVE_TEST !!current_block->steps.y()
 #endif
 
 #if CORE_IS_XZ || CORE_IS_YZ
@@ -2179,16 +2159,16 @@ uint32_t Stepper::block_phase_isr() {
 #	endif
 #	define Z_MOVE_TEST (S_(1) != S_(2) || (S_(1) > 0 && Z_CMP(D_(1), D_(2))))
 #else
-#	define Z_MOVE_TEST !!current_block->steps.c
+#	define Z_MOVE_TEST !!current_block->steps.z()
 #endif
 
 			uint8_t axis_bits = 0;
 			if (X_MOVE_TEST)
-				SBI(axis_bits, A_AXIS);
+				SBI(axis_bits, Axis::X());
 			if (Y_MOVE_TEST)
-				SBI(axis_bits, B_AXIS);
+				SBI(axis_bits, Axis::Y());
 			if (Z_MOVE_TEST)
-				SBI(axis_bits, C_AXIS);
+				SBI(axis_bits, Axis::Z());
 			// if (!!current_block->steps.e) SBI(axis_bits, E_AXIS);
 			// if (!!current_block->steps.a) SBI(axis_bits, X_HEAD);
 			// if (!!current_block->steps.b) SBI(axis_bits, Y_HEAD);
@@ -2215,11 +2195,14 @@ uint32_t Stepper::block_phase_isr() {
 			// Based on the oversampling factor, do the calculations
 			step_event_count = current_block->step_event_count << oversampling;
 
-			// Initialize Bresenham delta errors to 1/2
-			delta_error = -int32_t(step_event_count);
+			for (auto axis : all_axes) {
+				// Initialize Bresenham delta errors to 1/2
+				delta_error[axis] = -i32(step_event_count);
 
-			// Calculate Bresenham dividends and divisors
-			advance_dividend = current_block->steps << 1;
+				// Calculate Bresenham dividends and divisors
+				advance_dividend[axis] = current_block->steps[axis] << 1;
+			}
+
 			advance_divisor = step_event_count << 1;
 
 			// No step events completed so far
@@ -2705,7 +2688,7 @@ void Stepper::init() {
 #endif
 
 	// Init direction bits for first moves
-	set_directions((INVERT_X_DIR ? _BV(X_AXIS) : 0) | (INVERT_Y_DIR ? _BV(Y_AXIS) : 0) | (INVERT_Z_DIR ? _BV(Z_AXIS) : 0));
+	set_directions((INVERT_X_DIR ? _BV(Axis::X()) : 0) | (INVERT_Y_DIR ? _BV(Axis::Y()) : 0) | (INVERT_Z_DIR ? _BV(Axis::Z()) : 0));
 
 #if HAS_MOTOR_CURRENT_SPI || HAS_MOTOR_CURRENT_PWM
 	initialized = true;
@@ -2745,7 +2728,7 @@ void Stepper::_set_position(const int32_t& a, const int32_t& b, const int32_t& c
 /**
  * Get a stepper's position in steps.
  */
-int32_t Stepper::position(const AxisEnum axis) {
+int32_t Stepper::position(const Axis axis) {
 #ifdef __AVR__
 	// Protect the access to the position. Only required for AVR, as
 	//  any 32bit CPU offers atomic access to 32bit variables
@@ -2763,15 +2746,15 @@ int32_t Stepper::position(const AxisEnum axis) {
 }
 
 // Set the current position in steps
-void Stepper::set_position(const int32_t& a, const int32_t& b, const int32_t& c, const int32_t& e) {
+void Stepper::set_position(const Vector6i32 &target) {
 	planner.synchronize();
 	const bool was_enabled = suspend();
-	_set_position(a, b, c, e);
+	_set_position(target);
 	if (was_enabled)
 		wake_up();
 }
 
-void Stepper::set_axis_position(const AxisEnum a, const int32_t& v) {
+void Stepper::set_axis_position(const Axis a, const int32_t& v) {
 	planner.synchronize();
 
 #ifdef __AVR__
@@ -2795,7 +2778,7 @@ void Stepper::set_axis_position(const AxisEnum a, const int32_t& v) {
 // Stepper ISR (this CAN happen with the endstop limits ISR) then
 // when the stepper ISR resumes, we must be very sure that the movement
 // is properly canceled
-void Stepper::endstop_triggered(const AxisEnum axis) {
+void Stepper::endstop_triggered(const Axis axis) {
 
 	const bool was_enabled = suspend();
 	endstops_trigsteps[axis] = (
@@ -2820,7 +2803,7 @@ void Stepper::endstop_triggered(const AxisEnum axis) {
 		wake_up();
 }
 
-int32_t Stepper::triggered_position(const AxisEnum axis) {
+int32_t Stepper::triggered_position(const Axis axis) {
 #ifdef __AVR__
 	// Protect the access to the position. Only required for AVR, as
 	//  any 32bit CPU offers atomic access to 32bit variables

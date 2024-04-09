@@ -42,10 +42,9 @@ void GcodeSuite::M201() {
 		planner.xy_freq_min_speed_factor = constrain(parser.value_float(), 1, 100) / 100;
 #endif
 
-	LOOP_XYZE(i) {
-		if (parser.seen(axis_codes[i])) {
-			const uint8_t a = (i == E_AXIS ? uint8_t(E_AXIS_N(target_extruder)) : i);
-			planner.set_max_acceleration(a, parser.value_axis_units((AxisEnum) a));
+	for (auto i : all_axes) {
+		if (parser.seen(i.to_char())) {
+			planner.set_max_acceleration(i, parser.value_axis_units(i));
 		}
 	}
 }
@@ -61,10 +60,10 @@ void GcodeSuite::M203() {
 	if (target_extruder < 0)
 		return;
 
-	LOOP_XYZE(i)
-	if (parser.seen(axis_codes[i])) {
-		const uint8_t a = (i == E_AXIS ? uint8_t(E_AXIS_N(target_extruder)) : i);
-		planner.set_max_feedrate(a, MMM_TO_MMS(parser.value_axis_units((AxisEnum) a)));
+	for (auto i : all_axes) {
+		if (parser.seen(i.to_char())) {
+			planner.set_max_feedrate(i, MMM_TO_MMS(parser.value_axis_units(i)));
+		}
 	}
 }
 

@@ -102,50 +102,20 @@ namespace swordfish::motion {
 	}
 
 	void MotionModule::move(Movement movement) {
-		/*EStopModule::getInstance().throwIfTriggered();
-
-		debug()("current -> x: ", current_position.x, ", y: ", current_position.y, ", z: ", current_position.z, ", feedRate: ", feedrate_mm_s);
-		debug()("requested -> x: ", movement.x, ", y: ", movement.y, ", z: ", movement.z, ", feedRate: ", movement.feedRate, ", relative: ", movement.relative);
-
-		Vector3f dest = {
-		  isnan(movement.x) ? current_position.x : (movement.relative ? current_position.x + movement.x : movement.x - _offset(X)),
-		  isnan(movement.y) ? current_position.y : (movement.relative ? current_position.y + movement.y : movement.y - _offset(Y)),
-		  isnan(movement.z) ? current_position.z : (movement.relative ? current_position.z + movement.z : movement.z - _offset(Z))
-		};
-
-		_limits.throwIfOutside(dest);
-
-		destination.x = dest(X);
-		destination.y = dest(Y);
-		destination.z = dest(Z);
-
-		feedRate_t old_feedrate = feedrate_mm_s;
-
-		try {
-		  feedrate_mm_s = isnan(movement.feedRate) ? feedrate_mm_s : movement.feedRate;
-
-		  debug()("actual -> x: ", destination.x, ", y: ", destination.y, ", z: ", destination.z, ", f: ", feedrate_mm_s);
-
-		  prepare_line_to_destination();
-		  planner.synchronize();
-		} catch {
-		  feedrate_mm_s = old_feedrate;
-
-		  throw;
-		}*/
-
 		// EStopModule::getInstance().throwIfTriggered();
 
-		Vector4f currentNative { current_position.x, current_position.y, current_position.z, 1 };
-		Vector4f currentLogical = _logicalTransform * currentNative;
-		Vector4f targetLogical {
-			isnan(movement.x) ? currentLogical(X) : (movement.relativeAxes & AxisSelector::X ? currentLogical(X) + movement.x : movement.x),
-			isnan(movement.y) ? currentLogical(Y) : (movement.relativeAxes & AxisSelector::Y ? currentLogical(Y) + movement.y : movement.y),
-			isnan(movement.z) ? currentLogical(Z) : (movement.relativeAxes & AxisSelector::Z ? currentLogical(Z) + movement.z : movement.z),
-			1
+		Vector6f32 currentNative = current_position;
+		Vector6f32 currentLogical = toLogical(currentNative); //_logicalTransform * currentNative;
+		Vector6f32 targetLogical {
+			isnan(movement.x) ? currentLogical.x() : (movement.relativeAxes & AxisSelector::X ? currentLogical.x() + movement.x : movement.x),
+			isnan(movement.y) ? currentLogical.y() : (movement.relativeAxes & AxisSelector::Y ? currentLogical.y() + movement.y : movement.y),
+			isnan(movement.z) ? currentLogical.z() : (movement.relativeAxes & AxisSelector::Z ? currentLogical.z() + movement.z : movement.z),
+			0,
+			0,
+			0
 		};
 
-		Vector4f targetNative = _nativeTransform * targetLogical;
+		Vector6f32 targetNative = toNative(targetLogical); //_nativeTransform * targetLogical;
 
 		debug()("===============================================");
 		debug()(
@@ -153,27 +123,21 @@ namespace swordfish::motion {
 				", y(", absoluteOrRelative(AxisSelector::Y, movement.relativeAxes), "): ", movement.y,
 				", z(", absoluteOrRelative(AxisSelector::Z, movement.relativeAxes), "): ", movement.z,
 				", feedRate: ", movement.feedRate);
-		debug()("current native -> x: ", currentNative(X), ", y: ", currentNative(Y), ", z: ", currentNative(Z));
-		debug()("current logical -> x: ", currentLogical(X), ", y: ", currentLogical(Y), ", z: ", currentLogical(Z));
-		debug()("target logical -> x: ", targetLogical(X), ", y: ", targetLogical(Y), ", z: ", targetLogical(Z));
-		debug()("target native -> x: ", targetNative(X), ", y: ", targetNative(Y), ", z: ", targetNative(Z));
+		debug()("current native -> x: ", currentNative.x(), ", y: ", currentNative.y(), ", z: ", currentNative.z());
+		debug()("current logical -> x: ", currentLogical.x(), ", y: ", currentLogical.y(), ", z: ", currentLogical.z());
+		debug()("target logical -> x: ", targetLogical.x(), ", y: ", targetLogical.y(), ", z: ", targetLogical.z());
+		debug()("target native -> x: ", targetNative.x(), ", y: ", targetNative.y(), ", z: ", targetNative.z());
 
-		_limits.throwIfOutside({ targetNative(X), targetNative(Y), targetNative(Z) });
-
-		xyz_pos_t target = {
-			targetNative(X),
-			targetNative(Y),
-			targetNative(Z)
-		};
+		_limits.throwIfOutside({ targetNative.x(), targetNative.y(), targetNative.z() });
 
 		planner.buffer_line(
-				target,
+				targetNative,
 				MMS_SCALED(isnan(movement.feedRate) ? feedrate_mm_s : movement.feedRate),
 				active_extruder,
 				0.0,
 				isnan(movement.accel_mm_s2) ? 0.0 : movement.accel_mm_s2);
 
-		current_position = target;
+		current_position = targetNative;
 	}
 
 	void MotionModule::synchronize() {
@@ -198,9 +162,9 @@ namespace swordfish::motion {
 
 	void MotionModule::updateTransforms() {
 		Matrix4f translate {
-			{1.0, 0.0, 0.0, -_offset(X)},
-			{0.0, 1.0, 0.0, -_offset(Y)},
-			{0.0, 0.0, 1.0, -_offset(Z)},
+			{1.0, 0.0, 0.0, -_offset.x()},
+			{0.0, 1.0, 0.0, -_offset.y()},
+			{0.0, 0.0, 1.0, -_offset.z()},
 			{0.0, 0.0, 0.0,         1.0}
 		};
 
@@ -227,11 +191,10 @@ namespace swordfish::motion {
 
 		_offset = homeOffset + workOffset + toolOffset;
 
-		debug()("home x: ", homeOffset(X), ", y: ", homeOffset(Y), ", z: ", homeOffset(Z));
-		debug()("work x: ", workOffset(X), ", y: ", workOffset(Y), ", z: ", workOffset(Z));
-		debug()("tool x: ", toolOffset(X), ", y: ", toolOffset(Y), ", z: ", toolOffset(Z));
-
-		debug()("offset x: ", _offset(X), ", y: ", _offset(Y), ", z: ", _offset(Z));
+		debug()("home x: ", homeOffset.x(), ", y: ", homeOffset.y(), ", z: ", homeOffset.z());
+		debug()("work x: ", workOffset.x(), ", y: ", workOffset.y(), ", z: ", workOffset.z());
+		debug()("tool x: ", toolOffset.x(), ", y: ", toolOffset.y(), ", z: ", toolOffset.z());
+		debug()("offset x: ", _offset.x(), ", y: ", _offset.y(), ", z: ", _offset.z());
 
 		updateTransforms();
 	}
@@ -247,9 +210,9 @@ namespace swordfish::motion {
 	void MotionModule::setHomeOffset(Vector3f homeOffset_) {
 		auto& homeOffset = __homeOffsetField.get(_pack);
 
-		homeOffset.x(homeOffset_(X));
-		homeOffset.y(homeOffset_(Y));
-		homeOffset.z(homeOffset_(Z));
+		homeOffset.x(homeOffset_.x());
+		homeOffset.y(homeOffset_.y());
+		homeOffset.z(homeOffset_.z());
 
 		updateOffset();
 	}
@@ -257,9 +220,9 @@ namespace swordfish::motion {
 	void MotionModule::setWorkOffset(Vector3f workOffset_) {
 		auto& workOffset = __workOffsetField.get(_pack);
 
-		workOffset.x(workOffset_(X));
-		workOffset.y(workOffset_(Y));
-		workOffset.z(workOffset_(Z));
+		workOffset.x(workOffset_.x());
+		workOffset.y(workOffset_.y());
+		workOffset.z(workOffset_.z());
 
 		updateOffset();
 	}
@@ -267,9 +230,9 @@ namespace swordfish::motion {
 	void MotionModule::setToolOffset(Vector3f toolOffset_) {
 		auto& toolOffset = __toolOffsetField.get(_pack);
 
-		toolOffset.x(toolOffset_(X));
-		toolOffset.y(toolOffset_(Y));
-		toolOffset.z(toolOffset_(Z));
+		toolOffset.x(toolOffset_.x());
+		toolOffset.y(toolOffset_.y());
+		toolOffset.z(toolOffset_.z());
 
 		updateOffset();
 	}

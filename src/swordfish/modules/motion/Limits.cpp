@@ -33,16 +33,16 @@ namespace swordfish::motion {
 			Vector3f min = getMin();
 			Vector3f max = getMax();
 
-			if (axis_was_homed((AxisEnum) X)) {
-				vector(X) = std::clamp(vector(X), min(X), max(X));
+			if (axis_was_homed(Axis::X())) {
+				vector.x() = std::clamp(vector.x(), min.x(), max.x());
 			}
 
-			if (axis_was_homed((AxisEnum) Y)) {
-				vector(Y) = std::clamp(vector(Y), min(Y), max(Y));
+			if (axis_was_homed(Axis::Y())) {
+				vector.y() = std::clamp(vector.y(), min.y(), max.y());
 			}
 
-			if (axis_was_homed((AxisEnum) Z)) {
-				vector(Z) = std::clamp(vector(Z), min(Z), max(Z));
+			if (axis_was_homed(Axis::Z())) {
+				vector.z() = std::clamp(vector.z(), min.z(), max.z());
 			}
 		}
 	}
@@ -76,9 +76,9 @@ namespace swordfish::motion {
 			// debug()("z: ", vector.z, ", min_z: ", min.z, ", max_z: ", max.z);
 
 			if (
-					(vector(X) != std::clamp(vector(X), min(X), max(X))) ||
-					(vector(Y) != std::clamp(vector(Y), min(Y), max(Y))) ||
-					(vector(Z) != std::clamp(vector(Z), min(Z), max(Z)))) {
+					(vector.x() != std::clamp(vector.x(), min.x(), max.x())) ||
+					(vector.y() != std::clamp(vector.y(), min.y(), max.y())) ||
+					(vector.z() != std::clamp(vector.z(), min.z(), max.z()))) {
 				throw LimitException(vector, min, max);
 			}
 		}

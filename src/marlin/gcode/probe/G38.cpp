@@ -29,7 +29,7 @@
 #	include "../../module/motion.h"
 #	include "../../module/endstops.h"
 
-extern bool run_probe(AxisEnum axis, EndstopEnum endstop, float distance, float retract);
+extern bool run_probe(Axis axis, EndstopValue endstop, float distance, float retract);
 
 /**
  * G38 Probe Target
@@ -56,23 +56,23 @@ void GcodeSuite::G38(const int8_t subcode) {
 			;
 
 	// If any axis has enough movement, do the move
-	LOOP_XYZ(i) {
-		if (parser.seenval(XYZ_CHAR(i))) {
-			const float v = parser.value_axis_units((AxisEnum) i);
-			const float dest = axis_is_relative((AxisEnum) i) ? current_position[i] + v : toNative(v, (AxisEnum) i);
+	for (auto i : linear_axes) {
+		if (parser.seenval(i.to_char())) {
+			const float v = parser.value_axis_units(i);
+			const float dest = axis_is_relative(i) ? current_position[i] + v : toNative(v, i);
 
 			if (ABS(dest - current_position[i]) >= G38_MINIMUM_MOVE) {
 				// destination[i] = dest;
 
-				endstops.enable_work_probe((AxisEnum) i, true);
+				endstops.enable_work_probe( i, true);
 
-				feedrate_mm_s = parser.seenval('F') ? parser.value_feedrate() : (homing_feedrate((AxisEnum) i) * 0.5);
+				feedrate_mm_s = parser.seenval('F') ? parser.value_feedrate() : (homing_feedrate(i) * 0.5);
 				float retract = parser.seenval('R') ? parser.value_float() : 5;
 
-				if (!run_probe((AxisEnum) i, WORK_PROBE, v, retract) && error_on_fail)
+				if (!run_probe(i, WORK_PROBE, v, retract) && error_on_fail)
 					SERIAL_ERROR_MSG("Failed to reach target");
 
-				endstops.enable_work_probe((AxisEnum) i, false);
+				endstops.enable_work_probe(i, false);
 
 				break;
 			}

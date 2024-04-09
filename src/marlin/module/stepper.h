@@ -302,8 +302,8 @@ class Stepper {
     #endif
 
     // Delta error variables for the Bresenham line tracer
-    static xyze_long_t delta_error;
-    static xyze_ulong_t advance_dividend;
+    static swordfish::math::Vector6i32 delta_error;
+    static swordfish::math::Vector6u32 advance_dividend;
     static uint32_t advance_divisor,
                     step_events_completed,  // The number of step events executed in the current block
                     accelerate_until,       // The point from where we need to stop acceleration
@@ -428,12 +428,11 @@ class Stepper {
     static bool is_block_busy(const block_t* const block);
 
     // Get the position of a stepper, in steps
-    static int32_t position(const AxisEnum axis);
+    static int32_t position(const Axis axis);
 
     // Set the current position in steps
-    static void set_position(const int32_t &a, const int32_t &b, const int32_t &c, const int32_t &e);
-    static inline void set_position(const xyze_long_t &abce) { set_position(abce.a, abce.b, abce.c, abce.e); }
-    static void set_axis_position(const AxisEnum a, const int32_t &v);
+    static void set_position(const swordfish::math::Vector6i32 &abce);
+    static void set_axis_position(const Axis a, const int32_t &v);
 
     // Report the positions of the steppers, in steps
     static void report_a_position(const xyz_long_t &pos);
@@ -454,16 +453,16 @@ class Stepper {
     FORCE_INLINE static void quick_stop() { abort_current_block = true; }
 
     // The direction of a single motor
-    FORCE_INLINE static bool motor_direction(const AxisEnum axis) { return TEST(last_direction_bits, axis); }
+    FORCE_INLINE static bool motor_direction(const Axis axis) { return TEST(last_direction_bits, axis); }
 
     // The last movement direction was not null on the specified axis. Note that motor direction is not necessarily the same.
-    FORCE_INLINE static bool axis_is_moving(const AxisEnum axis) { return TEST(axis_did_move, axis); }
+    FORCE_INLINE static bool axis_is_moving(const Axis axis) { return TEST(axis_did_move, axis); }
 
     // Handle a triggered endstop
-    static void endstop_triggered(const AxisEnum axis);
+    static void endstop_triggered(const Axis axis);
 
     // Triggered position of an axis in steps
-    static int32_t triggered_position(const AxisEnum axis);
+    static int32_t triggered_position(const Axis axis);
 
     #if HAS_MOTOR_CURRENT_SPI || HAS_MOTOR_CURRENT_PWM
       static void set_digipot_value_spi(const int16_t address, const int16_t value);
@@ -529,7 +528,7 @@ class Stepper {
 
     // Set the current position in steps
     static void _set_position(const int32_t &a, const int32_t &b, const int32_t &c, const int32_t &e);
-    FORCE_INLINE static void _set_position(const abce_long_t &spos) { _set_position(spos.a, spos.b, spos.c, spos.e); }
+    FORCE_INLINE static void _set_position(const swordfish::math::Vector6i32 &spos) { _set_position(spos.x(), spos.y(), spos.z(), spos.a()); }
 
     FORCE_INLINE static uint32_t calc_timer_interval(uint32_t step_rate, uint8_t* loops) {
       uint32_t timer;
