@@ -25,12 +25,11 @@
 
 void report_M92(const bool echo=true, const int8_t e=-1) {
   if (echo) SERIAL_ECHO_START(); else SERIAL_CHAR(' ');
-  SERIAL_ECHOPAIR_P(PSTR(" M92 X"), LINEAR_UNIT(planner.settings.axis_steps_per_mm[Axis::X()]),
-                          SP_Y_STR, LINEAR_UNIT(planner.settings.axis_steps_per_mm[Axis::Y()]),
-                          SP_Z_STR, LINEAR_UNIT(planner.settings.axis_steps_per_mm[Axis::Z()]));
-  #if DISABLED(DISTINCT_E_FACTORS)
-    SERIAL_ECHOPAIR_P(SP_E_STR, VOLUMETRIC_UNIT(planner.settings.axis_steps_per_mm[Axis::A()]));
-  #endif
+  SERIAL_ECHOPAIR_P(PSTR(" M92 X"), parser.linear_value_to_mm(planner.settings.axis_steps_per_unit[Axis::X()]),
+                          SP_Y_STR, parser.linear_value_to_mm(planner.settings.axis_steps_per_unit[Axis::Y()]),
+                          SP_Z_STR, parser.linear_value_to_mm(planner.settings.axis_steps_per_unit[Axis::Z()]));
+
+    SERIAL_ECHOPAIR_P(SP_E_STR, parser.radial_value_to_degrees(planner.settings.axis_steps_per_unit[Axis::A()]));
   SERIAL_EOL();
 
   #if ENABLED(DISTINCT_E_FACTORS)
@@ -38,7 +37,7 @@ void report_M92(const bool echo=true, const int8_t e=-1) {
       if (e >= 0 && i != e) continue;
       if (echo) SERIAL_ECHO_START(); else SERIAL_CHAR(' ');
       SERIAL_ECHOLNPAIR_P(PSTR(" M92 T"), (int)i,
-                        SP_E_STR, VOLUMETRIC_UNIT(planner.settings.axis_steps_per_mm[E_AXIS_N(i)]));
+                        SP_E_STR, VOLUMETRIC_UNIT(planner.settings.axis_steps_per_unit[E_AXIS_N(i)]));
     }
   #endif
 }
@@ -70,7 +69,7 @@ void GcodeSuite::M92() {
 
   for (auto i : all_axes) {
     if (parser.seenval(i.to_char())) {
-      planner.settings.axis_steps_per_mm[i] = parser.value_per_axis_units(i);
+      planner.settings.axis_steps_per_unit[i] = parser.value_per_axis_units(i);
     }
   }
   planner.refresh_positioning();

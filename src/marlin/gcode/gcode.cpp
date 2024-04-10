@@ -565,9 +565,23 @@ void GcodeSuite::process_parsed_command(const bool no_ok /*=false*/) {
 						break;
 					}
 
-					case 92:
+					case 92: {
 						G92();
+
 						break; // G92: Set current axis position(s)
+					}
+
+					case 93: {
+						G93(); // set feed rate mode to inverse time
+
+						break;
+					}
+
+					case 94: {
+						G94(); // set feed rate mode to mm/s
+
+						break;
+					}
 
 #if HAS_MESH
 					case 42:

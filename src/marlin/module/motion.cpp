@@ -151,7 +151,8 @@ void reset_hotend_offsets() {
 // no other feedrate is specified. Overridden for special moves.
 // Set by the last G0 through G5 command's "F" parameter.
 // Functions that override this for custom moves *must always* restore it!
-feedRate_t feedrate_mm_s = MMM_TO_MMS(1500);
+FeedRate feedrate_mm_s = FeedRate::MillimetersPerSecond(MMM_TO_MMS(homing_feedrate_mm_m.x));
+
 int16_t feedrate_percentage = 100;
 
 // Cartesian conversion result goes here:
@@ -320,57 +321,21 @@ void set_current_from_steppers_for_axis(const AxisValue axis) {
  * Move the planner to the current position from wherever it last moved
  * (or from wherever it has been told it is located).
  */
-void line_to_current_position(const feedRate_t& fr_mm_s /*=feedrate_mm_s*/) {
-	planner.buffer_line(current_position, fr_mm_s, active_extruder);
+void line_to_current_position(const FeedRate& feed_rate /*=feedrate_mm_s*/) {
+	planner.buffer_line(current_position, feed_rate, active_extruder);
 }
-
-#if EXTRUDERS
-void unscaled_e_move(const float& length, const feedRate_t& fr_mm_s) {
-	TERN_(HAS_FILAMENT_SENSOR, runout.reset());
-	current_position.e += length / planner.e_factor[active_extruder];
-	line_to_current_position(fr_mm_s);
-	planner.synchronize();
-}
-#endif
-
-#if IS_KINEMATIC
-
-/**
- * Buffer a fast move without interpolation. Set current_position to destination
- */
-void prepare_fast_move_to_destination(const feedRate_t& scaled_fr_mm_s /*=MMS_SCALED(feedrate_mm_s)*/) {
-	if (DEBUGGING(LEVELING))
-		DEBUG_POS("prepare_fast_move_to_destination", destination);
-
-#	if UBL_SEGMENTED
-	// UBL segmented line will do Z-only moves in single segment
-	ubl.line_to_destination_segmented(scaled_fr_mm_s);
-#	else
-	if (current_position == destination)
-		return;
-
-	planner.buffer_line(destination, scaled_fr_mm_s, active_extruder);
-#	endif
-
-	current_position = destination;
-}
-
-#endif // IS_KINEMATIC
 
 /**
  * Do a fast or normal move to 'destination' with an optional FR.
  *  - Move at normal speed regardless of feedrate percentage.
  *  - Extrude the specified length regardless of flow percentage.
  */
-void _internal_move_to_destination(const feedRate_t& fr_mm_s /*=0.0f*/
-#if IS_KINEMATIC
-                                   ,
-                                   const bool is_fast /*=false*/
-#endif
-) {
-	const feedRate_t old_feedrate = feedrate_mm_s;
-	if (fr_mm_s)
-		feedrate_mm_s = fr_mm_s;
+void _internal_move_to_destination(const std::optional<FeedRate>& feed_rate ) {
+	const FeedRate old_feedrate = feedrate_mm_s;
+
+	if (feed_rate.has_value()) {
+		feedrate_mm_s = feed_rate.value();
+	}
 
 	const uint16_t old_pct = feedrate_percentage;
 	feedrate_percentage = 100;
@@ -397,13 +362,18 @@ void _internal_move_to_destination(const feedRate_t& fr_mm_s /*=0.0f*/
 /**
  * Plan a move to (X, Y, Z) and set the current_position
  */
-void do_blocking_move_to(const Vector6f32& target, const feedRate_t& fr_mm_s /*=0.0*/) {
+void do_blocking_move_to(const Vector6f32& target, const std::optional<FeedRate>& feed_rate) {
 	DEBUG_SECTION(log_move, "do_blocking_move_to", DEBUGGING(LEVELING));
 	if (DEBUGGING(LEVELING))
 		DEBUG_XYZ("> ", target.x(), target.y(), target.z());
 
-	const feedRate_t z_feedrate = fr_mm_s ?: homing_feedrate(Axis::Z()),
-									 xy_feedrate = fr_mm_s ?: feedRate_t(XY_PROBE_FEEDRATE_MM_S);
+	/*
+	const FeedRate z_feedrate = feed_rate ? *feed_rate : homing_feedrate(Axis::Z());
+	const FeedRate xy_feedrate = feed_rate ? *feed_rate : FeedRate::MillimetersPerSecond(XY_PROBE_FEEDRATE_MM_S);
+	*/
+
+	const FeedRate z_feedrate = feed_rate ? *feed_rate : feedrate_mm_s;
+	const FeedRate xy_feedrate = feed_rate ? *feed_rate : feedrate_mm_s;
 
 	// If Z needs to raise, do it before moving XY
 	if (current_position.z() < target.z()) {
@@ -471,7 +441,7 @@ void do_z_clearance(const float& zclear, const bool z_trusted /*=true*/, const b
 // Prepare to do endstop or probe moves with custom feedrates.
 //  - Save / restore current feedrate and multiplier
 //
-static float saved_feedrate_mm_s;
+static FeedRate saved_feedrate_mm_s = FeedRate::MillimetersPerSecond(0);
 static int16_t saved_feedrate_percentage;
 void remember_feedrate_and_scaling() {
 	saved_feedrate_mm_s = feedrate_mm_s;
@@ -702,11 +672,15 @@ inline void segmented_line_to_destination(const feedRate_t& fr_mm_s, const float
  * Return true if 'current_position' was set to 'destination'
  */
 inline bool line_to_destination_cartesian(const float32_t accel_mm_s2) {
-	const float scaled_fr_mm_s = MMS_SCALED(feedrate_mm_s);
+	FeedRate scaled_feed_rate = feedrate_mm_s;
+
+	if (parser.feedrate_type == FeedRateType::MillimetersPerSecond) {
+	  scaled_feed_rate = MMS_SCALED(feedrate_mm_s);
+	}
 
 	planner.buffer_line(
 			destination,
-			scaled_fr_mm_s,
+			scaled_feed_rate,
 			active_extruder,
 			0.0,
 			accel_mm_s2);
@@ -892,7 +866,7 @@ bool homing_needed_error(uint8_t axis_bits /*=0x07*/) {
 /**
  * Homing bump feedrate (mm/s)
  */
-feedRate_t get_homing_bump_feedrate(const Axis axis) {
+FeedRate get_homing_bump_feedrate(const Axis axis) {
 #if HOMING_Z_WITH_PROBE
 	if (axis == Z_AXIS)
 		return MMM_TO_MMS(Z_PROBE_SPEED_SLOW);
@@ -1063,17 +1037,18 @@ void end_sensorless_homing_per_axis(const AxisEnum axis, sensorless_t enable_ste
 /**
  * Home an individual linear axis
  */
-void do_homing_move(const Axis axis, const float distance, const feedRate_t fr_mm_s = 0.0, [[maybe_unused]] const bool final_approach = true) {
+void do_homing_move(const Axis axis, const float distance, const std::optional<FeedRate> feed_rate = std::nullopt, [[maybe_unused]] const bool final_approach = true) {
 	DEBUG_SECTION(log_move, "do_homing_move", DEBUGGING(LEVELING));
 
-	const feedRate_t home_fr_mm_s = fr_mm_s ?: homing_feedrate(axis);
+	const FeedRate homing_feed_rate = feed_rate ? *feed_rate : homing_feedrate(axis);
 
 	if (DEBUGGING(LEVELING)) {
 		DEBUG_ECHOPAIR("...(", axis.to_char(), ", ", distance, ", ");
-		if (fr_mm_s)
-			DEBUG_ECHO(fr_mm_s);
-		else
-			DEBUG_ECHOPAIR("[", home_fr_mm_s, "]");
+		if (feed_rate.has_value()) {
+			DEBUG_ECHO(feed_rate.value().value());
+		} else {
+			DEBUG_ECHOPAIR("[", homing_feed_rate.value(), "]");
+		}
 		DEBUG_ECHOLNPGM(")");
 	}
 
@@ -1127,7 +1102,7 @@ void do_homing_move(const Axis axis, const float distance, const feedRate_t fr_m
 	                       cart_dist_mm
 #	endif
 	                       ,
-	                       home_fr_mm_s, active_extruder);
+	                       homing_feed_rate, active_extruder);
 #endif
 
 	planner.synchronize();
@@ -1372,7 +1347,7 @@ void homeaxis(const Axis axis) {
 		// Move away from the endstop by the axis HOMING_BUMP_MM
 		if (DEBUGGING(LEVELING))
 			DEBUG_ECHOLNPAIR("Move Away: ", -bump, "mm");
-		do_homing_move(axis, -bump, TERN0(HOMING_Z_WITH_PROBE, axis == Z_AXIS) ? MMM_TO_MMS(Z_PROBE_SPEED_FAST) : 0, false);
+		do_homing_move(axis, -bump, homing_feedrate(axis), false);
 
 #if ENABLED(DETECT_BROKEN_ENDSTOP)
 		// Check for a broken endstop

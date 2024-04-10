@@ -147,6 +147,10 @@ public:
 	constexpr const bool is_radial() const {
 		return !is_linear();
 	}
+
+	constexpr const u8 bit_value() const {
+		return 1 << *this;
+	}
 };
 
 static constexpr Axis all_axes[] = {

@@ -67,8 +67,6 @@ extern swordfish::math::Vector6f32 cartes;
   #define XY_PROBE_FEEDRATE_MM_S PLANNER_XY_FEEDRATE()
 #endif
 
-constexpr feedRate_t z_probe_fast_mm_s = MMM_TO_MMS(Z_PROBE_SPEED_FAST);
-
 // forward decl
 FORCE_INLINE bool axis_is_trusted(const Axis axis);
 
@@ -78,30 +76,25 @@ FORCE_INLINE bool axis_is_trusted(const Axis axis);
  */
 
 constexpr xyz_feedrate_t homing_feedrate_mm_m = HOMING_FEEDRATE_MM_M;
-FORCE_INLINE feedRate_t homing_feedrate(const Axis a) {
+FORCE_INLINE swordfish::motion::FeedRate homing_feedrate(const Axis a) {
 	float v;
-	#if ENABLED(DELTA)
-	v = homing_feedrate_mm_m.z;
-	#else
 
-		switch (a.value()) {
-			case AxisValue::X: v = homing_feedrate_mm_m.x; break;
-			case AxisValue::Y: v = homing_feedrate_mm_m.y; break;
-			case AxisValue::Z:
-			default: v = homing_feedrate_mm_m.z; break;
-		}
+	switch (a.value()) {
+		case AxisValue::X: v = homing_feedrate_mm_m.x; break;
+		case AxisValue::Y: v = homing_feedrate_mm_m.y; break;
+		case AxisValue::Z:
+		default: v = homing_feedrate_mm_m.z; break;
+	}
 
-	#endif
-
-	return MMM_TO_MMS(v);
+	return swordfish::motion::FeedRate::MillimetersPerSecond(MMM_TO_MMS(v));
 }
 
-feedRate_t get_homing_bump_feedrate(const Axis axis);
+swordfish::motion::FeedRate get_homing_bump_feedrate(const Axis axis);
 
 /**
  * The default feedrate for many moves, set by the most recent move
  */
-extern feedRate_t feedrate_mm_s;
+extern swordfish::motion::FeedRate feedrate_mm_s;
 
 /**
  * Feedrate scaling is applied to all G0/G1, G2/G3, and G5 moves
@@ -180,73 +173,45 @@ void sync_plan_position_e();
  * Move the planner to the current position from wherever it last moved
  * (or from wherever it has been told it is located).
  */
-void line_to_current_position(const feedRate_t &fr_mm_s=feedrate_mm_s);
-
-#if EXTRUDERS
-  void unscaled_e_move(const float &length, const feedRate_t &fr_mm_s);
-#endif
+void line_to_current_position(const std::optional<swordfish::motion::FeedRate> &feed_rate = std::nullopt);
 
 void prepare_line_to_destination(const float32_t accel_mm_s2 = 0.0);
 
-void _internal_move_to_destination(const feedRate_t &fr_mm_s=0.0f
-  #if IS_KINEMATIC
-    , const bool is_fast=false
-  #endif
-);
+void _internal_move_to_destination(const std::optional<swordfish::motion::FeedRate> &feed_rate = std::nullopt);
 
-inline void prepare_internal_move_to_destination(const feedRate_t &fr_mm_s=0.0f) {
-  _internal_move_to_destination(fr_mm_s);
+inline void prepare_internal_move_to_destination(const std::optional<swordfish::motion::FeedRate> &feed_rate = std::nullopt) {
+  _internal_move_to_destination(feed_rate);
 }
-
-#if IS_KINEMATIC
-  void prepare_fast_move_to_destination(const feedRate_t &scaled_fr_mm_s=MMS_SCALED(feedrate_mm_s));
-
-  inline void prepare_internal_fast_move_to_destination(const feedRate_t &fr_mm_s=0.0f) {
-    _internal_move_to_destination(fr_mm_s, true);
-  }
-#endif
 
 /**
  * Blocking movement and shorthand functions
  */
-// void do_blocking_move_to(const swordfish::math::Vector2f32 &raw, const feedRate_t &fr_mm_s=0.0f);
-// void do_blocking_move_to(const swordfish::math::Vector3f32 &raw, const feedRate_t &fr_mm_s=0.0f);
-// void do_blocking_move_to(const swordfish::math::Vector4f32 &raw, const feedRate_t &fr_mm_s=0.0f);
-// void do_blocking_move_to(const swordfish::math::Vector5f32 &raw, const feedRate_t &fr_mm_s=0.0f);
-void do_blocking_move_to(const swordfish::math::Vector6f32 &raw, const feedRate_t &fr_mm_s=0.0f);
 
-FORCE_INLINE void do_blocking_move_to_x(const float &rx, const feedRate_t &fr_mm_s=0.0f) {
+void do_blocking_move_to(const swordfish::math::Vector6f32 &raw, const std::optional<swordfish::motion::FeedRate> &feed_rate = std::nullopt);
+
+FORCE_INLINE void do_blocking_move_to_x(const float &rx, const std::optional<swordfish::motion::FeedRate> &feed_rate = std::nullopt) {
 	auto target = current_position;
 
 	target.x() = rx;
 
-	do_blocking_move_to(target, fr_mm_s);
+	do_blocking_move_to(target, feed_rate);
 }
 
-FORCE_INLINE void do_blocking_move_to_y(const float &ry, const feedRate_t &fr_mm_s=0.0f) {
+FORCE_INLINE void do_blocking_move_to_y(const float &ry, const std::optional<swordfish::motion::FeedRate> &feed_rate = std::nullopt) {
 	auto target = current_position;
 
 	target.y() = ry;
 
-	do_blocking_move_to(target, fr_mm_s);
+	do_blocking_move_to(target, feed_rate);
 }
 
-FORCE_INLINE void do_blocking_move_to_z(const float &rz, const feedRate_t &fr_mm_s=0.0f) {
+FORCE_INLINE void do_blocking_move_to_z(const float &rz, const std::optional<swordfish::motion::FeedRate> &feed_rate = std::nullopt) {
 	auto target = current_position;
 
 	target.z() = rz;
 
-	do_blocking_move_to(target, fr_mm_s);
+	do_blocking_move_to(target, feed_rate);
 }
-
-// void do_blocking_move_to_xy(const float &rx, const float &ry, const feedRate_t &fr_mm_s=0.0f);
-// void do_blocking_move_to_xy(const swordfish::math::Vector2f32 &raw, const feedRate_t &fr_mm_s=0.0f);
-// FORCE_INLINE void do_blocking_move_to_xy(const swordfish::math::Vector3f32 &raw, const feedRate_t &fr_mm_s=0.0f)  { do_blocking_move_to_xy(swordfish::math::Vector2f32(raw), fr_mm_s); }
-// FORCE_INLINE void do_blocking_move_to_xy(const swordfish::math::Vector4f32 &raw, const feedRate_t &fr_mm_s=0.0f) { do_blocking_move_to_xy(swordfish::math::Vector2f32(raw), fr_mm_s); }
-
-// void do_blocking_move_to_xy_z(const swordfish::math::Vector2f32 &raw, const float &z, const feedRate_t &fr_mm_s=0.0f);
-// FORCE_INLINE void do_blocking_move_to_xy_z(const swordfish:: &raw, const float &z, const feedRate_t &fr_mm_s=0.0f)  { do_blocking_move_to_xy_z(xy_pos_t(raw), z, fr_mm_s); }
-// FORCE_INLINE void do_blocking_move_to_xy_z(const xyze_pos_t &raw, const float &z, const feedRate_t &fr_mm_s=0.0f) { do_blocking_move_to_xy_z(xy_pos_t(raw), z, fr_mm_s); }
 
 void remember_feedrate_and_scaling();
 void remember_feedrate_scaling_off();

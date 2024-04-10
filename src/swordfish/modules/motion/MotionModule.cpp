@@ -16,6 +16,7 @@
 extern float32_t rapidrate_mm_s;
 
 #include <swordfish/debug.h>
+#include <swordfish/math.h>
 #include <swordfish/modules/estop/EStopModule.h>
 
 namespace swordfish::motion {
@@ -23,6 +24,7 @@ namespace swordfish::motion {
 
 	using namespace swordfish::core;
 	using namespace swordfish::estop;
+	using namespace swordfish::math;
 	using namespace swordfish::utils;
 
 	MotionModule* MotionModule::__instance = nullptr;
@@ -102,14 +104,12 @@ namespace swordfish::motion {
 	}
 
 	void MotionModule::move(Movement movement) {
-		// EStopModule::getInstance().throwIfTriggered();
-
 		Vector6f32 currentNative = current_position;
 		Vector6f32 currentLogical = toLogical(currentNative); //_logicalTransform * currentNative;
 		Vector6f32 targetLogical {
-			isnan(movement.x) ? currentLogical.x() : (movement.relativeAxes & AxisSelector::X ? currentLogical.x() + movement.x : movement.x),
-			isnan(movement.y) ? currentLogical.y() : (movement.relativeAxes & AxisSelector::Y ? currentLogical.y() + movement.y : movement.y),
-			isnan(movement.z) ? currentLogical.z() : (movement.relativeAxes & AxisSelector::Z ? currentLogical.z() + movement.z : movement.z),
+			isnan(movement.x) ? currentLogical.x() : (movement.relative_axes & AxisSelector::X ? currentLogical.x() + movement.x : movement.x),
+			isnan(movement.y) ? currentLogical.y() : (movement.relative_axes & AxisSelector::Y ? currentLogical.y() + movement.y : movement.y),
+			isnan(movement.z) ? currentLogical.z() : (movement.relative_axes & AxisSelector::Z ? currentLogical.z() + movement.z : movement.z),
 			0,
 			0,
 			0
@@ -119,10 +119,10 @@ namespace swordfish::motion {
 
 		debug()("===============================================");
 		debug()(
-				"requested -> x(", absoluteOrRelative(AxisSelector::X, movement.relativeAxes), "): ", movement.x,
-				", y(", absoluteOrRelative(AxisSelector::Y, movement.relativeAxes), "): ", movement.y,
-				", z(", absoluteOrRelative(AxisSelector::Z, movement.relativeAxes), "): ", movement.z,
-				", feedRate: ", movement.feedRate);
+				"requested -> x(", absoluteOrRelative(AxisSelector::X, movement.relative_axes), "): ", movement.x,
+				", y(", absoluteOrRelative(AxisSelector::Y, movement.relative_axes), "): ", movement.y,
+				", z(", absoluteOrRelative(AxisSelector::Z, movement.relative_axes), "): ", movement.z,
+				", feed_rate: ", movement.feed_rate.has_value() ? movement.feed_rate.value().value() : feedrate_mm_s.value());
 		debug()("current native -> x: ", currentNative.x(), ", y: ", currentNative.y(), ", z: ", currentNative.z());
 		debug()("current logical -> x: ", currentLogical.x(), ", y: ", currentLogical.y(), ", z: ", currentLogical.z());
 		debug()("target logical -> x: ", targetLogical.x(), ", y: ", targetLogical.y(), ", z: ", targetLogical.z());
@@ -130,9 +130,15 @@ namespace swordfish::motion {
 
 		_limits.throwIfOutside({ targetNative.x(), targetNative.y(), targetNative.z() });
 
+		auto feed_rate = movement.feed_rate.has_value() ? movement.feed_rate.value() : feedrate_mm_s;
+
+		if (feed_rate.type() == FeedRateType::MillimetersPerSecond) {
+			feed_rate = MMS_SCALED(feed_rate);
+		}
+
 		planner.buffer_line(
 				targetNative,
-				MMS_SCALED(isnan(movement.feedRate) ? feedrate_mm_s : movement.feedRate),
+				feed_rate,
 				active_extruder,
 				0.0,
 				isnan(movement.accel_mm_s2) ? 0.0 : movement.accel_mm_s2);
@@ -245,8 +251,8 @@ namespace swordfish::motion {
 		move({ .x = movement.x,
 		       .y = movement.y,
 		       .z = movement.z,
-		       .feedRate = isnan(movement.feedRate) ? rapidrate_mm_s : movement.feedRate,
-		       .relativeAxes = movement.relativeAxes,
+		       .feed_rate = movement.feed_rate.has_value() ? movement.feed_rate.value() : FeedRate::MillimetersPerSecond(rapidrate_mm_s),
+		       .relative_axes = movement.relative_axes,
 		       .accel_mm_s2 = isnan(movement.accel_mm_s2) ? planner.settings.travel_acceleration : movement.accel_mm_s2 });
 	}
 
@@ -254,8 +260,8 @@ namespace swordfish::motion {
 		move({ .x = movement.x,
 		       .y = movement.y,
 		       .z = movement.z,
-		       .feedRate = isnan(movement.feedRate) ? feedrate_mm_s : movement.feedRate,
-		       .relativeAxes = movement.relativeAxes,
+		       .feed_rate = movement.feed_rate.has_value() ? movement.feed_rate.value() : feedrate_mm_s,
+		       .relative_axes = movement.relative_axes,
 		       .accel_mm_s2 = isnan(movement.accel_mm_s2) ? planner.settings.acceleration : movement.accel_mm_s2 });
 	}
 } // namespace swordfish::motion

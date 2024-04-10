@@ -8,6 +8,7 @@
 #pragma once
 
 #include <limits>
+#include <optional>
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -25,6 +26,7 @@
 
 #include "CoordinateSystem.h"
 #include "CoordinateSystemTable.h"
+#include "Feedrate.h"
 #include "Limits.h"
 #include "NotHomedException.h"
 
@@ -38,11 +40,11 @@ namespace swordfish::motion {
 	using namespace swordfish::math;
 
 	struct Movement {
-		float32_t x = NaN;
-		float32_t y = NaN;
-		float32_t z = NaN;
-		float32_t feedRate = NaN;
-		utils::Flags<AxisSelector> relativeAxes = AxisSelector::None;
+		f32 x = NaN;
+		f32 y = NaN;
+		f32 z = NaN;
+		std::optional<FeedRate> feed_rate = std::nullopt;
+		utils::Flags<AxisSelector> relative_axes = AxisSelector::None;
 		float32_t accel_mm_s2 = NaN;
 	};
 

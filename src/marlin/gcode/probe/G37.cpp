@@ -69,12 +69,17 @@ inline bool do_single_probe(EndstopValue endstop /*, const uint8_t move_value*/)
 }
 
 void backoff(Vector3f32& retract_mm) {
-	REMEMBER(fr, feedrate_mm_s, MMM_TO_MMS(G0_FEEDRATE));
+	auto old_feed_rate = feedrate_mm_s;
+
+	feedrate_mm_s = FeedRate::MillimetersPerSecond(MMM_TO_MMS(G0_FEEDRATE));
 
 	// Move away by the retract distance
 	destination = current_position + Vector6f32 { retract_mm.x(), retract_mm.y(), retract_mm.z(), 0, 0, 0 };
 
 	prepare_line_to_destination();
+
+	feedrate_mm_s = old_feed_rate;
+
 	planner.synchronize();
 }
 

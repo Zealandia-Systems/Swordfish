@@ -155,7 +155,7 @@ void plan_arc(
 	if (mm_of_travel < 0.001f)
 		return;
 
-	const feedRate_t scaled_fr_mm_s = MMS_SCALED(feedrate_mm_s);
+	const FeedRate scaled_fr_mm_s = MMS_SCALED(feedrate_mm_s);
 
 	// Start with a nominal segment length
 	float seg_length = (

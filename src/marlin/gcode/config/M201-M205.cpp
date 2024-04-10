@@ -117,9 +117,9 @@ void GcodeSuite::M205() {
 	if (parser.seen('B'))
 		planner.settings.min_segment_time_us = parser.value_ulong();
 	if (parser.seen('S'))
-		planner.settings.min_feedrate_mm_s = parser.value_linear_units();
+		planner.settings.min_feedrate_unit_per_s = parser.value_linear_units();
 	if (parser.seen('T'))
-		planner.settings.min_travel_feedrate_mm_s = parser.value_linear_units();
+		planner.settings.min_travel_feedrate_unit_per_s = parser.value_linear_units();
 #if HAS_JUNCTION_DEVIATION
 	if (parser.seen('J')) {
 		const float junc_dev = parser.value_linear_units();

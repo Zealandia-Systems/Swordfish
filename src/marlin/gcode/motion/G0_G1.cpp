@@ -20,9 +20,10 @@
  *
  */
 
-#include <swordfish/debug.h>
+#include <swordfish/Controller.h>
 
 using namespace swordfish;
+using namespace swordfish::motion;
 
 #include "../gcode.h"
 #include "../../module/motion.h"
@@ -31,7 +32,7 @@ using namespace swordfish;
 #include "../../MarlinCore.h"
 
 #if ENABLED(VARIABLE_G0_FEEDRATE)
-  feedRate_t rapidrate_mm_s = MMM_TO_MMS(G0_FEEDRATE);
+  FeedRate rapidrate_mm_s = FeedRate::MillimetersPerSecond(MMM_TO_MMS(G0_FEEDRATE));
 #endif
 
 #if HAS_FAST_MOVES
@@ -52,10 +53,10 @@ void GcodeSuite::G0_G1(const bool fast_move/* = false*/) {
     #endif
   ) {
 
-    feedRate_t old_feedrate;
+    FeedRate old_feedrate = feedrate_mm_s;
+
     #if ENABLED(VARIABLE_G0_FEEDRATE)
-      if (fast_move) {
-        old_feedrate = feedrate_mm_s;             // Back up the (old) motion mode feedrate
+      if (fast_move) {         // Back up the (old) motion mode feedrate
         feedrate_mm_s = rapidrate_mm_s * 0.01f * rapidrate_percentage;       // Get G0 feedrate from last usage
       }
     #endif
@@ -72,7 +73,7 @@ void GcodeSuite::G0_G1(const bool fast_move/* = false*/) {
     }
 
 		debug()("accel_mm_s2: ", fast_move ? planner.settings.travel_acceleration : planner.settings.acceleration);
-		debug()("feedrate_mm_s: ", feedrate_mm_s);
+		debug()("feed_rate: type=", (i32) feedrate_mm_s.type(), ", value=", feedrate_mm_s.value());
 
     prepare_line_to_destination(fast_move ? planner.settings.travel_acceleration : planner.settings.acceleration);
 

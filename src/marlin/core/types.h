@@ -93,7 +93,7 @@ struct IF<true, L, R> { typedef L type; };
 typedef float feedRate_t;
 
 // Conversion macros
-#define MMM_TO_MMS(MM_M) feedRate_t(float(MM_M) / 60.0f)
+#define MMM_TO_MMS(MM_M) (float(MM_M) / 60.0f)
 #define MMS_TO_MMM(MM_S) (float(MM_S) * 60.0f)
 
 //

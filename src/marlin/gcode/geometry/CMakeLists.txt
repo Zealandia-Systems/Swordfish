@@ -4,5 +4,6 @@ target_sources(${PROJECT_NAME}.elf
 		G43_G49.cpp
 		G53-G59.cpp
 		G92.cpp
+		G93-G94.cpp
 		M206_M428.cpp
 )

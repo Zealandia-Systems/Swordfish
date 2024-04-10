@@ -574,7 +574,7 @@ start:
 			auto& limits = motionModule.getLimits();
 			auto& minObj = limits.getMin();
 
-			motionModule.move({ .x = minObj.x(), .feedRate = homing_feedrate(Axis::X()) });
+			motionModule.move({ .x = minObj.x(), .feed_rate = homing_feedrate(Axis::X()) });
 		}
 
 		return offsetZ;
@@ -621,7 +621,7 @@ start:
 
 			_flags[HomingFlag] = true;
 
-			motionModule.move({ .x = 100, .feedRate = homing_feedrate(Axis::X()), .relativeAxes = AxisSelector::All });
+			motionModule.move({ .x = 100, .feed_rate = homing_feedrate(Axis::X()), .relative_axes = AxisSelector::All });
 
 			planner.synchronize();
 
@@ -681,15 +681,15 @@ start:
 
 		// move to the tool clip clearance position on the X axis, this is slightly closer to the pocket than
 		// the caddy clearance position.
-		motionModule.move({ .x = target.x() + ToolClipClearanceX, .feedRate = homing_feedrate(Axis::X()) });
+		motionModule.move({ .x = target.x() + ToolClipClearanceX, .feed_rate = homing_feedrate(Axis::X()) });
 		motionModule.synchronize();
 
 		// move z to pocket offset.z
-		motionModule.move({ .z = target.z(), .feedRate = homing_feedrate(Axis::Z()) });
+		motionModule.move({ .z = target.z(), .feed_rate = homing_feedrate(Axis::Z()) });
 		motionModule.synchronize();
 
 		// move to x position of pocket offset
-		motionModule.move({ .x = target.x(), .feedRate = homing_feedrate(Axis::X()) });
+		motionModule.move({ .x = target.x(), .feed_rate = homing_feedrate(Axis::X()) });
 		motionModule.synchronize();
 
 		unlock();
@@ -749,13 +749,13 @@ start:
 			unlock();
 
 			// move z to pocket offset.z
-			motionModule.move({ .z = target.z(), .feedRate = homing_feedrate(Axis::Z()) });
+			motionModule.move({ .z = target.z(), .feed_rate = homing_feedrate(Axis::Z()) });
 			motionModule.synchronize();
 
 			lock();
 
 			// remove tool from pocket
-			motionModule.move({ .x = target.x() + ToolClipClearanceX, .feedRate = homing_feedrate(Axis::X()) });
+			motionModule.move({ .x = target.x() + ToolClipClearanceX, .feed_rate = homing_feedrate(Axis::X()) });
 			motionModule.synchronize();
 
 			// move z to top

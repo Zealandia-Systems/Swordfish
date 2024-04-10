@@ -567,6 +567,8 @@ private:
 	TERN_(GCODE_MOTION_MODES, static void G80());
 
 	static void G92(bool report = true);
+	static void G93();
+	static void G94();
 
 	TERN_(CALIBRATION_GCODE, static void G425());
 

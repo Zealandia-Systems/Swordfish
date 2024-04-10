@@ -4,6 +4,7 @@ target_sources(${PROJECT_NAME}.elf
 		CoordinateSystem.h
 		CoordinateSystemTable.cpp
 		CoordinateSystemTable.h
+		FeedRate.h
 		LimitException.cpp
 		LimitException.h
 		Limits.cpp
