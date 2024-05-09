@@ -331,6 +331,7 @@ typedef struct {
 
 class GcodeSuite {
 public:
+	static bool aborted_;
 	static uint8_t axis_relative;
 
 	static inline bool axis_is_relative(const AxisEnum a) {
@@ -413,6 +414,16 @@ public:
 		process_subcommands_now_P(keep_leveling ? G28_STR : TERN(G28_L0_ENSURES_LEVELING_OFF, "G28L0", G28_STR));
 	}
 
+	static inline void abort_current() {
+		aborted_ = true;
+	}
+
+	static inline void throwIfAborted() {
+		if (aborted_) {
+			throw swordfish::CommandException("command aborted");
+		}
+	}
+
 #if EITHER(HAS_AUTO_REPORTING, HOST_KEEPALIVE_FEATURE)
 	static bool autoreport_paused;
 	static inline bool set_autoreport_paused(const bool p) {
@@ -428,40 +439,28 @@ public:
 #endif
 
 #if ENABLED(HOST_KEEPALIVE_FEATURE)
-	/**
-	 * States for managing Marlin and host communication
-	 * Marlin sends messages if blocked or busy
-	 */
-	enum MarlinBusyState : char {
-		NOT_BUSY, // Not in a handler
-		IN_HANDLER, // Processing a GCode
-		IN_PROCESS, // Known to be blocking command input (as in G29)
-		HOMING,
-		PROBING,
-		PAUSED_FOR_USER, // Blocking pending any input
-		PAUSED_FOR_INPUT, // Blocking pending text input (concept)
-		SPINDLE_RAMPING
-	};
+private:
+	//static MarlinBusyState busy_state;
 
-	static MarlinBusyState busy_state;
+public:
 	static float host_keepalive_interval;
 
 	static void host_keepalive();
 
-	template<typename T>
-	class keepaliverestorer {
+	/*template<typename T>
+	class KeepaliveRestorer {
 		T& ref_;
 		T val_;
 
 	public:
-		keepaliverestorer(T& perm) :
+		KeepaliveRestorer(T& perm) :
 				ref_(perm), val_(perm) {
 		}
-		keepaliverestorer(T& perm, T temp_val) :
+		KeepaliveRestorer(T& perm, T temp_val) :
 				ref_(perm), val_(perm) {
 			perm = temp_val;
 		}
-		~keepaliverestorer() {
+		~KeepaliveRestorer() {
 			restore();
 		}
 		inline void restore() {
@@ -469,14 +468,41 @@ public:
 
 			host_keepalive();
 		}
-	};
+	};*/
 
-#	define REMEMBER_KEEPALIVE(N, X, V...) GcodeSuite::keepaliverestorer<__typeof__(X)> restorer_##N(X, ##V)
+	/*class TemporaryState {
+		private:
+			MarlinBusyState old_state_;
 
-#	define KEEPALIVE_STATE(N)             REMEMBER_KEEPALIVE(_KA_, gcode.busy_state, gcode.N)
+		public:
+			TemporaryState(MarlinBusyState temporary_state) {
+				old_state_ = GcodeSuite::busy_state;
+
+				GcodeSuite::set_busy_state(temporary_state);
+			}
+
+			~TemporaryState() {
+				restore();
+			}
+
+			inline void restore() {
+				GcodeSuite::set_busy_state(old_state_);
+			}
+	};*/
+
+//#	define REMEMBER_KEEPALIVE(N, X, V...) GcodeSuite::KeepaliveRestorer<__typeof__(X)> restorer_##N(X, ##V)
+
+//#	define KEEPALIVE_STATE(N)             REMEMBER_KEEPALIVE(_KA_, gcode.busy_state, gcode.N)
+
+	/*[[nodiscard]]
+	static TemporaryState keepalive_state(MarlinBusyState busy_state) {
+		return TemporaryState { busy_state };
+	}*/
 #else
-#	define KEEPALIVE_STATE(N) NOOP
+//#	define KEEPALIVE_STATE(N) NOOP
 #endif
+
+
 
 	static void dwell(millis_t time);
 
@@ -646,7 +672,7 @@ private:
 
 	static void M81();
 	static void M82();
-	static void M83();
+	//static void M83();
 	static void M85();
 	static void M86();
 	static void M92();

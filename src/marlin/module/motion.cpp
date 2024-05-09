@@ -30,8 +30,9 @@
 
 using namespace Eigen;
 
-using namespace swordfish;
+//using namespace swordfish;
 using namespace swordfish::motion;
+using namespace swordfish::status;
 
 #include "motion.h"
 #include "endstops.h"
@@ -317,8 +318,8 @@ void set_current_from_steppers_for_axis(const AxisEnum axis) {
  * Move the planner to the current position from wherever it last moved
  * (or from wherever it has been told it is located).
  */
-void line_to_current_position(const feedRate_t& fr_mm_s /*=feedrate_mm_s*/) {
-	planner.buffer_line(current_position, fr_mm_s, active_extruder);
+void line_to_current_position(const MachineState machine_state, const feedRate_t& fr_mm_s /*=feedrate_mm_s*/) {
+	planner.buffer_line(current_position, fr_mm_s, active_extruder, machine_state);
 }
 
 #if EXTRUDERS
@@ -359,7 +360,7 @@ void prepare_fast_move_to_destination(const feedRate_t& scaled_fr_mm_s /*=MMS_SC
  *  - Move at normal speed regardless of feedrate percentage.
  *  - Extrude the specified length regardless of flow percentage.
  */
-void _internal_move_to_destination(const feedRate_t& fr_mm_s /*=0.0f*/
+void _internal_move_to_destination(const MachineState machine_state, const feedRate_t& fr_mm_s /*=0.0f*/
 #if IS_KINEMATIC
                                    ,
                                    const bool is_fast /*=false*/
@@ -382,7 +383,7 @@ void _internal_move_to_destination(const feedRate_t& fr_mm_s /*=0.0f*/
 		prepare_fast_move_to_destination();
 	else
 #endif
-		prepare_line_to_destination();
+		prepare_line_to_destination(machine_state);
 
 	feedrate_mm_s = old_feedrate;
 	feedrate_percentage = old_pct;
@@ -394,7 +395,7 @@ void _internal_move_to_destination(const feedRate_t& fr_mm_s /*=0.0f*/
 /**
  * Plan a move to (X, Y, Z) and set the current_position
  */
-void do_blocking_move_to(const float rx, const float ry, const float rz, const feedRate_t& fr_mm_s /*=0.0*/) {
+void do_blocking_move_to(const MachineState machine_state, const float rx, const float ry, const float rz, const feedRate_t& fr_mm_s /*=0.0*/) {
 	DEBUG_SECTION(log_move, "do_blocking_move_to", DEBUGGING(LEVELING));
 	if (DEBUGGING(LEVELING))
 		DEBUG_XYZ("> ", rx, ry, rz);
@@ -475,16 +476,16 @@ void do_blocking_move_to(const float rx, const float ry, const float rz, const f
 	// If Z needs to raise, do it before moving XY
 	if (current_position.z < rz) {
 		current_position.z = rz;
-		line_to_current_position(z_feedrate);
+		line_to_current_position(machine_state, z_feedrate);
 	}
 
 	current_position.set(rx, ry);
-	line_to_current_position(xy_feedrate);
+	line_to_current_position(machine_state, xy_feedrate);
 
 	// If Z needs to lower, do it after moving XY
 	if (current_position.z > rz) {
 		current_position.z = rz;
-		line_to_current_position(z_feedrate);
+		line_to_current_position(machine_state, z_feedrate);
 	}
 
 #endif
@@ -492,43 +493,43 @@ void do_blocking_move_to(const float rx, const float ry, const float rz, const f
 	planner.synchronize();
 }
 
-void do_blocking_move_to(const xy_pos_t& raw, const feedRate_t& fr_mm_s /*=0.0f*/) {
-	do_blocking_move_to(raw.x, raw.y, current_position.z, fr_mm_s);
+void do_blocking_move_to(const MachineState machine_state, const xy_pos_t& raw, const feedRate_t& fr_mm_s /*=0.0f*/) {
+	do_blocking_move_to(machine_state, raw.x, raw.y, current_position.z, fr_mm_s);
 }
-void do_blocking_move_to(const xyz_pos_t& raw, const feedRate_t& fr_mm_s /*=0.0f*/) {
-	do_blocking_move_to(raw.x, raw.y, raw.z, fr_mm_s);
+void do_blocking_move_to(const MachineState machine_state, const xyz_pos_t& raw, const feedRate_t& fr_mm_s /*=0.0f*/) {
+	do_blocking_move_to(machine_state, raw.x, raw.y, raw.z, fr_mm_s);
 }
-void do_blocking_move_to(const xyze_pos_t& raw, const feedRate_t& fr_mm_s /*=0.0f*/) {
-	do_blocking_move_to(raw.x, raw.y, raw.z, fr_mm_s);
-}
-
-void do_blocking_move_to_x(const float& rx, const feedRate_t& fr_mm_s /*=0.0*/) {
-	do_blocking_move_to(rx, current_position.y, current_position.z, fr_mm_s);
-}
-void do_blocking_move_to_y(const float& ry, const feedRate_t& fr_mm_s /*=0.0*/) {
-	do_blocking_move_to(current_position.x, ry, current_position.z, fr_mm_s);
-}
-void do_blocking_move_to_z(const float& rz, const feedRate_t& fr_mm_s /*=0.0*/) {
-	do_blocking_move_to_xy_z(current_position, rz, fr_mm_s);
+void do_blocking_move_to(const MachineState machine_state, const xyze_pos_t& raw, const feedRate_t& fr_mm_s /*=0.0f*/) {
+	do_blocking_move_to(machine_state, raw.x, raw.y, raw.z, fr_mm_s);
 }
 
-void do_blocking_move_to_xy(const float& rx, const float& ry, const feedRate_t& fr_mm_s /*=0.0*/) {
-	do_blocking_move_to(rx, ry, current_position.z, fr_mm_s);
+void do_blocking_move_to_x(const MachineState machine_state, const float& rx, const feedRate_t& fr_mm_s /*=0.0*/) {
+	do_blocking_move_to(machine_state, rx, current_position.y, current_position.z, fr_mm_s);
 }
-void do_blocking_move_to_xy(const xy_pos_t& raw, const feedRate_t& fr_mm_s /*=0.0f*/) {
-	do_blocking_move_to_xy(raw.x, raw.y, fr_mm_s);
+void do_blocking_move_to_y(const MachineState machine_state, const float& ry, const feedRate_t& fr_mm_s /*=0.0*/) {
+	do_blocking_move_to(machine_state, current_position.x, ry, current_position.z, fr_mm_s);
+}
+void do_blocking_move_to_z(const MachineState machine_state, const float& rz, const feedRate_t& fr_mm_s /*=0.0*/) {
+	do_blocking_move_to_xy_z(machine_state, current_position, rz, fr_mm_s);
 }
 
-void do_blocking_move_to_xy_z(const xy_pos_t& raw, const float& z, const feedRate_t& fr_mm_s /*=0.0f*/) {
-	do_blocking_move_to(raw.x, raw.y, z, fr_mm_s);
+void do_blocking_move_to_xy(const MachineState machine_state, const float& rx, const float& ry, const feedRate_t& fr_mm_s /*=0.0*/) {
+	do_blocking_move_to(machine_state, rx, ry, current_position.z, fr_mm_s);
+}
+void do_blocking_move_to_xy(const MachineState machine_state, const xy_pos_t& raw, const feedRate_t& fr_mm_s /*=0.0f*/) {
+	do_blocking_move_to_xy(machine_state, raw.x, raw.y, fr_mm_s);
 }
 
-void do_z_clearance(const float& zclear, const bool z_trusted /*=true*/, const bool raise_on_untrusted /*=true*/, const bool lower_allowed /*=false*/) {
+void do_blocking_move_to_xy_z(const MachineState machine_state, const xy_pos_t& raw, const float& z, const feedRate_t& fr_mm_s /*=0.0f*/) {
+	do_blocking_move_to(machine_state, raw.x, raw.y, z, fr_mm_s);
+}
+
+void do_z_clearance(const MachineState machine_state, const float& zclear, const bool z_trusted /*=true*/, const bool raise_on_untrusted /*=true*/, const bool lower_allowed /*=false*/) {
 	const bool rel = raise_on_untrusted && !z_trusted;
 	float zdest = zclear + (rel ? current_position.z : 0.0f);
 	if (!lower_allowed)
 		NOLESS(zdest, current_position.z);
-	do_blocking_move_to_z(_MIN(zdest, Z_MAX_POS), TERN(HAS_BED_PROBE, z_probe_fast_mm_s, homing_feedrate(Z_AXIS)));
+	do_blocking_move_to_z(machine_state, _MIN(zdest, Z_MAX_POS), TERN(HAS_BED_PROBE, z_probe_fast_mm_s, homing_feedrate(Z_AXIS)));
 }
 
 //
@@ -765,13 +766,14 @@ inline void segmented_line_to_destination(const feedRate_t& fr_mm_s, const float
  *
  * Return true if 'current_position' was set to 'destination'
  */
-inline bool line_to_destination_cartesian(const float32_t accel_mm_s2) {
+inline bool line_to_destination_cartesian(const swordfish::status::MachineState machine_state, const float32_t accel_mm_s2) {
 	const float scaled_fr_mm_s = MMS_SCALED(feedrate_mm_s);
 
 	planner.buffer_line(
 			destination,
 			scaled_fr_mm_s,
 			active_extruder,
+			machine_state,
 			0.0,
 			accel_mm_s2);
 
@@ -919,7 +921,7 @@ inline bool dual_x_carriage_unpark() {
  *
  * Before exit, current_position is set to destination.
  */
-void prepare_line_to_destination(const float32_t accel_mm_s2 /* = 0.0 */) {
+void prepare_line_to_destination(const swordfish::status::MachineState machine_state, const float32_t accel_mm_s2 /* = 0.0 */) {
 	auto& motionModule = MotionModule::getInstance();
 	auto& limits = motionModule.getLimits();
 
@@ -927,7 +929,7 @@ void prepare_line_to_destination(const float32_t accel_mm_s2 /* = 0.0 */) {
 
 	limits.throwIfOutside(dest);
 
-	if (line_to_destination_cartesian(accel_mm_s2)) {
+	if (line_to_destination_cartesian(machine_state, accel_mm_s2)) {
 		return;
 	}
 
@@ -1191,7 +1193,7 @@ void do_homing_move(const AxisEnum axis, const float distance, const feedRate_t 
 	                       cart_dist_mm
 #	endif
 	                       ,
-	                       home_fr_mm_s, active_extruder);
+	                       home_fr_mm_s, active_extruder, MachineState::Homing);
 #endif
 
 	planner.synchronize();

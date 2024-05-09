@@ -21,7 +21,6 @@
 using namespace swordfish;
 using namespace swordfish::core;
 using namespace swordfish::data;
-using namespace swordfish::gcode;
 using namespace swordfish::io;
 using namespace swordfish::motion;
 using namespace swordfish::tools;

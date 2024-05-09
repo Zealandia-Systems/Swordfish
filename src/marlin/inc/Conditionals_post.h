@@ -1755,7 +1755,8 @@
 #if _HAS_STOP(X,MAX)
   #define HAS_X_MAX 1
 #endif
-#if _HAS_STOP(Y,MIN)
+//#if _HAS_STOP(Y,MIN)
+#if PIN_EXISTS(Y_MIN)
   #define HAS_Y_MIN 1
 #endif
 #if _HAS_STOP(Y,MAX)

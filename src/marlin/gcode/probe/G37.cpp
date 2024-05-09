@@ -30,6 +30,7 @@
 #include <swordfish/debug.h>
 
 #include <swordfish/Controller.h>
+
 #if HAS_TOOL_PROBE
 #	include "../gcode.h"
 
@@ -39,6 +40,7 @@
 
 using namespace swordfish;
 using namespace swordfish::motion;
+using namespace swordfish::status;
 
 #	define TOOL_PROBE_X (X_MIN_POS + 35)
 #	define TOOL_PROBE_Y (Y_MAX_POS - 10)
@@ -51,7 +53,7 @@ inline bool do_single_probe(EndstopEnum endstop /*, const uint8_t move_value*/) 
 
 	endstops.enable(true);
 
-	prepare_line_to_destination();
+	prepare_line_to_destination(MachineState::Probing);
 	planner.synchronize();
 
 	bool triggered = endstops.trigger_state() & (1 << endstop);
@@ -74,7 +76,7 @@ void backoff(xyz_float_t& retract_mm) {
 	// Move away by the retract distance
 	destination = current_position + retract_mm;
 
-	prepare_line_to_destination();
+	prepare_line_to_destination(MachineState::Probing);
 	planner.synchronize();
 }
 
@@ -133,8 +135,6 @@ bool run_probe(AxisEnum axis, EndstopEnum endstop, float distance, float retract
  * G37 Probe Tool Offset
  */
 void GcodeSuite::G37() {
-	KEEPALIVE_STATE(PROBING);
-
 	if (homing_needed_error(_BV(X_AXIS) | _BV(Y_AXIS) | _BV(Z_AXIS))) {
 		return;
 	}

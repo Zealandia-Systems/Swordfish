@@ -113,7 +113,7 @@ namespace swordfish::core {
 	template<
 			typename T>
 	class ValueField : public ValueFieldBase {
-	private:
+	protected:
 		const uint32_t _byteOffset;
 		const T _defaultValue;
 
@@ -203,6 +203,10 @@ namespace swordfish::core {
 	public:
 		ValidatedValueField(const char* name, uint32_t byteOffset, T defaultValue, void (*validate)(T, T)) :
 				ValueField<T>(name, byteOffset, defaultValue), _validate(validate) {
+		}
+
+		virtual void init(Pack& pack) override {
+			ValueField<T>::set(pack, ValueField<T>::_defaultValue);
 		}
 
 		virtual void set(Pack& pack, const T value) override {

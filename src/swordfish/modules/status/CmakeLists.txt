@@ -1,0 +1,9 @@
+target_sources(${PROJECT_NAME}.elf
+	PRIVATE
+		Color.cpp
+		Color.h
+		StatusModule.cpp
+		StatusModule.h
+		WS2812Driver.cpp
+		WS2812Driver.h
+)

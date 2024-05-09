@@ -7,6 +7,7 @@
 
 #define HAS_Z_BRAKE 1
 
+#include <marlin/gcode/gcode.h>
 #include <marlin/module/planner.h>
 #include <marlin/module/motion.h>
 #include <marlin/module/stepper.h>
@@ -16,10 +17,12 @@
 #include <Arduino.h>
 
 #include <swordfish/debug.h>
+#include <swordfish/modules/status/StatusModule.h>
 #include <swordfish/modules/tools/ToolsModule.h>
 
 namespace swordfish::estop {
 	using namespace swordfish::tools;
+	using namespace swordfish::status;
 
 	EStopModule* EStopModule::__instance = nullptr;
 
@@ -39,6 +42,14 @@ namespace swordfish::estop {
 			_pack(__schema, *this, &(Module::_pack)),
 			_estopISR(std::bind(&EStopModule::handleEStop, this), ESTOP_PIN, CHANGE, false),
 			_triggered(readPin()) {
+
+		if (_triggered) {
+			StatusModule::getInstance().set_state(MachineState::EmergencyStop);
+		}
+	}
+
+	void EStopModule::idle() {
+		checkOrClear();
 	}
 
 	void EStopModule::handleEStop() {
@@ -58,17 +69,22 @@ namespace swordfish::estop {
 			planner.quick_stop();
 			planner.clear_block_buffer();
 			queue.clear();
+			gcode.abort_current();
 
 			set_axis_never_homed(X_AXIS);
 			set_axis_never_homed(Y_AXIS);
 			set_axis_never_homed(Z_AXIS);
+
+			auto& statusModule = StatusModule::getInstance();
+
+			statusModule.set_state(MachineState::EmergencyStop);
 		}
 	}
 
 	bool EStopModule::checkOrClear() {
 		__disable_irq();
 
-		if (_triggered && readPin()) {
+		if (/*_triggered && */readPin()) {
 			__enable_irq();
 
 			return false;
@@ -78,10 +94,12 @@ namespace swordfish::estop {
 			_triggered = false;
 
 			auto& toolsModule = ToolsModule::getInstance();
+			auto& statusModule = StatusModule::getInstance();
 			auto& driver = toolsModule.getCurrentDriver();
 
 			stepper.wake_up();
 			driver.emergencyClear();
+			statusModule.set_state(MachineState::Idle);
 
 			debug()("estop cleared");
 		}
@@ -92,6 +110,8 @@ namespace swordfish::estop {
 	}
 
 	void EStopModule::throwIfTriggered() {
+		GcodeSuite::throwIfAborted();
+
 		if (!checkOrClear()) {
 			throw EStopException();
 		}

@@ -45,7 +45,9 @@ namespace swordfish::estop {
 		virtual const char* name() override {
 			return "Emergency Stop";
 		}
+
 		virtual void init() override;
+		virtual void idle() override;
 
 		bool isTriggered() {
 			return _triggered;

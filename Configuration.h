@@ -691,6 +691,7 @@
 #define X_MAX_ENDSTOP_INVERTING       true // Set to true to invert the logic of the endstop.
 #define Y_MAX_ENDSTOP_INVERTING       true // Set to true to invert the logic of the endstop.
 #define Z_MAX_ENDSTOP_INVERTING       true // Set to true to invert the logic of the endstop.
+#define A_MAX_ENDSTOP_INVERTING       true // Set to true to invert the logic of the endstop.
 #define Z_MIN_PROBE_ENDSTOP_INVERTING true // Set to true to invert the logic of the probe.
 #define TOOL_PROBE_ENDSTOP_INVERTING  true
 #define WORK_PROBE_ENDSTOP_INVERTING  true
@@ -1185,7 +1186,11 @@
 
 // Invert the stepper direction. Change (or reverse the motor connector) if an axis goes the wrong way.
 #define INVERT_X_DIR              false
+#if MACHINE_TYPE == 5
+#define INVERT_Y_DIR              false
+#else
 #define INVERT_Y_DIR              true
+#endif
 #define INVERT_Z_DIR              true
 
 // @section extruder
@@ -1202,7 +1207,7 @@
 
 // @section homing
 
-#define NO_MOTION_BEFORE_HOMING   // Inhibit movement until all axes have been homed. Also enable HOME_AFTER_DEACTIVATE for extra safety.
+//#define NO_MOTION_BEFORE_HOMING   // Inhibit movement until all axes have been homed. Also enable HOME_AFTER_DEACTIVATE for extra safety.
 // #define HOME_AFTER_DEACTIVATE   // Require rehoming after steppers are deactivated. Also enable NO_MOTION_BEFORE_HOMING for extra safety.
 // #define UNKNOWN_Z_NO_RAISE      // Don't raise Z (lower the bed) if Z is "unknown." For beds that fall when Z is powered off.
 
@@ -1213,9 +1218,6 @@
 
 // Direction of endstops when homing; 1=MAX, -1=MIN
 // :[-1,1]
-#define X_HOME_DIR                -1
-#define Y_HOME_DIR                1
-#define Z_HOME_DIR                1
 
 // @section machine
 
@@ -1223,27 +1225,78 @@
 #if MACHINE_TYPE == 1
 #	define X_BED_SIZE 735
 #	define Y_BED_SIZE 730
+#define X_HOME_DIR -1
+#define Y_HOME_DIR 1
+#define Z_HOME_DIR 1
 #elif MACHINE_TYPE == 2
 #	define X_BED_SIZE 1355
 #	define Y_BED_SIZE 730
+#define X_HOME_DIR -1
+#define Y_HOME_DIR 1
+#define Z_HOME_DIR 1
 #elif MACHINE_TYPE == 3
 #	define X_BED_SIZE 1355
 #	define Y_BED_SIZE 1330
+#define X_HOME_DIR -1
+#define Y_HOME_DIR 1
+#define Z_HOME_DIR 1
 #elif MACHINE_TYPE == 4
 #	define X_BED_SIZE 1355
 #	define Y_BED_SIZE 2530
+#define X_HOME_DIR -1
+#define Y_HOME_DIR 1
+#define Z_HOME_DIR 1
+#elif MACHINE_TYPE == 5
+# define X_BED_SIZE 320
+# define Y_BED_SIZE 320
+#define X_HOME_DIR -1
+#define Y_HOME_DIR -1
+#define Z_HOME_DIR 1
+#elif MACHINE_TYPE == 6
+# define X_BED_SIZE 620
+# define Y_BED_SIZE 320
+#define X_HOME_DIR -1
+#define Y_HOME_DIR -1
+#define Z_HOME_DIR 1
+#elif MACHINE_TYPE == 7
+# define X_BED_SIZE 620
+# define Y_BED_SIZE 620
+#define X_HOME_DIR -1
+#define Y_HOME_DIR -1
+#define Z_HOME_DIR 1
+#elif MACHINE_TYPE == 8
+# define X_BED_SIZE 1220
+# define Y_BED_SIZE 620
+#define X_HOME_DIR -1
+#define Y_HOME_DIR -1
+#define Z_HOME_DIR 1
+#elif MACHINE_TYPE == 9
+# define X_BED_SIZE 1220
+# define Y_BED_SIZE 1220
+#define X_HOME_DIR -1
+#define Y_HOME_DIR -1
+#define Z_HOME_DIR 1
 #else
 #	define X_BED_SIZE 1355
 #	define Y_BED_SIZE 1330
+#define X_HOME_DIR -1
+#define Y_HOME_DIR 1
+#define Z_HOME_DIR 1
 #endif
 
 // Travel limits (mm) after homing, corresponding to endstop positions.
 #define X_MIN_POS 0
 #define Y_MIN_POS 0
+#if MACHINE_TYPE == 1 || MACHINE_TYPE == 2 || MACHINE_TYPE == 3 || MACHINE_TYPE == 4
 #define Z_MIN_POS -155
+#elif MACHINE_TYPE == 5
+#define Z_MIN_POS -200
+#endif
 #define X_MAX_POS X_BED_SIZE
 #define Y_MAX_POS Y_BED_SIZE
 #define Z_MAX_POS 0
+
+#define A_MIN_POS 0
 
 /**
  * Software Endstops

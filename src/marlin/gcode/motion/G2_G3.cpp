@@ -28,6 +28,7 @@
 
 using namespace swordfish;
 using namespace swordfish::motion;
+using namespace swordfish::status;
 
 #	include "../gcode.h"
 #	include "../../module/motion.h"
@@ -264,12 +265,13 @@ void plan_arc(
 		Eigen::Vector3f raw3f { raw.x, raw.y, raw.z };
 
 		limits.throwIfOutside(raw3f);
+		gcode.throwIfAborted();
 
 #	if HAS_LEVELING && !PLANNER_LEVELING
 		planner.apply_leveling(raw);
 #	endif
 
-		if (!planner.buffer_line(raw, scaled_fr_mm_s, active_extruder, 0
+		if (!planner.buffer_line(raw, scaled_fr_mm_s, active_extruder, MachineState::FeedMove, 0
 #	if ENABLED(SCARA_FEEDRATE_SCALING)
 		                         ,
 		                         inv_duration
@@ -290,7 +292,7 @@ void plan_arc(
 	planner.apply_leveling(raw);
 #	endif
 
-	planner.buffer_line(raw, scaled_fr_mm_s, active_extruder, 0
+	planner.buffer_line(raw, scaled_fr_mm_s, active_extruder, MachineState::FeedMove, 0
 #	if ENABLED(SCARA_FEEDRATE_SCALING)
 	                    ,
 	                    inv_duration

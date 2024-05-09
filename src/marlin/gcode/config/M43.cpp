@@ -29,6 +29,10 @@
 #include "../../pins/pinsDebug.h"
 #include "../../module/endstops.h"
 
+#include <swordfish/Controller.h>
+
+using namespace swordfish::status;
+
 #if HAS_Z_SERVO_PROBE
   #include "../../module/probe.h"
   #include "../../module/servo.h"
@@ -338,7 +342,8 @@ void GcodeSuite::M43() {
     }
 
     #if HAS_RESUME_CONTINUE
-      KEEPALIVE_STATE(PAUSED_FOR_USER);
+      TemporaryState state(MachineState::AwaitingInput);
+
       wait_for_user = true;
       TERN_(HOST_PROMPT_SUPPORT, host_prompt(PROMPT_USER_CONTINUE, PSTR("M43 Wait Called"), CONTINUE_STR));
       TERN_(EXTENSIBLE_UI, ExtUI::onUserConfirmRequired_P(PSTR("M43 Wait Called")));

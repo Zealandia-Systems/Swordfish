@@ -4,7 +4,7 @@
 #include <marlin/libs/modbus.h>
 #include <swordfish/modules/gcode/CommandException.h>
 
-using namespace swordfish::gcode;
+using namespace swordfish;
 
 enum class Function : uint8_t {
 	None = 0x00,

@@ -20,15 +20,17 @@
  *
  */
 
-#include <swordfish/debug.h>
+#include <swordfish/Controller.h>
 
 using namespace swordfish;
+using namespace swordfish::status;
 
 #include "../gcode.h"
 #include "../../module/motion.h"
 #include "../../module/planner.h"
 
 #include "../../MarlinCore.h"
+#include <swordfish/Controller.h>
 
 #if ENABLED(VARIABLE_G0_FEEDRATE)
   feedRate_t rapidrate_mm_s = MMM_TO_MMS(G0_FEEDRATE);
@@ -42,8 +44,7 @@ using namespace swordfish;
  * G0, G1: Coordinated movement of X Y Z E axes
  */
 void GcodeSuite::G0_G1(const bool fast_move/* = false*/) {
-
-  if (IsRunning()
+	if (IsRunning()
     #if ENABLED(NO_MOTION_BEFORE_HOMING)
       && !homing_needed_error(
           (parser.seen('X') ? _BV(X_AXIS) : 0)
@@ -53,13 +54,15 @@ void GcodeSuite::G0_G1(const bool fast_move/* = false*/) {
   ) {
 
     feedRate_t old_feedrate;
-    #if ENABLED(VARIABLE_G0_FEEDRATE)
-      if (fast_move) {
-        old_feedrate = feedrate_mm_s;             // Back up the (old) motion mode feedrate
-        feedrate_mm_s = rapidrate_mm_s * 0.01f * rapidrate_percentage;       // Get G0 feedrate from last usage
-      }
-    #endif
-    
+		MachineState machine_state = MachineState::FeedMove;
+
+		if (fast_move) {
+			machine_state = MachineState::RapidMove;
+
+			old_feedrate = feedrate_mm_s;             // Back up the (old) motion mode feedrate
+			feedrate_mm_s = rapidrate_mm_s * 0.01f * rapidrate_percentage;       // Get G0 feedrate from last usage
+		}
+
     get_destination_from_command();                 // Get X Y Z E F (and set cutter power)
 
     if (fast_move) {
@@ -70,12 +73,12 @@ void GcodeSuite::G0_G1(const bool fast_move/* = false*/) {
         feedrate_mm_s = MMM_TO_MMS(G0_FEEDRATE);  // Get the fixed G0 feedrate
       #endif
     }
-    
+
 		debug()("accel_mm_s2: ", fast_move ? planner.settings.travel_acceleration : planner.settings.acceleration);
 		debug()("feedrate_mm_s: ", feedrate_mm_s);
-		
-    prepare_line_to_destination(fast_move ? planner.settings.travel_acceleration : planner.settings.acceleration);
-    
+
+    prepare_line_to_destination(machine_state, fast_move ? planner.settings.travel_acceleration : planner.settings.acceleration);
+
 		// Restore the motion mode feedrate
     if (fast_move) {
 			feedrate_mm_s = old_feedrate;

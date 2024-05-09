@@ -9,6 +9,7 @@
 
 #include "MotionModule.h"
 
+#include <marlin/gcode/gcode.h>
 #include <marlin/module/endstops.h>
 #include <marlin/module/motion.h>
 #include <marlin/module/planner.h>
@@ -17,12 +18,14 @@ extern float32_t rapidrate_mm_s;
 
 #include <swordfish/debug.h>
 #include <swordfish/modules/estop/EStopModule.h>
+#include <swordfish/modules/status/StatusModule.h>
 
 namespace swordfish::motion {
 	using namespace Eigen;
 
 	using namespace swordfish::core;
 	using namespace swordfish::estop;
+	using namespace swordfish::status;
 	using namespace swordfish::utils;
 
 	MotionModule* MotionModule::__instance = nullptr;
@@ -102,39 +105,7 @@ namespace swordfish::motion {
 	}
 
 	void MotionModule::move(Movement movement) {
-		/*EStopModule::getInstance().throwIfTriggered();
-
-		debug()("current -> x: ", current_position.x, ", y: ", current_position.y, ", z: ", current_position.z, ", feedRate: ", feedrate_mm_s);
-		debug()("requested -> x: ", movement.x, ", y: ", movement.y, ", z: ", movement.z, ", feedRate: ", movement.feedRate, ", relative: ", movement.relative);
-
-		Vector3f dest = {
-		  isnan(movement.x) ? current_position.x : (movement.relative ? current_position.x + movement.x : movement.x - _offset(X)),
-		  isnan(movement.y) ? current_position.y : (movement.relative ? current_position.y + movement.y : movement.y - _offset(Y)),
-		  isnan(movement.z) ? current_position.z : (movement.relative ? current_position.z + movement.z : movement.z - _offset(Z))
-		};
-
-		_limits.throwIfOutside(dest);
-
-		destination.x = dest(X);
-		destination.y = dest(Y);
-		destination.z = dest(Z);
-
-		feedRate_t old_feedrate = feedrate_mm_s;
-
-		try {
-		  feedrate_mm_s = isnan(movement.feedRate) ? feedrate_mm_s : movement.feedRate;
-
-		  debug()("actual -> x: ", destination.x, ", y: ", destination.y, ", z: ", destination.z, ", f: ", feedrate_mm_s);
-
-		  prepare_line_to_destination();
-		  planner.synchronize();
-		} catch {
-		  feedrate_mm_s = old_feedrate;
-
-		  throw;
-		}*/
-
-		// EStopModule::getInstance().throwIfTriggered();
+		gcode.throwIfAborted();
 
 		Vector4f currentNative { current_position.x, current_position.y, current_position.z, 1 };
 		Vector4f currentLogical = _logicalTransform * currentNative;
@@ -170,6 +141,7 @@ namespace swordfish::motion {
 				target,
 				MMS_SCALED(isnan(movement.feedRate) ? feedrate_mm_s : movement.feedRate),
 				active_extruder,
+				movement.state,
 				0.0,
 				isnan(movement.accel_mm_s2) ? 0.0 : movement.accel_mm_s2);
 
@@ -284,7 +256,8 @@ namespace swordfish::motion {
 		       .z = movement.z,
 		       .feedRate = isnan(movement.feedRate) ? rapidrate_mm_s : movement.feedRate,
 		       .relativeAxes = movement.relativeAxes,
-		       .accel_mm_s2 = isnan(movement.accel_mm_s2) ? planner.settings.travel_acceleration : movement.accel_mm_s2 });
+		       .accel_mm_s2 = isnan(movement.accel_mm_s2) ? planner.settings.travel_acceleration : movement.accel_mm_s2,
+					 .state = MachineState::RapidMove });
 	}
 
 	void MotionModule::feedMove(Movement movement) {
@@ -293,6 +266,7 @@ namespace swordfish::motion {
 		       .z = movement.z,
 		       .feedRate = isnan(movement.feedRate) ? feedrate_mm_s : movement.feedRate,
 		       .relativeAxes = movement.relativeAxes,
-		       .accel_mm_s2 = isnan(movement.accel_mm_s2) ? planner.settings.acceleration : movement.accel_mm_s2 });
+		       .accel_mm_s2 = isnan(movement.accel_mm_s2) ? planner.settings.acceleration : movement.accel_mm_s2,
+					 .state = MachineState::FeedMove });
 	}
 } // namespace swordfish::motion

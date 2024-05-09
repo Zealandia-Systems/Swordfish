@@ -64,6 +64,7 @@ void GcodeSuite::M115() {
 	SERIAL_PRINTF(",\"date\":\"%s\"", __DATE__);
 	SERIAL_PRINTF(",\"time\":\"%s\"", __TIME__);
 	SERIAL_PRINTF(",\"url\":\"%s\"", SOURCE_CODE_URL);
+	SERIAL_PRINTF(",\"machine\":\"%s\"", MACHINE_NAME);
 	SERIAL_ECHO(",\"smartM6\":true");
 	SERIAL_PRINTF(",\"hasATC\":%s", toolsModule.isAutomatic() ? "true" : "false");
 	SERIAL_ECHO("}");
