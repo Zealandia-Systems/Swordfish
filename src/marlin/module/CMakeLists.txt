@@ -2,7 +2,6 @@ target_sources(${PROJECT_NAME}.elf
 	PRIVATE
 		endstops.cpp
 		endstops.h
-		estop.h
 		motion.cpp
 		motion.h
 		planner_bezier.cpp

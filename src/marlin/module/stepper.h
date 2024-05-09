@@ -351,15 +351,15 @@ class Stepper {
     #endif
 
     // Exact steps at which an endstop was triggered
-    static xyz_long_t endstops_trigsteps;
+    static swordfish::math::Vector6i32 endstops_trigsteps;
 
 	public:
     // Positions of stepper motors, in step units
-    static xyze_long_t count_position;
+    static swordfish::math::Vector6i32 count_position;
 
 	private:
     // Current stepper motor directions (+1 or -1)
-    static xyze_int8_t count_direction;
+    static swordfish::math::Vector6i8 count_direction;
 
     #if ENABLED(LASER_POWER_INLINE_TRAPEZOID)
 
@@ -431,11 +431,11 @@ class Stepper {
     static int32_t position(const Axis axis);
 
     // Set the current position in steps
-    static void set_position(const swordfish::math::Vector6i32 &abce);
+    static void set_position(const swordfish::math::Vector6i32 &pos);
     static void set_axis_position(const Axis a, const int32_t &v);
 
     // Report the positions of the steppers, in steps
-    static void report_a_position(const xyz_long_t &pos);
+    static void report_a_position(const swordfish::math::Vector6i32 &pos);
     static void report_positions();
 
     // Discard current block and free any resources
@@ -527,9 +527,10 @@ class Stepper {
   private:
 
     // Set the current position in steps
-    static void _set_position(const int32_t &a, const int32_t &b, const int32_t &c, const int32_t &e);
-    FORCE_INLINE static void _set_position(const swordfish::math::Vector6i32 &spos) { _set_position(spos.x(), spos.y(), spos.z(), spos.a()); }
-
+	static void _set_position(const swordfish::math::Vector6i32& position);
+	FORCE_INLINE static void _set_position(const int32_t x, const int32_t y, const int32_t z, const int32_t a, const int32_t b, const int32_t c) {
+		_set_position({ x, y, z, a, b, c });
+	}
     FORCE_INLINE static uint32_t calc_timer_interval(uint32_t step_rate, uint8_t* loops) {
       uint32_t timer;
 

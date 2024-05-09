@@ -27,8 +27,6 @@
 #include "../../module/stepper.h"
 #include "../../module/endstops.h"
 
-#include "../../module/probe.h"
-
 #define DEBUG_OUT ENABLED(DEBUG_LEVELING_FEATURE)
 #include "../../core/debug_out.h"
 

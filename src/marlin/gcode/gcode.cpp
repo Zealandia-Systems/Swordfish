@@ -69,11 +69,10 @@ extern bool wifi_custom_command(char* const command_ptr);
 
 #include "../MarlinCore.h" // for idle()
 
-#include "../module/estop.h"
-
 #include <swordfish/Controller.h>
 #include <swordfish/core/Console.h>
 #include <swordfish/modules/motion/LimitException.h>
+#include <swordfish/modules/gcode/CommandException.h>
 #include <swordfish/modules/estop/EStopException.h>
 
 using namespace swordfish;
@@ -114,42 +113,6 @@ GcodeSuite::WorkspacePlane GcodeSuite::workspace_plane = PLANE_XY;
 tool_record_t GcodeSuite::tool_table[MAX_TOOL_OFFSETS];
 #endif
 
-/**
- * Get the target extruder from the T parameter or the active_extruder
- * Return -1 if the T parameter is out of range
- */
-int8_t GcodeSuite::get_target_extruder_from_command() {
-	if (parser.seenval('T')) {
-		const int8_t e = parser.value_byte();
-		if (e < EXTRUDERS)
-			return e;
-		SERIAL_ECHO_START();
-		SERIAL_CHAR('M');
-		SERIAL_ECHO(parser.codenum);
-		SERIAL_ECHOLNPAIR(" " STR_INVALID_EXTRUDER " ", int(e));
-		return -1;
-	}
-	return active_extruder;
-}
-
-/**
- * Get the target e stepper from the T parameter
- * Return -1 if the T parameter is out of range or unspecified
- */
-int8_t GcodeSuite::get_target_e_stepper_from_command() {
-	const int8_t e = parser.intval('T', -1);
-	if (WITHIN(e, 0, E_STEPPERS - 1))
-		return e;
-
-	SERIAL_ECHO_START();
-	SERIAL_CHAR('M');
-	SERIAL_ECHO(parser.codenum);
-	if (e == -1)
-		SERIAL_ECHOLNPGM(" " STR_E_STEPPER_NOT_SPECIFIED);
-	else
-		SERIAL_ECHOLNPAIR(" " STR_INVALID_E_STEPPER " ", int(e));
-	return -1;
-}
 
 /**
  * Set XYZE destination and feedrate from the current GCode command
@@ -185,28 +148,12 @@ void GcodeSuite::get_destination_from_command() {
 		}
 	}
 
-#if ENABLED(POWER_LOSS_RECOVERY) && !PIN_EXISTS(POWER_LOSS)
-	// Only update power loss recovery on moves with E
-	if (recovery.enabled && IS_SD_PRINTING() && seen.e && (seen.x || seen.y))
-		recovery.save();
-#endif
-
 	if (parser.linearval('F') > 0)
 		feedrate_mm_s = parser.value_feedrate();
 
-// Get ABCDHI mixing factors
-#if BOTH(MIXING_EXTRUDER, DIRECT_MIXING_IN_G1)
-	M165();
-#endif
-
-#if ENABLED(LASER_MOVE_POWER)
-	// Set the laser power in the planner to configure this move
-	if (parser.seen('S')) {
-		const float spwr = parser.value_float();
-		cutter.inline_power(TERN(SPINDLE_LASER_PWM, cutter.power_to_range(cutter_power_t(round(spwr))), spwr > 0 ? 255 : 0));
-	} else if (ENABLED(LASER_MOVE_G0_OFF) && parser.codenum == 0) // G0
-		cutter.set_inline_enabled(false);
-#endif
+	if (parser.feedrate_type == FeedRateType::InverseTime && !parser.seen('F')) {
+		throw CommandException("Expected F parameter while in G93 mode.");
+	}
 }
 
 /**

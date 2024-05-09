@@ -1357,18 +1357,6 @@ void Planner::check_axes_activity() {
 #endif
 	}
 
-	//
-	// Disable inactive axes
-	//
-	if (TERN0(DISABLE_X, !axis_active.x))
-		DISABLE_AXIS_X();
-	if (TERN0(DISABLE_Y, !axis_active.y))
-		DISABLE_AXIS_Y();
-	if (TERN0(DISABLE_Z, !axis_active.z))
-		DISABLE_AXIS_Z();
-	if (TERN0(DISABLE_E, !axis_active.e))
-		disable_e_steppers();
-
 //
 // Update Fan speeds
 //

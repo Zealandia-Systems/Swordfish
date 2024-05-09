@@ -1,6 +1,5 @@
 target_sources(${PROJECT_NAME}.elf
 	PRIVATE
-		gcode_d.cpp
 		gcode.cpp
 		gcode.h
 		parser.cpp

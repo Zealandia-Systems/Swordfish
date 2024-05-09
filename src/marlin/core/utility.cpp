@@ -51,7 +51,6 @@ void safe_delay(millis_t ms) {
 
 #if ENABLED(DEBUG_LEVELING_FEATURE)
 
-  #include "../module/probe.h"
   #include "../module/motion.h"
   #include "../module/stepper.h"
   #include "../libs/numtostr.h"

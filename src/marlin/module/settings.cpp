@@ -64,8 +64,6 @@ using namespace swordfish::motion;
 #	include "../HAL/shared/eeprom_api.h"
 #endif
 
-#include "probe.h"
-
 #if HAS_LEVELING
 #	include "../feature/bedlevel/bedlevel.h"
 #endif
@@ -3115,12 +3113,7 @@ inline void say_M914() {
 #		endif
 #	endif
 
-#	if ENABLED(ADVANCED_PAUSE_FEATURE)
-inline void say_M603(const bool forReplay) {
-	CONFIG_ECHO_START();
-	SERIAL_ECHOPGM("  M603 ");
-}
-#	endif
+
 
 inline void say_units(const bool colon) {
 	serialprintPGM(
@@ -3132,7 +3125,7 @@ inline void say_units(const bool colon) {
 		SERIAL_ECHOLNPGM(":");
 }
 
-void report_M92(const bool echo = true, const int8_t e = -1);
+void report_M92(const bool echo = true);
 
 /**
  * M503 - Report current settings in RAM

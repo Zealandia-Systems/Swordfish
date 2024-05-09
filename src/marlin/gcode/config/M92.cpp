@@ -23,23 +23,16 @@
 #include "../gcode.h"
 #include "../../module/planner.h"
 
-void report_M92(const bool echo=true, const int8_t e=-1) {
+void report_M92(const bool echo=true) {
   if (echo) SERIAL_ECHO_START(); else SERIAL_CHAR(' ');
-  SERIAL_ECHOPAIR_P(PSTR(" M92 X"), parser.linear_value_to_mm(planner.settings.axis_steps_per_unit[Axis::X()]),
-                          SP_Y_STR, parser.linear_value_to_mm(planner.settings.axis_steps_per_unit[Axis::Y()]),
-                          SP_Z_STR, parser.linear_value_to_mm(planner.settings.axis_steps_per_unit[Axis::Z()]));
+  SERIAL_ECHOPAIR_P(PSTR(" M92 X"), parser.linear_value_to_mm(planner.settings.axis_steps_per_unit[Axis::X()]));
+	SERIAL_ECHOPAIR_P(SP_Y_STR, parser.linear_value_to_mm(planner.settings.axis_steps_per_unit[Axis::Y()]));
+	SERIAL_ECHOPAIR_P(SP_Z_STR, parser.linear_value_to_mm(planner.settings.axis_steps_per_unit[Axis::Z()]));
+	SERIAL_ECHOPAIR_P(SP_A_STR, parser.radial_value_to_degrees(planner.settings.axis_steps_per_unit[Axis::A()]));
+	SERIAL_ECHOPAIR_P(SP_B_STR, parser.radial_value_to_degrees(planner.settings.axis_steps_per_unit[Axis::B()]));
+	SERIAL_ECHOPAIR_P(SP_C_STR, parser.radial_value_to_degrees(planner.settings.axis_steps_per_unit[Axis::C()]));
 
-    SERIAL_ECHOPAIR_P(SP_E_STR, parser.radial_value_to_degrees(planner.settings.axis_steps_per_unit[Axis::A()]));
   SERIAL_EOL();
-
-  #if ENABLED(DISTINCT_E_FACTORS)
-    LOOP_L_N(i, E_STEPPERS) {
-      if (e >= 0 && i != e) continue;
-      if (echo) SERIAL_ECHO_START(); else SERIAL_CHAR(' ');
-      SERIAL_ECHOLNPAIR_P(PSTR(" M92 T"), (int)i,
-                        SP_E_STR, VOLUMETRIC_UNIT(planner.settings.axis_steps_per_unit[E_AXIS_N(i)]));
-    }
-  #endif
 }
 
 /**
@@ -56,16 +49,12 @@ void report_M92(const bool echo=true, const int8_t e=-1) {
  *      'L' specifies a desired layer height. Nearest good heights are shown.
  */
 void GcodeSuite::M92() {
-
-  const int8_t target_extruder = get_target_extruder_from_command();
-  if (target_extruder < 0) return;
-
   // No arguments? Show M92 report.
-  if (!parser.seen("XYZE"
+  if (!parser.seen("XYZABC"
     #if ENABLED(MAGIC_NUMBERS_GCODE)
       "HL"
     #endif
-  )) return report_M92(true, target_extruder);
+  )) return report_M92(true);
 
   for (auto i : all_axes) {
     if (parser.seenval(i.to_char())) {
