@@ -849,8 +849,8 @@ void Endstops::update() {
 
 	// Signal, after validation, if an endstop limit is pressed or not
 
-	if (stepper.axis_is_moving(X_AXIS)) {
-		if (stepper.motor_direction(X_AXIS_HEAD)) { // -direction
+	if (stepper.axis_is_moving(Axis::X())) {
+		if (stepper.motor_direction(Axis::X())) { // -direction
 #if HAS_X_MIN || (X_SPI_SENSORLESS && X_HOME_DIR < 0)
 			PROCESS_ENDSTOP_X(MIN);
 #	if CORE_DIAG(XY, Y, MIN)
@@ -865,10 +865,10 @@ void Endstops::update() {
 #endif
 
 #if HAS_WORK_PROBE
-			if (work_probe_enabled[X_AXIS] && TEST_ENDSTOP(WORK_PROBE)) {
+			if (work_probe_enabled[Axis::X()] && TEST_ENDSTOP(WORK_PROBE)) {
 				SBI(hit_state, WORK_PROBE);
 
-				planner.endstop_triggered(X_AXIS);
+				planner.endstop_triggered(Axis::X());
 			}
 #endif
 		} else { // +direction
@@ -886,17 +886,17 @@ void Endstops::update() {
 #endif
 
 #if HAS_WORK_PROBE
-			if (work_probe_enabled[X_AXIS] && TEST_ENDSTOP(WORK_PROBE)) {
+			if (work_probe_enabled[Axis::X()] && TEST_ENDSTOP(WORK_PROBE)) {
 				SBI(hit_state, WORK_PROBE);
 
-				planner.endstop_triggered(X_AXIS);
+				planner.endstop_triggered(Axis::X());
 			}
 #endif
 		}
 	}
 
-	if (stepper.axis_is_moving(Y_AXIS)) {
-		if (stepper.motor_direction(Y_AXIS_HEAD)) { // -direction
+	if (stepper.axis_is_moving(Axis::Y())) {
+		if (stepper.motor_direction(Axis::Y())) { // -direction
 #if HAS_Y_MIN || (Y_SPI_SENSORLESS && Y_HOME_DIR < 0)
 			PROCESS_ENDSTOP_Y(MIN);
 #	if CORE_DIAG(XY, X, MIN)
@@ -911,10 +911,10 @@ void Endstops::update() {
 #endif
 
 #if HAS_WORK_PROBE
-			if (work_probe_enabled[Y_AXIS] && TEST_ENDSTOP(WORK_PROBE)) {
+			if (work_probe_enabled[Axis::Y()] && TEST_ENDSTOP(WORK_PROBE)) {
 				SBI(hit_state, WORK_PROBE);
 
-				planner.endstop_triggered(Y_AXIS);
+				planner.endstop_triggered(Axis::Y());
 			}
 #endif
 		} else { // +direction
@@ -932,17 +932,17 @@ void Endstops::update() {
 #endif
 
 #if HAS_WORK_PROBE
-			if (work_probe_enabled[Y_AXIS] && TEST_ENDSTOP(WORK_PROBE)) {
+			if (work_probe_enabled[Axis::Y()] && TEST_ENDSTOP(WORK_PROBE)) {
 				SBI(hit_state, WORK_PROBE);
 
-				planner.endstop_triggered(Y_AXIS);
+				planner.endstop_triggered(Axis::Y());
 			}
 #endif
 		}
 	}
 
-	if (stepper.axis_is_moving(Z_AXIS)) {
-		if (stepper.motor_direction(Z_AXIS_HEAD)) { // Z -direction. Gantry down, bed up.
+	if (stepper.axis_is_moving(Axis::Z())) {
+		if (stepper.motor_direction(Axis::Z())) { // Z -direction. Gantry down, bed up.
 
 #if HAS_Z_MIN || (Z_SPI_SENSORLESS && Z_HOME_DIR < 0)
 			if (TERN1(Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN, z_probe_enabled) && TERN1(HAS_CUSTOM_PROBE_PIN, !z_probe_enabled))
@@ -968,15 +968,15 @@ void Endstops::update() {
 			if (tool_probe_enabled && TEST_ENDSTOP(TOOL_PROBE)) {
 				SBI(hit_state, TOOL_PROBE);
 
-				planner.endstop_triggered(Z_AXIS);
+				planner.endstop_triggered(Axis::Z());
 			}
 #endif
 
 #if HAS_WORK_PROBE
-			if (work_probe_enabled[Z_AXIS] && TEST_ENDSTOP(WORK_PROBE)) {
+			if (work_probe_enabled[Axis::Z()] && TEST_ENDSTOP(WORK_PROBE)) {
 				SBI(hit_state, WORK_PROBE);
 
-				planner.endstop_triggered(Z_AXIS);
+				planner.endstop_triggered(Axis::Z());
 			}
 #endif
 		} else { // Z +direction. Gantry up, bed down.

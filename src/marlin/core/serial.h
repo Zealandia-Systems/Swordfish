@@ -21,7 +21,7 @@
  */
 #pragma once
 
-#include <Eigen/Core>
+#include <swordfish/math.h>
 
 #include "../inc/MarlinConfig.h"
 
@@ -908,8 +908,12 @@ inline void print_xyz(const xyz_pos_t& xyz, PGM_P const prefix = nullptr, PGM_P 
 	print_xyz(xyz.x, xyz.y, xyz.z, prefix, suffix);
 }
 
-inline void print_xyz(const Eigen::Vector3f& xyz, PGM_P const prefix = nullptr, PGM_P const suffix = nullptr) {
-	print_xyz(xyz(0), xyz(1), xyz(2), prefix, suffix);
+inline void print_xyz(const swordfish::math::Vector3f32& xyz, PGM_P const prefix = nullptr, PGM_P const suffix = nullptr) {
+	print_xyz(xyz.x(), xyz.y(), xyz.z(), prefix, suffix);
+}
+
+inline void print_xyz(const swordfish::math::Vector6f32& xyz, PGM_P const prefix = nullptr, PGM_P const suffix = nullptr) {
+	print_xyz(xyz.x(), xyz.y(), xyz.z(), prefix, suffix);
 }
 
 #define SERIAL_POS(SUFFIX, VAR) \

@@ -22,6 +22,8 @@
 #pragma once
 
 #include <Eigen/Core>
+#include <swordfish/types.h>
+#include <swordfish/math.h>
 
 #include <math.h>
 #include <stddef.h>
@@ -38,6 +40,7 @@ typedef const __FlashStringHelper* progmem_str;
 //  - A_AXIS, B_AXIS, and C_AXIS should be used for Steppers, corresponding to XYZ on Cartesians
 //  - X_HEAD, Y_HEAD, and Z_HEAD should be used for Steppers on Core kinematics
 //
+/*
 enum AxisEnum : uint8_t {
 	X_AXIS = 0,
 	A_AXIS = 0,
@@ -60,16 +63,19 @@ enum AxisEnum : uint8_t {
 	ALL_AXES = 0xFE,
 	NO_AXIS = 0xFF
 };
+*/
 
 //
 // Loop over XYZE axes
 //
+/*
 #define LOOP_XYZ(VAR)    LOOP_S_LE_N(VAR, X_AXIS, Z_AXIS)
 #define LOOP_XYZE(VAR)   LOOP_S_LE_N(VAR, X_AXIS, E_AXIS)
 #define LOOP_XYZE_N(VAR) LOOP_S_L_N(VAR, X_AXIS, XYZE_N)
 #define LOOP_ABC(VAR)    LOOP_S_LE_N(VAR, A_AXIS, C_AXIS)
 #define LOOP_ABCE(VAR)   LOOP_S_LE_N(VAR, A_AXIS, E_AXIS)
 #define LOOP_ABCE_N(VAR) LOOP_S_L_N(VAR, A_AXIS, XYZE_N)
+*/
 
 //
 // Conditional type assignment magic. For example...
@@ -87,7 +93,7 @@ struct IF<true, L, R> { typedef L type; };
 typedef float feedRate_t;
 
 // Conversion macros
-#define MMM_TO_MMS(MM_M) feedRate_t(float(MM_M) / 60.0f)
+#define MMM_TO_MMS(MM_M) (float(MM_M) / 60.0f)
 #define MMS_TO_MMM(MM_S) (float(MM_S) * 60.0f)
 
 //
@@ -173,17 +179,9 @@ typedef xy_float_t ab_float_t;
 typedef xyz_float_t abc_float_t;
 typedef xyze_float_t abce_float_t;
 
-typedef ab_float_t ab_pos_t;
-typedef abc_float_t abc_pos_t;
-typedef abce_float_t abce_pos_t;
-
-// External conversion methods
-void toLogical(xy_pos_t& raw);
-void toLogical(xyz_pos_t& raw);
-void toLogical(xyze_pos_t& raw);
-void toNative(xy_pos_t& raw);
-void toNative(xyz_pos_t& raw);
-void toNative(xyze_pos_t& raw);
+//typedef ab_float_t ab_pos_t;
+//typedef abc_float_t abc_pos_t;
+//typedef abce_float_t abce_pos_t;
 
 //
 // XY coordinates, counters, etc.
@@ -206,15 +204,15 @@ struct XYval {
 		x = px;
 		y = py;
 	}
-	FI void set(const T (&arr)[XY]) {
+	FI void set(const T (&arr)[2]) {
 		x = arr[0];
 		y = arr[1];
 	}
-	FI void set(const T (&arr)[XYZ]) {
+	FI void set(const T (&arr)[3]) {
 		x = arr[0];
 		y = arr[1];
 	}
-	FI void set(const T (&arr)[XYZE]) {
+	FI void set(const T (&arr)[4]) {
 		x = arr[0];
 		y = arr[1];
 	}
@@ -269,16 +267,14 @@ struct XYval {
 	FI XYval<float> reciprocal() const {
 		return { _RECIP(x), _RECIP(y) };
 	}
-	FI XYval<float> asLogical() const {
+	/*FI XYval<float> asLogical() const {
 		XYval<float> o = asFloat();
-		toLogical(o);
-		return o;
+		return toLogical(o);
 	}
 	FI XYval<float> asNative() const {
 		XYval<float> o = asFloat();
-		toNative(o);
-		return o;
-	}
+		return toNative(o);
+	}*/
 	FI operator XYZval<T>() {
 		return { x, y };
 	}
@@ -671,16 +667,16 @@ struct XYZval {
 		y = pxy.y;
 		z = pz;
 	}
-	FI void set(const T (&arr)[XY]) {
+	FI void set(const T (&arr)[2]) {
 		x = arr[0];
 		y = arr[1];
 	}
-	FI void set(const T (&arr)[XYZ]) {
+	FI void set(const T (&arr)[3]) {
 		x = arr[0];
 		y = arr[1];
 		z = arr[2];
 	}
-	FI void set(const T (&arr)[XYZE]) {
+	FI void set(const T (&arr)[4]) {
 		x = arr[0];
 		y = arr[1];
 		z = arr[2];
@@ -741,16 +737,14 @@ struct XYZval {
 	FI XYZval<float> reciprocal() const {
 		return { _RECIP(x), _RECIP(y), _RECIP(z) };
 	}
-	FI XYZval<float> asLogical() const {
+	/*FI XYZval<float> asLogical() const {
 		XYZval<float> o = asFloat();
-		toLogical(o);
-		return o;
+		return toLogical(o);
 	}
 	FI XYZval<float> asNative() const {
 		XYZval<float> o = asFloat();
-		toNative(o);
-		return o;
-	}
+		return toNative(o);
+	}*/
 	FI operator XYval<T>&() {
 		return *(XYval<T>*) this;
 	}
@@ -1218,16 +1212,16 @@ struct XYZEval {
 		z = pxyz.z;
 		e = pe;
 	}
-	FI void set(const T (&arr)[XY]) {
+	FI void set(const T (&arr)[2]) {
 		x = arr[0];
 		y = arr[1];
 	}
-	FI void set(const T (&arr)[XYZ]) {
+	FI void set(const T (&arr)[3]) {
 		x = arr[0];
 		y = arr[1];
 		z = arr[2];
 	}
-	FI void set(const T (&arr)[XYZE]) {
+	FI void set(const T (&arr)[4]) {
 		x = arr[0];
 		y = arr[1];
 		z = arr[2];
@@ -1274,16 +1268,14 @@ struct XYZEval {
 	FI XYZEval<float> reciprocal() const {
 		return { _RECIP(x), _RECIP(y), _RECIP(z), _RECIP(e) };
 	}
-	FI XYZEval<float> asLogical() const {
+	/*FI XYZEval<float> asLogical() const {
 		XYZEval<float> o = asFloat();
-		toLogical(o);
-		return o;
+		return toLogical(o);
 	}
 	FI XYZEval<float> asNative() const {
 		XYZEval<float> o = asFloat();
-		toNative(o);
-		return o;
-	}
+		return toNative(o);
+	}*/
 	FI operator XYval<T>&() {
 		return *(XYval<T>*) this;
 	}
@@ -1696,6 +1688,3 @@ struct XYZEval {
 #undef _LS
 #undef _RS
 #undef FI
-
-const xyze_char_t axis_codes { 'X', 'Y', 'Z', 'E' };
-#define XYZ_CHAR(A) ((char) ('X' + A))

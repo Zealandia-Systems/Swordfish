@@ -69,11 +69,10 @@ extern bool wifi_custom_command(char* const command_ptr);
 
 #include "../MarlinCore.h" // for idle()
 
-#include "../module/estop.h"
-
 #include <swordfish/Controller.h>
 #include <swordfish/core/Console.h>
 #include <swordfish/modules/motion/LimitException.h>
+#include <swordfish/modules/gcode/CommandException.h>
 #include <swordfish/modules/estop/EStopException.h>
 
 using namespace swordfish;
@@ -91,7 +90,7 @@ millis_t GcodeSuite::previous_move_ms = 0,
 
 // Relative motion mode for each logical axis
 static constexpr xyze_bool_t ar_init = AXIS_RELATIVE_MODES;
-uint8_t GcodeSuite::axis_relative = ((ar_init.x ? _BV(REL_X) : 0) | (ar_init.y ? _BV(REL_Y) : 0) | (ar_init.z ? _BV(REL_Z) : 0) | (ar_init.e ? _BV(REL_E) : 0));
+uint8_t GcodeSuite::axis_relative = ((ar_init.x ? _BV((u8)AxisRelative::X) : 0) | (ar_init.y ? _BV((u8)AxisRelative::Y) : 0) | (ar_init.z ? _BV((u8)AxisRelative::Z) : 0) | (ar_init.e ? _BV((u8)AxisRelative::A) : 0));
 bool GcodeSuite::aborted_ = false;
 
 #if EITHER(HAS_AUTO_REPORTING, HOST_KEEPALIVE_FEATURE)
@@ -116,42 +115,6 @@ GcodeSuite::WorkspacePlane GcodeSuite::workspace_plane = PLANE_XY;
 tool_record_t GcodeSuite::tool_table[MAX_TOOL_OFFSETS];
 #endif
 
-/**
- * Get the target extruder from the T parameter or the active_extruder
- * Return -1 if the T parameter is out of range
- */
-int8_t GcodeSuite::get_target_extruder_from_command() {
-	if (parser.seenval('T')) {
-		const int8_t e = parser.value_byte();
-		if (e < EXTRUDERS)
-			return e;
-		SERIAL_ECHO_START();
-		SERIAL_CHAR('M');
-		SERIAL_ECHO(parser.codenum);
-		SERIAL_ECHOLNPAIR(" " STR_INVALID_EXTRUDER " ", int(e));
-		return -1;
-	}
-	return active_extruder;
-}
-
-/**
- * Get the target e stepper from the T parameter
- * Return -1 if the T parameter is out of range or unspecified
- */
-int8_t GcodeSuite::get_target_e_stepper_from_command() {
-	const int8_t e = parser.intval('T', -1);
-	if (WITHIN(e, 0, E_STEPPERS - 1))
-		return e;
-
-	SERIAL_ECHO_START();
-	SERIAL_CHAR('M');
-	SERIAL_ECHO(parser.codenum);
-	if (e == -1)
-		SERIAL_ECHOLNPGM(" " STR_E_STEPPER_NOT_SPECIFIED);
-	else
-		SERIAL_ECHOLNPAIR(" " STR_INVALID_E_STEPPER " ", int(e));
-	return -1;
-}
 
 /**
  * Set XYZE destination and feedrate from the current GCode command
@@ -160,10 +123,8 @@ int8_t GcodeSuite::get_target_e_stepper_from_command() {
  *  - Set to current for missing axis codes
  *  - Set the feedrate, if included
  */
-void GcodeSuite::get_destination_from_command() {
+void GcodeSuite::get_destination_from_command(bool rapid_move) {
 	auto& motionModule = MotionModule::getInstance();
-
-	xyze_bool_t seen = { false, false, false, false };
 
 #if ENABLED(CANCEL_OBJECTS)
 	const bool& skip_move = cancelable.skipping;
@@ -171,40 +132,59 @@ void GcodeSuite::get_destination_from_command() {
 	constexpr bool skip_move = false;
 #endif
 
+	bool has_linear_moves = false;
+	u8 radial_moves = 0;
+
+	debug()("rapid_move: ", rapid_move);
+
 	// Get new XYZ position, whether absolute or relative
-	LOOP_XYZ(i) {
-		if ((seen[i] = parser.seenval(XYZ_CHAR(i)))) {
-			const float v = parser.value_axis_units((AxisEnum) i);
-			if (skip_move)
+	for (auto i : all_axes) {
+		debug()("axis: ", (usize)i, " (", i.to_char(), ")");
+
+		if (parser.seenval(i.to_char())) {
+			debug()("seen");
+
+			const float v = parser.value_axis_units(i);
+
+			if (!rapid_move) {
+				if (i.is_linear()) {
+					has_linear_moves = true;
+				} else {
+					radial_moves ++;
+
+					if (has_linear_moves && parser.feedrate_type != FeedRateType::InverseTime) {
+						throw CommandException("Linear and radial moves can only be combined in G93 mode");
+					}
+				}
+			}
+
+			if (skip_move) {
 				destination[i] = current_position[i];
-			else
-				destination[i] = axis_is_relative(AxisEnum(i)) ? current_position[i] + v : motionModule.toNative((AxisEnum) i, v);
-		} else
+			} else {
+				debug()("v: ", v);
+
+				destination[i] = axis_is_relative(i) ? current_position[i] + v : motionModule.toNative(i, v);
+			}
+		} else {
 			destination[i] = current_position[i];
+		}
 	}
 
-#if ENABLED(POWER_LOSS_RECOVERY) && !PIN_EXISTS(POWER_LOSS)
-	// Only update power loss recovery on moves with E
-	if (recovery.enabled && IS_SD_PRINTING() && seen.e && (seen.x || seen.y))
-		recovery.save();
-#endif
+	if (!rapid_move && radial_moves > 1 && parser.feedrate_type != FeedRateType::InverseTime) {
+		throw CommandException("Only a single radial move is supported in G94 mode");
+	}
 
-	if (parser.linearval('F') > 0)
+	debug()("done");
+
+	if (parser.linearval('F') > 0) {
+		debug()("feed rate");
+
 		feedrate_mm_s = parser.value_feedrate();
+	}
 
-// Get ABCDHI mixing factors
-#if BOTH(MIXING_EXTRUDER, DIRECT_MIXING_IN_G1)
-	M165();
-#endif
-
-#if ENABLED(LASER_MOVE_POWER)
-	// Set the laser power in the planner to configure this move
-	if (parser.seen('S')) {
-		const float spwr = parser.value_float();
-		cutter.inline_power(TERN(SPINDLE_LASER_PWM, cutter.power_to_range(cutter_power_t(round(spwr))), spwr > 0 ? 255 : 0));
-	} else if (ENABLED(LASER_MOVE_G0_OFF) && parser.codenum == 0) // G0
-		cutter.set_inline_enabled(false);
-#endif
+	if (parser.feedrate_type == FeedRateType::InverseTime && !parser.seen('F')) {
+		throw CommandException("Expected F parameter while in G93 mode.");
+	}
 }
 
 /**
@@ -557,9 +537,23 @@ void GcodeSuite::process_parsed_command(const bool no_ok /*=false*/) {
 						break;
 					}
 
-					case 92:
+					case 92: {
 						G92();
+
 						break; // G92: Set current axis position(s)
+					}
+
+					case 93: {
+						G93(); // set feed rate mode to inverse time
+
+						break;
+					}
+
+					case 94: {
+						G94(); // set feed rate mode to mm/s
+
+						break;
+					}
 
 #if HAS_MESH
 					case 42:
@@ -1113,8 +1107,13 @@ const char* GcodeSuite::get_state() {
 	}
 }
 
-inline void report_position_json(const xyz_pos_t& pos) {
-	SERIAL_PRINTF("{\"x\":%lf,\"y\":%lf,\"z\":%lf}", pos.x, pos.y, pos.z);
+inline void report_position_json(const Vector6f32& pos) {
+	SERIAL_PRINTF("{\"x\":%lf", pos.x());
+	SERIAL_PRINTF(",\"y\":%lf", pos.y());
+	SERIAL_PRINTF(",\"z\":%lf", pos.z());
+	SERIAL_PRINTF(",\"a\":%lf", pos.a());
+	SERIAL_PRINTF(",\"b\":%lf", pos.b());
+	SERIAL_PRINTF(",\"c\":%lf}", pos.c());
 }
 
 extern int16_t rapidrate_percentage;
@@ -1122,7 +1121,7 @@ extern int16_t rapidrate_percentage;
 void GcodeSuite::report_state() {
 	// get_cartesian_from_steppers();
 
-	xyz_pos_t pos = current_position;
+	Vector6f32 pos = current_position;
 	// xyz_pos_t pos = cartes;
 
 	const char* state = get_state();
@@ -1135,7 +1134,7 @@ void GcodeSuite::report_state() {
 	SERIAL_ECHO("\",\"mpos\":");
 	report_position_json(pos);
 	SERIAL_ECHO(",\"wpos\":");
-	report_position_json(pos.asLogical());
+	report_position_json(toLogical(pos));
 	// SERIAL_ECHO(",\"spos\":");
 	// SERIAL_PRINTF("{\"x\":%lf,\"y\":%lf,\"z\":%lf}", Stepper::count_position.x, Stepper::count_position.y, Stepper::count_position.z);
 	SERIAL_PRINTF(",\"wcs\":%ld", motionManager.getActiveCoordinateSystem().getIndex() + 1);

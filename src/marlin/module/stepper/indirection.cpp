@@ -45,4 +45,4 @@ void reset_stepper_drivers() {
 }
 
 // Flags to optimize XYZ Enabled state
-xyz_bool_t axis_enabled = { false, false, false };
+bool axis_enabled[6] = { false, false, false, false, false, false };

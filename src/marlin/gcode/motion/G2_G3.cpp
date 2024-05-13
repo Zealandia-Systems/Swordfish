@@ -55,31 +55,34 @@ using namespace swordfish::status;
  * boards to produce much smoother curved surfaces.
  */
 void plan_arc(
-		const xyze_pos_t& cart, // Destination position
-		const ab_float_t& offset, // Center of rotation relative to current_position
+		const Vector6f32& cart, // Destination position
+		const Vector2f32& offset, // Center of rotation relative to current_position
 		const bool clockwise, // Clockwise?
 		const uint8_t circles // Take the scenic route
 ) {
 	auto& limits = MotionModule::getInstance().getLimits();
 
 #	if ENABLED(CNC_WORKSPACE_PLANES)
-	AxisEnum p_axis, q_axis, l_axis;
+	Axis p_axis = Axis::X();
+	Axis q_axis = Axis::Y();
+	Axis l_axis = Axis::Z();
+
 	switch (gcode.workspace_plane) {
 		default:
 		case GcodeSuite::PLANE_XY:
-			p_axis = X_AXIS;
-			q_axis = Y_AXIS;
-			l_axis = Z_AXIS;
+			p_axis = Axis::X();
+			q_axis = Axis::Y();
+			l_axis = Axis::Z();
 			break;
 		case GcodeSuite::PLANE_YZ:
-			p_axis = Y_AXIS;
-			q_axis = Z_AXIS;
-			l_axis = X_AXIS;
+			p_axis = Axis::Y();
+			q_axis = Axis::Z();
+			l_axis = Axis::X();
 			break;
 		case GcodeSuite::PLANE_ZX:
-			p_axis = Z_AXIS;
-			q_axis = X_AXIS;
-			l_axis = Y_AXIS;
+			p_axis = Axis::Z();
+			q_axis = Axis::X();
+			l_axis = Axis::Y();
 			break;
 	}
 #	else
@@ -87,11 +90,11 @@ void plan_arc(
 #	endif
 
 	// Radius vector from center to current location
-	ab_float_t rvec = -offset;
+	Vector2f32 rvec = -offset;
 
-	const float radius = HYPOT(rvec.a, rvec.b),
-							center_P = current_position[p_axis] - rvec.a,
-							center_Q = current_position[q_axis] - rvec.b,
+	const float radius = HYPOT(rvec.x(), rvec.y()),
+							center_P = current_position[p_axis] - rvec.x(),
+							center_Q = current_position[q_axis] - rvec.y(),
 							rt_X = cart[p_axis] - center_P,
 							rt_Y = cart[q_axis] - center_Q,
 							start_L = current_position[l_axis];
@@ -110,7 +113,7 @@ void plan_arc(
 		min_segments = MIN_CIRCLE_SEGMENTS;
 	} else {
 		// Calculate the angle
-		angular_travel = ATAN2(rvec.a * rt_Y - rvec.b * rt_X, rvec.a * rt_X + rvec.b * rt_Y);
+		angular_travel = ATAN2(rvec.x() * rt_Y - rvec.y() * rt_X, rvec.x() * rt_X + rvec.y() * rt_Y);
 
 		// Angular travel too small to detect? Just return.
 		if (!angular_travel)
@@ -132,23 +135,20 @@ void plan_arc(
 		min_segments = CEIL((MIN_CIRCLE_SEGMENTS) *portion_of_circle);
 	}
 
-	float linear_travel = cart[l_axis] - start_L,
-				extruder_travel = 0;
+	float linear_travel = cart[l_axis] - start_L;
 
 	// If circling around...
 	if (ENABLED(ARC_P_CIRCLES) && circles) {
 		const float total_angular = angular_travel + circles * RADIANS(360), // Total rotation with all circles and remainder
 				part_per_circle = RADIANS(360) / total_angular, // Each circle's part of the total
-				l_per_circle = linear_travel * part_per_circle, // L movement per circle
-				e_per_circle = extruder_travel * part_per_circle; // E movement per circle
-		xyze_pos_t temp_position = current_position; // for plan_arc to compare to current_position
+				l_per_circle = linear_travel * part_per_circle; // L movement per circle // E movement per circle
+
+		Vector6f32 temp_position = current_position; // for plan_arc to compare to current_position
 		for (uint16_t n = circles; n--;) {
-			temp_position.e += e_per_circle; // Destination E axis
 			temp_position[l_axis] += l_per_circle; // Destination L axis
 			plan_arc(temp_position, offset, clockwise, 0); // Plan a single whole circle
 		}
 		linear_travel = cart[l_axis] - current_position[l_axis];
-		extruder_travel = 0;
 	}
 
 	const float flat_mm = radius * angular_travel,
@@ -156,7 +156,7 @@ void plan_arc(
 	if (mm_of_travel < 0.001f)
 		return;
 
-	const feedRate_t scaled_fr_mm_s = MMS_SCALED(feedrate_mm_s);
+	const FeedRate scaled_fr_mm_s = MMS_SCALED(feedrate_mm_s);
 
 	// Start with a nominal segment length
 	float seg_length = (
@@ -200,10 +200,9 @@ void plan_arc(
 	 * This is important when there are successive arc motions.
 	 */
 	// Vector rotation matrix values
-	xyze_pos_t raw;
+	Vector6f32 raw;
 	const float theta_per_segment = angular_travel / segments,
 							linear_per_segment = linear_travel / segments,
-							extruder_per_segment = extruder_travel / segments,
 							sq_theta_per_segment = sq(theta_per_segment),
 							sin_T = theta_per_segment - sq_theta_per_segment * theta_per_segment / 6,
 							cos_T = 1 - 0.5f * sq_theta_per_segment; // Small angle approximation
@@ -232,9 +231,9 @@ void plan_arc(
 #	if N_ARC_CORRECTION > 1
 		if (--arc_recalc_count) {
 			// Apply vector rotation matrix to previous rvec.a / 1
-			const float r_new_Y = rvec.a * sin_T + rvec.b * cos_T;
-			rvec.a = rvec.a * cos_T - rvec.b * sin_T;
-			rvec.b = r_new_Y;
+			const float r_new_Y = rvec.x() * sin_T + rvec.y() * cos_T;
+			rvec.x() = rvec.x() * cos_T - rvec.y() * sin_T;
+			rvec.y() = r_new_Y;
 		} else
 #	endif
 		{
@@ -247,22 +246,16 @@ void plan_arc(
 			// To reduce stuttering, the sin and cos could be computed at different times.
 			// For now, compute both at the same time.
 			const float cos_Ti = cos(i * theta_per_segment), sin_Ti = sin(i * theta_per_segment);
-			rvec.a = -offset[0] * cos_Ti + offset[1] * sin_Ti;
-			rvec.b = -offset[0] * sin_Ti - offset[1] * cos_Ti;
+			rvec.x() = -offset.x() * cos_Ti + offset.y() * sin_Ti;
+			rvec.y() = -offset.x() * sin_Ti - offset.y() * cos_Ti;
 		}
 
 		// Update raw location
-		raw[p_axis] = center_P + rvec.a;
-		raw[q_axis] = center_Q + rvec.b;
-#	if ENABLED(AUTO_BED_LEVELING_UBL)
-		raw[l_axis] = start_L;
-		UNUSED(linear_per_segment);
-#	else
+		raw[p_axis] = center_P + rvec.x();
+		raw[q_axis] = center_Q + rvec.y();
 		raw[l_axis] += linear_per_segment;
-#	endif
-		raw.e += extruder_per_segment;
 
-		Eigen::Vector3f raw3f { raw.x, raw.y, raw.z };
+		Vector3f32 raw3f { raw.x(), raw.y(), raw.z() };
 
 		limits.throwIfOutside(raw3f);
 		gcode.throwIfAborted();
@@ -284,7 +277,7 @@ void plan_arc(
 	raw = cart;
 	TERN_(AUTO_BED_LEVELING_UBL, raw[l_axis] = start_L);
 
-	Eigen::Vector3f raw3f { raw.x, raw.y, raw.z };
+	Vector3f32 raw3f { raw.x(), raw.y(), raw.z() };
 
 	limits.throwIfOutside(raw3f);
 
@@ -339,22 +332,24 @@ void GcodeSuite::G2_G3(const bool clockwise) {
 		relative_mode = true;
 #	endif
 
-		get_destination_from_command(); // Get X Y Z E F (and set cutter power)
+		get_destination_from_command(false); // Get X Y Z E F (and set cutter power)
 
 		TERN_(SF_ARC_FIX, relative_mode = relative_mode_backup);
 
-		ab_float_t arc_offset = { 0, 0 };
+		Vector2f32 arc_offset = { 0, 0 };
 		if (parser.seenval('R')) {
 			const float r = parser.value_linear_units();
 			if (r) {
-				const xy_pos_t p1 = current_position, p2 = destination;
+				const Vector2f32 p1 = { current_position.x(), current_position.y() };
+				const Vector2f32 p2 = { destination.x(), destination.y() };
+
 				if (p1 != p2) {
-					const xy_pos_t d2 = (p2 - p1) * 0.5f; // XY vector to midpoint of move from current
+					const auto d2 = (p2 - p1) * 0.5f; // XY vector to midpoint of move from current
 					const float e = clockwise ^ (r < 0) ? -1 : 1, // clockwise -1/1, counterclockwise 1/-1
-							len = d2.magnitude(), // Distance to mid-point of move from current
+							len = d2.norm(), // Distance to mid-point of move from current
 							h2 = (r - len) * (r + len), // factored to reduce rounding error
 							h = (h2 >= 0) ? SQRT(h2) : 0.0f; // Distance to the arc pivot-point from midpoint
-					const xy_pos_t s = { -d2.y, d2.x }; // Perpendicular bisector. (Divide by len for unit vector.)
+					const Vector2f32 s = { -d2.y(), d2.x() }; // Perpendicular bisector. (Divide by len for unit vector.)
 					arc_offset = d2 + s / len * e * h; // The calculated offset (mid-point if |r| <= len)
 				}
 			}
@@ -380,12 +375,12 @@ void GcodeSuite::G2_G3(const bool clockwise) {
 			constexpr char achar = 'I', bchar = 'J';
 #	endif
 			if (parser.seenval(achar))
-				arc_offset.a = parser.value_linear_units();
+				arc_offset.x() = parser.value_linear_units();
 			if (parser.seenval(bchar))
-				arc_offset.b = parser.value_linear_units();
+				arc_offset.y() = parser.value_linear_units();
 		}
 
-		if (arc_offset) {
+		if (arc_offset.norm()) {
 #	if ENABLED(ARC_P_CIRCLES)
 			// P indicates number of circles to do
 			const int8_t circles_to_do = parser.byteval('P');

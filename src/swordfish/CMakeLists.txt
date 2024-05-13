@@ -7,6 +7,7 @@ target_sources(${PROJECT_NAME}.elf
 		Exception.cpp
 		Exception.h
 		macros.h
+		math.h
 		Module.cpp
 		Module.h
 		PersistentStore.h

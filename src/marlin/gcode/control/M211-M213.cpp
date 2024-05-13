@@ -36,22 +36,27 @@ using namespace Eigen;
 using namespace swordfish;
 using namespace swordfish::motion;
 
-static void setAxis(core::LinearVector3& vector, uint8_t axis, float32_t value) {
-	switch (axis) {
-		case 0: {
+static void setAxis(core::LinearVector3& vector, Axis axis, float32_t value) {
+	switch (axis.value()) {
+		case AxisValue::X: {
 			vector.x(value);
 
 			break;
 		}
 
-		case 1: {
+		case AxisValue::Y: {
 			vector.y(value);
 
 			break;
 		}
 
-		case 2: {
+		case AxisValue::Z: {
 			vector.z(value);
+
+			break;
+		}
+
+		default: {
 
 			break;
 		}
@@ -62,8 +67,8 @@ static void logLimits() {
 	auto& motionModule = MotionModule::getInstance();
 	auto& limits = motionModule.getLimits();
 
-	Vector3f min = limits.getMin();
-	Vector3f max = limits.getMax();
+	Vector3f32 min = limits.getMin();
+	Vector3f32 max = limits.getMax();
 
 	// motionModule.toLogical(min);
 	// motionModule.toLogical(max);
@@ -97,8 +102,8 @@ void GcodeSuite::M212() {
 	auto& minObj = limits.getMin();
 	auto writeConfig = false;
 
-	for (auto i = 0; i < 3; i++) {
-		if (parser.seen(XYZ_CHAR(i))) {
+	for (auto i : linear_axes) {
+		if (parser.seen(i.to_char())) {
 			writeConfig = true;
 
 			setAxis(minObj, i, parser.linear_value_to_mm(parser.value_linear_units()));
@@ -118,8 +123,8 @@ void GcodeSuite::M213() {
 	auto& maxObj = limits.getMax();
 	auto writeConfig = false;
 
-	for (auto i = 0; i < 3; i++) {
-		if (parser.seen(XYZ_CHAR(i))) {
+	for (auto i : linear_axes) {
+		if (parser.seen(i.to_char())) {
 			writeConfig = true;
 
 			setAxis(maxObj, i, parser.linear_value_to_mm(parser.value_linear_units()));

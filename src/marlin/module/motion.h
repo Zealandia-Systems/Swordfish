@@ -41,8 +41,8 @@ constexpr float fslop = 0.0001;
 
 extern bool relative_mode;
 
-extern xyz_pos_t current_position,  // High-level current tool position
-                  destination;       // Destination for a move
+extern swordfish::math::Vector6f32 current_position;  // High-level current tool position
+extern swordfish::math::Vector6f32 destination;       // Destination for a move
 
 // G60/G61 Position Save and Return
 #if SAVED_POSITIONS
@@ -51,7 +51,7 @@ extern xyz_pos_t current_position,  // High-level current tool position
 #endif
 
 // Scratch space for a cartesian result
-extern xyz_pos_t cartes;
+extern swordfish::math::Vector6f32 cartes;
 
 // Until kinematics.cpp is created, declare this here
 #if IS_KINEMATIC
@@ -67,10 +67,8 @@ extern xyz_pos_t cartes;
   #define XY_PROBE_FEEDRATE_MM_S PLANNER_XY_FEEDRATE()
 #endif
 
-constexpr feedRate_t z_probe_fast_mm_s = MMM_TO_MMS(Z_PROBE_SPEED_FAST);
-
 // forward decl
-FORCE_INLINE bool axis_is_trusted(const AxisEnum axis);
+FORCE_INLINE bool axis_is_trusted(const Axis axis);
 
 /**
  * Feed rates are often configured with mm/m
@@ -78,30 +76,25 @@ FORCE_INLINE bool axis_is_trusted(const AxisEnum axis);
  */
 
 constexpr xyz_feedrate_t homing_feedrate_mm_m = HOMING_FEEDRATE_MM_M;
-FORCE_INLINE feedRate_t homing_feedrate(const AxisEnum a) {
+FORCE_INLINE swordfish::motion::FeedRate homing_feedrate(const Axis a) {
 	float v;
-	#if ENABLED(DELTA)
-	v = homing_feedrate_mm_m.z;
-	#else
 
-		switch (a) {
-			case X_AXIS: v = homing_feedrate_mm_m.x; break;
-			case Y_AXIS: v = homing_feedrate_mm_m.y; break;
-			case Z_AXIS:
-			default: v = homing_feedrate_mm_m.z; break;
-		}
+	switch (a.value()) {
+		case AxisValue::X: v = homing_feedrate_mm_m.x; break;
+		case AxisValue::Y: v = homing_feedrate_mm_m.y; break;
+		case AxisValue::Z:
+		default: v = homing_feedrate_mm_m.z; break;
+	}
 
-	#endif
-
-	return MMM_TO_MMS(v);
+	return swordfish::motion::FeedRate::MillimetersPerSecond(MMM_TO_MMS(v));
 }
 
-feedRate_t get_homing_bump_feedrate(const AxisEnum axis);
+swordfish::motion::FeedRate get_homing_bump_feedrate(const Axis axis);
 
 /**
  * The default feedrate for many moves, set by the most recent move
  */
-extern feedRate_t feedrate_mm_s;
+extern swordfish::motion::FeedRate feedrate_mm_s;
 
 /**
  * Feedrate scaling is applied to all G0/G1, G2/G3, and G5 moves
@@ -130,7 +123,7 @@ inline float pgm_read_any(const float *p)   { return TERN(__IMXRT1062__, *p, pgm
 inline int8_t pgm_read_any(const int8_t *p) { return TERN(__IMXRT1062__, *p, pgm_read_byte(p)); }
 
 #define XYZ_DEFS(T, NAME, OPT) \
-  inline T NAME(const AxisEnum axis) { \
+  inline T NAME(const Axis axis) { \
     static const XYZval<T> NAME##_P DEFS_PROGMEM = { X_##OPT, Y_##OPT, Z_##OPT }; \
     return pgm_read_any(&NAME##_P[axis]); \
   }
@@ -140,15 +133,15 @@ XYZ_DEFS(float, base_home_pos,  HOME_POS);
 XYZ_DEFS(float, max_length,     MAX_LENGTH);
 XYZ_DEFS(int8_t, home_dir, HOME_DIR);
 
-inline float home_bump_mm(const AxisEnum axis) {
+inline float home_bump_mm(const Axis axis) {
   static const xyz_pos_t home_bump_mm_P DEFS_PROGMEM = HOMING_BUMP_MM;
   return pgm_read_any(&home_bump_mm_P[axis]);
 }
 
 #if HAS_WORKSPACE_OFFSET
-  void update_workspace_offset(const AxisEnum axis);
+  void update_workspace_offset(const Axis axis);
 #else
-  inline void update_workspace_offset(const AxisEnum) {}
+  inline void update_workspace_offset(const Axis) {}
 #endif
 
 #if HAS_HOTEND_OFFSET
@@ -165,7 +158,7 @@ void report_current_position();
 void report_current_position_projected();
 
 void get_cartesian_from_steppers();
-void set_current_from_steppers_for_axis(const AxisEnum axis);
+void set_current_from_steppers_for_axis(const AxisValue axis);
 
 /**
  * sync_plan_position
@@ -180,52 +173,45 @@ void sync_plan_position_e();
  * Move the planner to the current position from wherever it last moved
  * (or from wherever it has been told it is located).
  */
-void line_to_current_position(const swordfish::status::MachineState machine_state, const feedRate_t &fr_mm_s=feedrate_mm_s);
-
-#if EXTRUDERS
-  void unscaled_e_move(const float &length, const feedRate_t &fr_mm_s);
-#endif
+void line_to_current_position(const swordfish::status::MachineState machine_state, const std::optional<swordfish::motion::FeedRate> &feed_rate = std::nullopt);
 
 void prepare_line_to_destination(const swordfish::status::MachineState machine_state, const float32_t accel_mm_s2 = 0.0);
 
-void _internal_move_to_destination(const swordfish::status::MachineState machine_state, const feedRate_t &fr_mm_s=0.0f
-  #if IS_KINEMATIC
-    , const bool is_fast=false
-  #endif
-);
+void _internal_move_to_destination(const swordfish::status::MachineState machine_state, const std::optional<swordfish::motion::FeedRate> &feed_rate = std::nullopt);
 
-inline void prepare_internal_move_to_destination(const swordfish::status::MachineState machine_state, const feedRate_t &fr_mm_s=0.0f) {
-  _internal_move_to_destination(machine_state, fr_mm_s);
+inline void prepare_internal_move_to_destination(const swordfish::status::MachineState machine_state, const std::optional<swordfish::motion::FeedRate> &feed_rate = std::nullopt) {
+  _internal_move_to_destination(machine_state, feed_rate);
 }
-
-#if IS_KINEMATIC
-  void prepare_fast_move_to_destination(const feedRate_t &scaled_fr_mm_s=MMS_SCALED(feedrate_mm_s));
-
-  inline void prepare_internal_fast_move_to_destination(const feedRate_t &fr_mm_s=0.0f) {
-    _internal_move_to_destination(fr_mm_s, true);
-  }
-#endif
 
 /**
  * Blocking movement and shorthand functions
  */
-void do_blocking_move_to(const swordfish::status::MachineState machine_state, const float rx, const float ry, const float rz, const feedRate_t &fr_mm_s=0.0f);
-void do_blocking_move_to(const swordfish::status::MachineState machine_state, const xy_pos_t &raw, const feedRate_t &fr_mm_s=0.0f);
-void do_blocking_move_to(const swordfish::status::MachineState machine_state, const xyz_pos_t &raw, const feedRate_t &fr_mm_s=0.0f);
-void do_blocking_move_to(const swordfish::status::MachineState machine_state, const xyze_pos_t &raw, const feedRate_t &fr_mm_s=0.0f);
 
-void do_blocking_move_to_x(const swordfish::status::MachineState machine_state, const float &rx, const feedRate_t &fr_mm_s=0.0f);
-void do_blocking_move_to_y(const swordfish::status::MachineState machine_state, const float &ry, const feedRate_t &fr_mm_s=0.0f);
-void do_blocking_move_to_z(const swordfish::status::MachineState machine_state, const float &rz, const feedRate_t &fr_mm_s=0.0f);
+void do_blocking_move_to(const swordfish::status::MachineState machine_state, const swordfish::math::Vector6f32 &raw, const std::optional<swordfish::motion::FeedRate> &feed_rate = std::nullopt);
 
-void do_blocking_move_to_xy(const swordfish::status::MachineState machine_state, const float &rx, const float &ry, const feedRate_t &fr_mm_s=0.0f);
-void do_blocking_move_to_xy(const swordfish::status::MachineState machine_state, const xy_pos_t &raw, const feedRate_t &fr_mm_s=0.0f);
-FORCE_INLINE void do_blocking_move_to_xy(const swordfish::status::MachineState machine_state, const xyz_pos_t &raw, const feedRate_t &fr_mm_s=0.0f)  { do_blocking_move_to_xy(machine_state, xy_pos_t(raw), fr_mm_s); }
-FORCE_INLINE void do_blocking_move_to_xy(const swordfish::status::MachineState machine_state, const xyze_pos_t &raw, const feedRate_t &fr_mm_s=0.0f) { do_blocking_move_to_xy(machine_state, xy_pos_t(raw), fr_mm_s); }
+FORCE_INLINE void do_blocking_move_to_x(const swordfish::status::MachineState machine_state, const float &rx, const std::optional<swordfish::motion::FeedRate> &feed_rate = std::nullopt) {
+	auto target = current_position;
 
-void do_blocking_move_to_xy_z(const swordfish::status::MachineState machine_state, const xy_pos_t &raw, const float &z, const feedRate_t &fr_mm_s=0.0f);
-FORCE_INLINE void do_blocking_move_to_xy_z(const swordfish::status::MachineState machine_state, const xyz_pos_t &raw, const float &z, const feedRate_t &fr_mm_s=0.0f)  { do_blocking_move_to_xy_z(machine_state, xy_pos_t(raw), z, fr_mm_s); }
-FORCE_INLINE void do_blocking_move_to_xy_z(const swordfish::status::MachineState machine_state, const xyze_pos_t &raw, const float &z, const feedRate_t &fr_mm_s=0.0f) { do_blocking_move_to_xy_z(machine_state, xy_pos_t(raw), z, fr_mm_s); }
+	target.x() = rx;
+
+	do_blocking_move_to(machine_state, target, feed_rate);
+}
+
+FORCE_INLINE void do_blocking_move_to_y(const swordfish::status::MachineState machine_state, const float &ry, const std::optional<swordfish::motion::FeedRate> &feed_rate = std::nullopt) {
+	auto target = current_position;
+
+	target.y() = ry;
+
+	do_blocking_move_to(machine_state, target, feed_rate);
+}
+
+FORCE_INLINE void do_blocking_move_to_z(const swordfish::status::MachineState machine_state, const float &rz, const std::optional<swordfish::motion::FeedRate> &feed_rate = std::nullopt) {
+	auto target = current_position;
+
+	target.z() = rz;
+
+	do_blocking_move_to(machine_state, target, feed_rate);
+}
 
 void remember_feedrate_and_scaling();
 void remember_feedrate_scaling_off();
@@ -236,26 +222,26 @@ void do_z_clearance(const swordfish::status::MachineState machine_state, const f
 /**
  * Homing and Trusted Axes
  */
-constexpr uint8_t xyz_bits = _BV(X_AXIS) | _BV(Y_AXIS) | _BV(Z_AXIS);
+constexpr uint8_t xyz_bits = _BV(Axis::X()) | _BV(Axis::Y()) | _BV(Axis::Z());
 extern uint8_t axis_homed, axis_trusted;
 
-void homeaxis(const AxisEnum axis);
-void set_axis_is_at_home(const AxisEnum axis);
-void set_axis_never_homed(const AxisEnum axis);
+void homeaxis(const Axis axis);
+void set_axis_is_at_home(const Axis axis);
+void set_axis_never_homed(const Axis axis);
 uint8_t axes_should_home(uint8_t axis_bits=0x07);
 bool homing_needed_error(uint8_t axis_bits=0x07);
 
-FORCE_INLINE bool axis_was_homed(const AxisEnum axis)     { return TEST(axis_homed, axis); }
-FORCE_INLINE bool axis_is_trusted(const AxisEnum axis)    { return TEST(axis_trusted, axis); }
-FORCE_INLINE bool axis_should_home(const AxisEnum axis)   { return (axes_should_home() & _BV(axis)) != 0; }
+FORCE_INLINE bool axis_was_homed(const Axis axis)     { return TEST(axis_homed, axis); }
+FORCE_INLINE bool axis_is_trusted(const Axis axis)    { return TEST(axis_trusted, axis); }
+FORCE_INLINE bool axis_should_home(const Axis axis)   { return (axes_should_home() & _BV(axis)) != 0; }
 FORCE_INLINE bool no_axes_homed()                         { return !axis_homed; }
 FORCE_INLINE bool all_axes_homed()                        { return xyz_bits == (axis_homed & xyz_bits); }
 FORCE_INLINE bool homing_needed()                         { return !all_axes_homed(); }
 FORCE_INLINE bool all_axes_trusted()                      { return xyz_bits == (axis_trusted & xyz_bits); }
-FORCE_INLINE void set_axis_homed(const AxisEnum axis)     { SBI(axis_homed, axis); }
-FORCE_INLINE void set_axis_unhomed(const AxisEnum axis)   { CBI(axis_homed, axis); }
-FORCE_INLINE void set_axis_trusted(const AxisEnum axis)   { SBI(axis_trusted, axis); }
-FORCE_INLINE void set_axis_untrusted(const AxisEnum axis) { CBI(axis_trusted, axis); }
+FORCE_INLINE void set_axis_homed(const Axis axis)     { SBI(axis_homed, axis); }
+FORCE_INLINE void set_axis_unhomed(const Axis axis)   { CBI(axis_homed, axis); }
+FORCE_INLINE void set_axis_trusted(const Axis axis)   { SBI(axis_trusted, axis); }
+FORCE_INLINE void set_axis_untrusted(const Axis axis) { CBI(axis_trusted, axis); }
 FORCE_INLINE void set_all_homed()                         { axis_homed = axis_trusted = xyz_bits; }
 FORCE_INLINE void set_all_unhomed()                       { axis_homed = axis_trusted = 0; }
 
@@ -287,14 +273,18 @@ FORCE_INLINE void set_all_unhomed()                       { axis_homed = axis_tr
   #else
     #define _WS position_shift
   #endif
-	float32_t toLogical(float32_t value, AxisEnum axis);
-  float32_t toNative(float32_t value, AxisEnum axis);
-  void toLogical(xy_pos_t &raw);
-  void toLogical(xyz_pos_t &raw);
-  //FORCE_INLINE void toLogical(xyze_pos_t &raw) { swordfish::controller.motionManager().toLogical(raw); }
-  void toNative(xy_pos_t &raw);
-  void toNative(xyz_pos_t &raw);
-  //FORCE_INLINE void toNative(xyze_pos_t &raw)  { swordfish::controller.motionManager().toNative(raw); }
+	f32 toLogical(const f32 value, Axis axis);
+  f32 toNative(const f32 value, Axis axis);
+  swordfish::math::Vector2f32 toLogical(const swordfish::math::Vector2f32 &raw);
+  swordfish::math::Vector3f32 toLogical(const swordfish::math::Vector3f32 &raw);
+	swordfish::math::Vector4f32 toLogical(const swordfish::math::Vector4f32 &raw);
+	swordfish::math::Vector5f32 toLogical(const swordfish::math::Vector5f32 &raw);
+	swordfish::math::Vector6f32 toLogical(const swordfish::math::Vector6f32 &raw);
+  swordfish::math::Vector2f32 toNative(const swordfish::math::Vector2f32 &raw);
+  swordfish::math::Vector3f32 toNative(const swordfish::math::Vector3f32 &raw);
+	swordfish::math::Vector4f32 toNative(const swordfish::math::Vector4f32 &raw);
+	swordfish::math::Vector5f32 toNative(const swordfish::math::Vector5f32 &raw);
+	swordfish::math::Vector6f32 toNative(const swordfish::math::Vector6f32 &raw);
 #else
   #define toLogical(POS, AXIS) (POS)
   #define toNative(POS, AXIS) (POS)
@@ -404,16 +394,16 @@ FORCE_INLINE void set_all_unhomed()                       { axis_homed = axis_tr
     FORCE_INLINE void set_duplication_enabled(const bool dupe) { extruder_duplication_enabled = dupe; }
   #endif
 
-  FORCE_INLINE int x_home_dir(const uint8_t) { return home_dir(X_AXIS); }
+  FORCE_INLINE int x_home_dir(const uint8_t) { return home_dir(Axis::X()); }
 
 #endif
 
 #if HAS_M206_COMMAND
-  void set_home_offset(const AxisEnum axis, const float v);
+  void set_home_offset(const Axis axis, const float v);
 #endif
 
 #if USE_SENSORLESS
   struct sensorless_t;
-  sensorless_t start_sensorless_homing_per_axis(const AxisEnum axis);
-  void end_sensorless_homing_per_axis(const AxisEnum axis, sensorless_t enable_stealth);
+  sensorless_t start_sensorless_homing_per_axis(const Axis axis);
+  void end_sensorless_homing_per_axis(const Axis axis, sensorless_t enable_stealth);
 #endif

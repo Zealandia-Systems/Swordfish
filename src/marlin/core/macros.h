@@ -25,13 +25,11 @@
 #	define __has_include(...) 1
 #endif
 
-#define ABCE           4
-#define XYZE           4
-#define ABC            3
+#define XYZA           4
 #define XYZ            3
 #define XY             2
 
-#define _AXIS(A)       (A##_AXIS)
+#define _AXIS(A)       (Axis::A())
 
 #define _XMIN_         100
 #define _YMIN_         200

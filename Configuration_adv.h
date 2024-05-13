@@ -857,7 +857,7 @@
 #define INVERT_X_STEP_PIN             true
 #define INVERT_Y_STEP_PIN             true
 #define INVERT_Z_STEP_PIN             true
-#define INVERT_E_STEP_PIN             true
+#define INVERT_A_STEP_PIN             true
 
 /**
  * Idle Stepper Shutdown
@@ -868,7 +868,7 @@
 #define DISABLE_INACTIVE_X            false
 #define DISABLE_INACTIVE_Y            false
 #define DISABLE_INACTIVE_Z            false // Set 'false' if the nozzle could fall onto your printed part!
-#define DISABLE_INACTIVE_E            false
+#define DISABLE_INACTIVE_A            false
 
 // If the Nozzle or Bed falls when the Z stepper is disabled, set its resting position here.
 // #define Z_AFTER_DEACTIVATE Z_HOME_POS

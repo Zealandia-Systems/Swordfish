@@ -30,6 +30,8 @@
  * Copyright (c) 2009-2011 Simen Svale Skogsrud
  */
 
+#include <swordfish/math.h>
+
 #include "../MarlinCore.h"
 
 #if ENABLED(JD_HANDLE_SMALL_SEGMENTS)
@@ -148,6 +150,30 @@ enum BlockFlag : char {
  * may never actually be reached due to acceleration limits.
  */
 typedef struct block_t {
+	block_t() {
+		reset();
+	}
+
+	void reset() {
+		flag = 0;
+		nominal_speed_sqr = 0.0;
+		max_entry_speed_sqr = 0.0;
+		millimeters = 0.0;
+		acceleration = 0.0;
+		steps = swordfish::math::Vector6u32 { 0, 0, 0, 0, 0, 0 };
+		step_event_count = 0;
+		accelerate_until = 0;
+		decelerate_after = 0;
+		cruise_rate = 0;
+		acceleration_time = 0;
+		deceleration_time = 0;
+		acceleration_time_inverse = 0;
+		deceleration_time_inverse = 0;
+		direction_bits = 0;
+		initial_rate = 0;
+		final_rate = 0;
+		acceleration_steps_per_s2 = 0;
+	}
 
   volatile uint8_t flag;                    // Block flags (See BlockFlag enum above) - Modified by ISR and main thread!
 
@@ -159,8 +185,8 @@ typedef struct block_t {
         acceleration;                       // acceleration mm/sec^2
 
   union {
-    abce_ulong_t steps;                     // Step count along each axis
-    abce_long_t position;                   // New position to force when this sync block is executed
+    swordfish::math::Vector6u32 steps;                     // Step count along each axis
+    swordfish::math::Vector6i32 position;                   // New position to force when this sync block is executed
   };
   uint32_t step_event_count;                // The number of step events required to complete this block
 
@@ -258,15 +284,15 @@ typedef struct block_t {
 #endif
 
 typedef struct {
-   uint32_t max_acceleration_mm_per_s2[XYZE_N], // (mm/s^2) M201 XYZE
-            min_segment_time_us;                // (µs) M205 B
-      float axis_steps_per_mm[XYZE_N];          // (steps) M92 XYZE - Steps per millimeter
- feedRate_t max_feedrate_mm_s[XYZE_N];          // (mm/s) M203 XYZE - Max speeds
-      float acceleration,                       // (mm/s^2) M204 S - Normal acceleration. DEFAULT ACCELERATION for all printing moves.
-            retract_acceleration,               // (mm/s^2) M204 R - Retract acceleration. Filament pull-back and push-forward while standing still in the other axes
-            travel_acceleration;                // (mm/s^2) M204 T - Travel acceleration. DEFAULT ACCELERATION for all NON printing moves.
- feedRate_t min_feedrate_mm_s,                  // (mm/s) M205 S - Minimum linear feedrate
-            min_travel_feedrate_mm_s;           // (mm/s) M205 T - Minimum travel feedrate
+  swordfish::math::Vector6u32 max_acceleration_unit_per_s2; // (mm/s^2) M201 XYZE
+	u32 min_segment_time_us;                // (µs) M205 B
+	swordfish::math::Vector6f32 axis_steps_per_unit;          // (steps) M92 XYZE - Steps per millimeter
+	swordfish::math::Vector6f32 max_feedrate_unit_per_s;          // (mm/s) M203 XYZE - Max speeds
+	f32 acceleration;                       // (mm/s^2) M204 S - Normal acceleration. DEFAULT ACCELERATION for all printing moves.
+	f32 retract_acceleration;               // (mm/s^2) M204 R - Retract acceleration. Filament pull-back and push-forward while standing still in the other axes
+	f32 travel_acceleration;                // (mm/s^2) M204 T - Travel acceleration. DEFAULT ACCELERATION for all NON printing moves.
+ 	f32 min_feedrate_unit_per_s;                  // (mm/s) M205 S - Minimum linear feedrate
+	f32 min_travel_feedrate_unit_per_s;      // (mm/s) M205 T - Minimum travel feedrate
 } planner_settings_t;
 
 #if DISABLED(SKEW_CORRECTION)
@@ -350,8 +376,8 @@ class Planner {
       static laser_state_t laser_inline;
     #endif
 
-    static uint32_t max_acceleration_steps_per_s2[XYZE_N]; // (steps/s^2) Derived from mm_per_s2
-    static float steps_to_mm[XYZE_N];           // Millimeters per step
+    static swordfish::math::Vector6u32 max_acceleration_steps_per_s2; // (steps/s^2) Derived from mm_per_s2
+    static swordfish::math::Vector6f32 steps_to_unit;           // Millimeters per step
 
     #if HAS_JUNCTION_DEVIATION
       static float junction_deviation_mm;       // (mm) M205 J
@@ -385,7 +411,7 @@ class Planner {
      * The current position of the tool in absolute steps
      * Recalculated if any axis_steps_per_mm are changed by gcode
      */
-    static xyze_long_t position;
+    static swordfish::math::Vector6i32 position;
 
     #if HAS_POSITION_FLOAT
       static xyze_pos_t position_float;
@@ -423,7 +449,7 @@ class Planner {
     /**
      * Speed of previous path line segment
      */
-    static xyze_float_t previous_speed;
+    static swordfish::math::Vector6f32 previous_speed;
 
     /**
      * Nominal speed of previous path line segment (mm/s)^2
@@ -466,7 +492,7 @@ class Planner {
     static void refresh_positioning();
     static void set_max_acceleration(const uint8_t axis, float targetValue);
     static void set_max_feedrate(const uint8_t axis, float targetValue);
-    static void set_max_jerk(const AxisEnum axis, float targetValue);
+    static void set_max_jerk(const Axis axis, float targetValue);
 
 
     #if EXTRUDERS
@@ -677,11 +703,11 @@ class Planner {
      * Returns true if movement was buffered, false otherwise
      */
     static bool _buffer_steps(
-			const xyze_long_t &target,
+			const swordfish::math::Vector6i32 &target,
       #if HAS_POSITION_FLOAT
         const xyze_pos_t &target_float,
       #endif
-      const feedRate_t fr_mm_s,
+      const swordfish::motion::FeedRate fr_mm_s,
 			const uint8_t extruder,
 			const swordfish::status::MachineState machine_state,
 			const float &millimeters = 0.0,
@@ -703,11 +729,11 @@ class Planner {
     static bool _populate_block(
 			block_t * const block,
 			bool split_move,
-      const xyze_long_t &target,
+      const swordfish::math::Vector6i32 &target,
       #if HAS_POSITION_FLOAT
         const xyze_pos_t &target_float,
       #endif
-      feedRate_t fr_mm_s,
+      swordfish::motion::FeedRate feed_rate,
 			const uint8_t extruder,
 			const swordfish::status::MachineState machine_state,
 			const float &millimeters = 0.0,
@@ -719,13 +745,6 @@ class Planner {
      * Add a block to the buffer that just updates the position
      */
     static void buffer_sync_block();
-
-  #if IS_KINEMATIC
-    private:
-
-      // Allow do_homing_move to access internal functions, such as buffer_segment.
-      friend void do_homing_move(const AxisEnum, const float, const feedRate_t, const bool);
-  #endif
 
     /**
      * Planner::buffer_segment
@@ -740,37 +759,13 @@ class Planner {
      *  millimeters - the length of the movement, if known
      */
     static bool buffer_segment(
-			const float &a,
-			const float &b,
-			const float &c,
-			const float &e,
-      const feedRate_t &fr_mm_s,
+			const swordfish::math::Vector6f32& raw,
+      const swordfish::motion::FeedRate &feed_rate,
 			const uint8_t extruder,
 			const swordfish::status::MachineState machine_state,
 			const float &millimeters = 0.0,
 			const float32_t accel_mm_s2 = 0.0
     );
-
-    FORCE_INLINE static bool buffer_segment(
-			abce_pos_t &abce,
-      const feedRate_t &fr_mm_s,
-			const uint8_t extruder,
-			const swordfish::status::MachineState machine_state,
-			const float &millimeters = 0.0,
-			const float32_t accel_mm_s2 = 0.0
-    ) {
-      return buffer_segment(
-				abce.a,
-				abce.b,
-				abce.c,
-				abce.e,
-        fr_mm_s,
-				extruder,
-				machine_state,
-				millimeters,
-				accel_mm_s2
-			);
-    }
 
   public:
 
@@ -786,37 +781,13 @@ class Planner {
      *  inv_duration - the reciprocal if the duration of the movement, if known (kinematic only if feeedrate scaling is enabled)
      */
     static bool buffer_line(
-			const float &rx,
-			const float &ry,
-			const float &rz,
-			const float &e,
-			const feedRate_t &fr_mm_s,
+			const swordfish::math::Vector6f32 &cart,
+			const swordfish::motion::FeedRate &feed_rate,
 			const uint8_t extruder,
 			const swordfish::status::MachineState machine_state,
 			const float millimeters = 0.0,
 			const float32_t accel_mm_s2 = 0.0
     );
-
-    FORCE_INLINE static bool buffer_line(
-			const xyze_pos_t &cart,
-			const feedRate_t &fr_mm_s,
-			const uint8_t extruder,
-			const swordfish::status::MachineState machine_state,
-			const float millimeters = 0.0,
-			const float32_t accel_mm_s2 = 0.0
-    ) {
-      return buffer_line(
-				cart.x,
-				cart.y,
-				cart.z,
-				cart.e,
-				fr_mm_s,
-				extruder,
-				machine_state,
-				millimeters,
-				accel_mm_s2
-      );
-    }
 
     #if ENABLED(DIRECT_STEPPING)
       static void buffer_page(const page_idx_t page_idx, const uint8_t extruder, const uint16_t num_steps);
@@ -836,7 +807,7 @@ class Planner {
      * Clears previous speed values.
      */
     static void set_position_mm(const float &rx, const float &ry, const float &rz, const float &e);
-    FORCE_INLINE static void set_position_mm(const xyze_pos_t &cart) { set_position_mm(cart.x, cart.y, cart.z, cart.e); }
+    FORCE_INLINE static void set_position_mm(const swordfish::math::Vector6f32 &cart) { set_position_mm(cart.x(), cart.y(), cart.z(), cart.a()); }
     static void set_e_position_mm(const float &e);
 
     /**
@@ -846,20 +817,22 @@ class Planner {
      * conversions are applied.
      */
     static void set_machine_position_mm(const float &a, const float &b, const float &c, const float &e);
-    FORCE_INLINE static void set_machine_position_mm(const abce_pos_t &abce) { set_machine_position_mm(abce.a, abce.b, abce.c, abce.e); }
+    FORCE_INLINE static void set_machine_position_mm(const swordfish::math::Vector6f32 &abce) { set_machine_position_mm(abce.x(), abce.y(), abce.z(), abce.a()); }
 
     /**
      * Get an axis position according to stepper position(s)
      * For CORE machines apply translation from ABC to XYZ.
      */
-    static float get_axis_position_mm(const AxisEnum axis);
+    static float get_axis_position_mm(const Axis axis);
 
-    static inline abce_pos_t get_axis_positions_mm() {
-      const abce_pos_t out = {
-        get_axis_position_mm(A_AXIS),
-        get_axis_position_mm(B_AXIS),
-        get_axis_position_mm(C_AXIS),
-        get_axis_position_mm(E_AXIS)
+    static inline swordfish::math::Vector6f32 get_axis_positions_mm() {
+      const swordfish::math::Vector6f32 out = {
+        get_axis_position_mm(Axis::X()),
+        get_axis_position_mm(Axis::Y()),
+        get_axis_position_mm(Axis::Z()),
+        get_axis_position_mm(Axis::A()),
+				0.0,
+				0.0
       };
       return out;
     }
@@ -874,10 +847,10 @@ class Planner {
     static void quick_stop();
 
     // Called when an endstop is triggered. Causes the machine to stop inmediately
-    static void endstop_triggered(const AxisEnum axis);
+    static void endstop_triggered(const Axis axis);
 
     // Triggered position of an axis in mm (not core-savvy)
-    static float triggered_position_mm(const AxisEnum axis);
+    static float triggered_position_mm(const Axis axis);
 
     // Block until all buffered steps are executed / cleaned
     static void synchronize();
@@ -996,26 +969,26 @@ class Planner {
 
     static void recalculate();
 
-    #if HAS_JUNCTION_DEVIATION
+		FORCE_INLINE static void normalize_junction_vector(swordfish::math::Vector6f32 &vector) {
+			float magnitude_sq = 0;
+			for (auto axis : all_axes) {
+				if (vector[axis]) {
+					magnitude_sq += sq(vector[axis]);
+				}
+			}
+			vector *= RSQRT(magnitude_sq);
+		}
 
-      FORCE_INLINE static void normalize_junction_vector(xyze_float_t &vector) {
-        float magnitude_sq = 0;
-        LOOP_XYZE(idx) if (vector[idx]) magnitude_sq += sq(vector[idx]);
-        vector *= RSQRT(magnitude_sq);
-      }
-
-      FORCE_INLINE static float limit_value_by_axis_maximum(const float &max_value, xyze_float_t &unit_vec) {
-        float limit_value = max_value;
-        LOOP_XYZE(idx) {
-          if (unit_vec[idx]) {
-            if (limit_value * ABS(unit_vec[idx]) > settings.max_acceleration_mm_per_s2[idx])
-              limit_value = ABS(settings.max_acceleration_mm_per_s2[idx] / unit_vec[idx]);
-          }
-        }
-        return limit_value;
-      }
-
-    #endif // !CLASSIC_JERK
+		FORCE_INLINE static float limit_value_by_axis_maximum(const float &max_value, swordfish::math::Vector6f32 &unit_vec) {
+			float limit_value = max_value;
+			for (auto axis : all_axes) {
+				if (unit_vec[axis]) {
+					if (limit_value * ABS(unit_vec[axis]) > settings.max_acceleration_unit_per_s2[axis])
+						limit_value = ABS(settings.max_acceleration_unit_per_s2[axis] / unit_vec[axis]);
+				}
+			}
+			return limit_value;
+		}
 };
 
 #define PLANNER_XY_FEEDRATE() _MIN(planner.settings.max_feedrate_mm_s[X_AXIS], planner.settings.max_feedrate_mm_s[Y_AXIS])

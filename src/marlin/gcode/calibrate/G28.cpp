@@ -27,8 +27,6 @@
 #include "../../module/stepper.h"
 #include "../../module/endstops.h"
 
-#include "../../module/probe.h"
-
 #define DEBUG_OUT ENABLED(DEBUG_LEVELING_FEATURE)
 #include "../../core/debug_out.h"
 
@@ -232,15 +230,15 @@ void GcodeSuite::G28() {
 
 	if (doZ) {
 		if (homing) {
-			homeaxis(Z_AXIS);
+			homeaxis(Axis::Z());
 		} else {
-			do_blocking_move_to_z(MachineState::Homing, home_dir(Z_AXIS) > 0 ? Z_MAX_POS : Z_MIN_POS);
+			do_blocking_move_to_z(MachineState::Homing, home_dir(Axis::Z()) > 0 ? Z_MAX_POS : Z_MIN_POS);
 		}
 	}
 
 #endif
 
-	const float z_homing_height = TERN1(UNKNOWN_Z_NO_RAISE, axis_is_trusted(Z_AXIS))
+	const float z_homing_height = TERN1(UNKNOWN_Z_NO_RAISE, axis_is_trusted(Axis::Z()))
 	                                  ? (parser.seenval('R') ? parser.value_linear_units() : Z_HOMING_HEIGHT)
 	                                  : 0;
 
@@ -248,7 +246,7 @@ void GcodeSuite::G28() {
 		// Raise Z before homing any other axes and z is not already high enough (never lower z)
 		if (DEBUGGING(LEVELING))
 			DEBUG_ECHOLNPAIR("Raise Z (before homing) by ", z_homing_height);
-		do_z_clearance(MachineState::Homing, z_homing_height, axis_is_trusted(Z_AXIS), DISABLED(UNKNOWN_Z_NO_RAISE));
+		do_z_clearance(MachineState::Homing, z_homing_height, axis_is_trusted(Axis::Z()), DISABLED(UNKNOWN_Z_NO_RAISE));
 	}
 
 #if ENABLED(QUICK_HOME)
@@ -267,7 +265,7 @@ void GcodeSuite::G28() {
 
 	// Home Y (before X)
 	if (ENABLED(HOME_Y_BEFORE_X) && (doY || TERN0(CODEPENDENT_XY_HOMING, doX)))
-		homeaxis(Y_AXIS);
+		homeaxis(Axis::Y());
 
 	// Home X
 	if (doX || (doY && ENABLED(CODEPENDENT_XY_HOMING) && DISABLED(HOME_Y_BEFORE_X))) {
@@ -291,9 +289,9 @@ void GcodeSuite::G28() {
 #else
 
 		if (homing) {
-			homeaxis(X_AXIS);
+			homeaxis(Axis::X());
 		} else {
-			do_blocking_move_to_x(MachineState::Homing, home_dir(X_AXIS) > 0 ? X_MAX_POS : X_MIN_POS);
+			do_blocking_move_to_x(MachineState::Homing, home_dir(Axis::X()) > 0 ? X_MAX_POS : X_MIN_POS);
 		}
 
 #endif
@@ -302,9 +300,9 @@ void GcodeSuite::G28() {
 	// Home Y (after X)
 	if (DISABLED(HOME_Y_BEFORE_X) && doY) {
 		if (homing) {
-			homeaxis(Y_AXIS);
+			homeaxis(Axis::Y());
 		} else {
-			do_blocking_move_to_y(MachineState::Homing, home_dir(Y_AXIS) > 0 ? Y_MAX_POS : Y_MIN_POS);
+			do_blocking_move_to_y(MachineState::Homing, home_dir(Axis::Y()) > 0 ? Y_MAX_POS : Y_MIN_POS);
 		}
 	}
 

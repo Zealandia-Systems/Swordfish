@@ -317,12 +317,12 @@
 #	define HAS_FAST_MOVES 1
 #endif
 
-enum AxisRelative : uint8_t { REL_X,
-	                            REL_Y,
-	                            REL_Z,
-	                            REL_E,
-	                            E_MODE_ABS,
-	                            E_MODE_REL };
+enum class AxisRelative : uint8_t { X,
+	                            Y,
+	                            Z,
+	                            A,
+	                            B,
+	                            C };
 
 typedef struct {
 	xyz_pos_t offset;
@@ -334,13 +334,7 @@ public:
 	static bool aborted_;
 	static uint8_t axis_relative;
 
-	static inline bool axis_is_relative(const AxisEnum a) {
-		if (a == E_AXIS) {
-			if (TEST(axis_relative, E_MODE_REL))
-				return true;
-			if (TEST(axis_relative, E_MODE_ABS))
-				return false;
-		}
+	static inline bool axis_is_relative(const Axis a) {
 		return TEST(axis_relative, a);
 	}
 
@@ -353,15 +347,7 @@ public:
 	}
 
 	static inline void set_relative_mode(const bool rel) {
-		axis_relative = rel ? _BV(REL_X) | _BV(REL_Y) | _BV(REL_Z) | _BV(REL_E) : 0;
-	}
-	static inline void set_e_relative() {
-		CBI(axis_relative, E_MODE_ABS);
-		SBI(axis_relative, E_MODE_REL);
-	}
-	static inline void set_e_absolute() {
-		CBI(axis_relative, E_MODE_REL);
-		SBI(axis_relative, E_MODE_ABS);
+		axis_relative = rel ? _BV((u8)AxisRelative::X) | _BV((u8)AxisRelative::Y) | _BV((u8)AxisRelative::Z) | _BV((u8)AxisRelative::A) | _BV((u8)AxisRelative::B) | _BV((u8)AxisRelative::C) : 0;
 	}
 
 #if ENABLED(CNC_WORKSPACE_PLANES)
@@ -398,9 +384,7 @@ public:
 		return ELAPSED(ms, previous_move_ms + stepper_inactive_time);
 	}
 
-	static int8_t get_target_extruder_from_command();
-	static int8_t get_target_e_stepper_from_command();
-	static void get_destination_from_command();
+	static void get_destination_from_command(bool rapid_move);
 
 	static void process_parsed_command(const bool no_ok = false);
 	static void process_next_command();
@@ -607,6 +591,8 @@ private:
 	TERN_(GCODE_MOTION_MODES, static void G80());
 
 	static void G92(bool report = true);
+	static void G93();
+	static void G94();
 
 	TERN_(CALIBRATION_GCODE, static void G425());
 

@@ -71,9 +71,9 @@ namespace swordfish::estop {
 			queue.clear();
 			gcode.abort_current();
 
-			set_axis_never_homed(X_AXIS);
-			set_axis_never_homed(Y_AXIS);
-			set_axis_never_homed(Z_AXIS);
+			set_axis_never_homed(Axis::X());
+			set_axis_never_homed(Axis::Y());
+			set_axis_never_homed(Axis::Z());
 
 			auto& statusModule = StatusModule::getInstance();
 

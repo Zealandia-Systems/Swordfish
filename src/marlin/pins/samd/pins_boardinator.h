@@ -45,7 +45,7 @@
 //
 
 #define X_MIN_PIN              70
-#if MACHINE_TYPE == 5
+#if MACHINE_TYPE == 5 || MACHINE_TYPE == 6 || MACHINE_TYPE == 7 || MACHINE_TYPE == 8 || MACHINE_TYPE == 9
 #define Y_MIN_PIN 71
 #define Y_MAX_PIN -1
 #define Y2_MIN_PIN 72

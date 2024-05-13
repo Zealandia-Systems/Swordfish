@@ -30,7 +30,8 @@
 
 using namespace Eigen;
 
-//using namespace swordfish;
+using namespace swordfish;
+using namespace swordfish::math;
 using namespace swordfish::motion;
 using namespace swordfish::status;
 
@@ -104,7 +105,7 @@ bool relative_mode; // = false;
  *   Used by 'line_to_current_position' to do a move after changing it.
  *   Used by 'sync_plan_position' to update 'planner.position'.
  */
-xyz_pos_t current_position { X_HOME_POS, Y_HOME_POS, Z_HOME_POS };
+Vector6f32 current_position { X_HOME_POS, Y_HOME_POS, Z_HOME_POS, 0.0, 0.0, 0.0 };
 
 /**
  * Cartesian Destination
@@ -112,7 +113,7 @@ xyz_pos_t current_position { X_HOME_POS, Y_HOME_POS, Z_HOME_POS };
  *   and expected by functions like 'prepare_line_to_destination'.
  *   G-codes can set destination using 'get_destination_from_command'
  */
-xyz_pos_t destination { 0, 0, 0 };
+Vector6f32 destination { 0, 0, 0, 0, 0, 0 };
 
 // G60/G61 Position Save and Return
 #if SAVED_POSITIONS
@@ -151,11 +152,12 @@ void reset_hotend_offsets() {
 // no other feedrate is specified. Overridden for special moves.
 // Set by the last G0 through G5 command's "F" parameter.
 // Functions that override this for custom moves *must always* restore it!
-feedRate_t feedrate_mm_s = MMM_TO_MMS(1500);
+FeedRate feedrate_mm_s = FeedRate::MillimetersPerSecond(MMM_TO_MMS(homing_feedrate_mm_m.x));
+
 int16_t feedrate_percentage = 100;
 
 // Cartesian conversion result goes here:
-xyz_pos_t cartes;
+Vector6f32 cartes;
 
 #if IS_KINEMATIC
 
@@ -210,16 +212,16 @@ inline void report_more_positions() {
 }
 
 // Report the logical position for a given machine position
-inline void report_logical_position(const xyz_pos_t& rpos) {
-	const xyz_pos_t lpos = rpos.asLogical();
-	SERIAL_ECHOPAIR_P(X_LBL, lpos.x, SP_Y_LBL, lpos.y, SP_Z_LBL, lpos.z);
+inline void report_logical_position(const Vector6f32& rpos) {
+	const Vector6f32 lpos = toLogical(rpos);
+	SERIAL_ECHOPAIR_P(X_LBL, lpos.x(), SP_Y_LBL, lpos.y(), SP_Z_LBL, lpos.z());
 }
 
 // Report the real current position according to the steppers.
 // Forward kinematics and un-leveling are applied.
 void report_real_position() {
 	get_cartesian_from_steppers();
-	xyz_pos_t npos = cartes;
+	Vector6f32 npos = cartes;
 
 #if HAS_POSITION_MODIFIERS
 	planner.unapply_modifiers(npos, true);
@@ -282,9 +284,10 @@ void get_cartesian_from_steppers() {
 			planner.get_axis_position_degrees(A_AXIS),
 			planner.get_axis_position_degrees(B_AXIS));
 #	else
-	cartes.set(planner.get_axis_position_mm(X_AXIS), planner.get_axis_position_mm(Y_AXIS));
+	cartes.x() = planner.get_axis_position_mm(Axis::X());
+	cartes.y() = planner.get_axis_position_mm(Axis::Y());
 #	endif
-	cartes.z = planner.get_axis_position_mm(Z_AXIS);
+	cartes.z() = planner.get_axis_position_mm(Axis::Z());
 #endif
 }
 
@@ -299,76 +302,41 @@ void get_cartesian_from_steppers() {
  * To keep hosts in sync, always call report_current_position
  * after updating the current_position.
  */
-void set_current_from_steppers_for_axis(const AxisEnum axis) {
+void set_current_from_steppers_for_axis(const AxisValue axis) {
 	get_cartesian_from_steppers();
-	xyze_pos_t pos = cartes;
-	pos.e = planner.get_axis_position_mm(E_AXIS);
+
+	Vector6f32 pos = cartes;
 
 #if HAS_POSITION_MODIFIERS
 	planner.unapply_modifiers(pos, true);
 #endif
 
-	if (axis == ALL_AXES)
+	if (axis == AxisValue::All) {
 		current_position = pos;
-	else
-		current_position[axis] = pos[axis];
+	} else {
+		current_position[(u8)axis] = pos[(u8)axis];
+	}
 }
 
 /**
  * Move the planner to the current position from wherever it last moved
  * (or from wherever it has been told it is located).
  */
-void line_to_current_position(const MachineState machine_state, const feedRate_t& fr_mm_s /*=feedrate_mm_s*/) {
-	planner.buffer_line(current_position, fr_mm_s, active_extruder, machine_state);
+void line_to_current_position(const MachineState machine_state, const FeedRate& feed_rate /*=feedrate_mm_s*/) {
+	planner.buffer_line(current_position, feed_rate, active_extruder, machine_state);
 }
-
-#if EXTRUDERS
-void unscaled_e_move(const float& length, const feedRate_t& fr_mm_s) {
-	TERN_(HAS_FILAMENT_SENSOR, runout.reset());
-	current_position.e += length / planner.e_factor[active_extruder];
-	line_to_current_position(fr_mm_s);
-	planner.synchronize();
-}
-#endif
-
-#if IS_KINEMATIC
-
-/**
- * Buffer a fast move without interpolation. Set current_position to destination
- */
-void prepare_fast_move_to_destination(const feedRate_t& scaled_fr_mm_s /*=MMS_SCALED(feedrate_mm_s)*/) {
-	if (DEBUGGING(LEVELING))
-		DEBUG_POS("prepare_fast_move_to_destination", destination);
-
-#	if UBL_SEGMENTED
-	// UBL segmented line will do Z-only moves in single segment
-	ubl.line_to_destination_segmented(scaled_fr_mm_s);
-#	else
-	if (current_position == destination)
-		return;
-
-	planner.buffer_line(destination, scaled_fr_mm_s, active_extruder);
-#	endif
-
-	current_position = destination;
-}
-
-#endif // IS_KINEMATIC
 
 /**
  * Do a fast or normal move to 'destination' with an optional FR.
  *  - Move at normal speed regardless of feedrate percentage.
  *  - Extrude the specified length regardless of flow percentage.
  */
-void _internal_move_to_destination(const MachineState machine_state, const feedRate_t& fr_mm_s /*=0.0f*/
-#if IS_KINEMATIC
-                                   ,
-                                   const bool is_fast /*=false*/
-#endif
-) {
-	const feedRate_t old_feedrate = feedrate_mm_s;
-	if (fr_mm_s)
-		feedrate_mm_s = fr_mm_s;
+void _internal_move_to_destination(const MachineState machine_state, const std::optional<FeedRate>& feed_rate ) {
+	const FeedRate old_feedrate = feedrate_mm_s;
+
+	if (feed_rate.has_value()) {
+		feedrate_mm_s = feed_rate.value();
+	}
 
 	const uint16_t old_pct = feedrate_percentage;
 	feedrate_percentage = 100;
@@ -395,148 +363,53 @@ void _internal_move_to_destination(const MachineState machine_state, const feedR
 /**
  * Plan a move to (X, Y, Z) and set the current_position
  */
-void do_blocking_move_to(const MachineState machine_state, const float rx, const float ry, const float rz, const feedRate_t& fr_mm_s /*=0.0*/) {
+void do_blocking_move_to(const MachineState machine_state, const Vector6f32& target, const std::optional<FeedRate>& feed_rate) {
 	DEBUG_SECTION(log_move, "do_blocking_move_to", DEBUGGING(LEVELING));
 	if (DEBUGGING(LEVELING))
-		DEBUG_XYZ("> ", rx, ry, rz);
+		DEBUG_XYZ("> ", target.x(), target.y(), target.z());
 
-	const feedRate_t z_feedrate = fr_mm_s ?: homing_feedrate(Z_AXIS),
-									 xy_feedrate = fr_mm_s ?: feedRate_t(XY_PROBE_FEEDRATE_MM_S);
+	/*
+	const FeedRate z_feedrate = feed_rate ? *feed_rate : homing_feedrate(Axis::Z());
+	const FeedRate xy_feedrate = feed_rate ? *feed_rate : FeedRate::MillimetersPerSecond(XY_PROBE_FEEDRATE_MM_S);
+	*/
 
-#if ENABLED(DELTA)
-
-	if (!position_is_reachable(rx, ry))
-		return;
-
-	REMEMBER(fr, feedrate_mm_s, xy_feedrate);
-
-	destination = current_position; // sync destination at the start
-
-	if (DEBUGGING(LEVELING))
-		DEBUG_POS("destination = current_position", destination);
-
-	// when in the danger zone
-	if (current_position.z > delta_clip_start_height) {
-		if (rz > delta_clip_start_height) { // staying in the danger zone
-			destination.set(rx, ry, rz); // move directly (uninterpolated)
-			prepare_internal_fast_move_to_destination(); // set current_position from destination
-			if (DEBUGGING(LEVELING))
-				DEBUG_POS("danger zone move", current_position);
-			return;
-		}
-		destination.z = delta_clip_start_height;
-		prepare_internal_fast_move_to_destination(); // set current_position from destination
-		if (DEBUGGING(LEVELING))
-			DEBUG_POS("zone border move", current_position);
-	}
-
-	if (rz > current_position.z) { // raising?
-		destination.z = rz;
-		prepare_internal_fast_move_to_destination(z_feedrate); // set current_position from destination
-		if (DEBUGGING(LEVELING))
-			DEBUG_POS("z raise move", current_position);
-	}
-
-	destination.set(rx, ry);
-	prepare_internal_move_to_destination(); // set current_position from destination
-	if (DEBUGGING(LEVELING))
-		DEBUG_POS("xy move", current_position);
-
-	if (rz < current_position.z) { // lowering?
-		destination.z = rz;
-		prepare_internal_fast_move_to_destination(z_feedrate); // set current_position from destination
-		if (DEBUGGING(LEVELING))
-			DEBUG_POS("z lower move", current_position);
-	}
-
-#elif IS_SCARA
-
-	if (!position_is_reachable(rx, ry))
-		return;
-
-	destination = current_position;
+	const FeedRate z_feedrate = feed_rate ? *feed_rate : feedrate_mm_s;
+	const FeedRate xy_feedrate = feed_rate ? *feed_rate : feedrate_mm_s;
 
 	// If Z needs to raise, do it before moving XY
-	if (destination.z < rz) {
-		destination.z = rz;
-		prepare_internal_fast_move_to_destination(z_feedrate);
-	}
-
-	destination.set(rx, ry);
-	prepare_internal_fast_move_to_destination(xy_feedrate);
-
-	// If Z needs to lower, do it after moving XY
-	if (destination.z > rz) {
-		destination.z = rz;
-		prepare_internal_fast_move_to_destination(z_feedrate);
-	}
-
-#else
-
-	// If Z needs to raise, do it before moving XY
-	if (current_position.z < rz) {
-		current_position.z = rz;
+	if (current_position.z() < target.z()) {
+		current_position.z() = target.z();
 		line_to_current_position(machine_state, z_feedrate);
 	}
 
-	current_position.set(rx, ry);
+	current_position.x() = target.x();
+	current_position.y() = target.y();
+
 	line_to_current_position(machine_state, xy_feedrate);
 
 	// If Z needs to lower, do it after moving XY
-	if (current_position.z > rz) {
-		current_position.z = rz;
+	if (current_position.z() > target.z()) {
+		current_position.z() = target.z();
 		line_to_current_position(machine_state, z_feedrate);
 	}
-
-#endif
-
 	planner.synchronize();
 }
 
-void do_blocking_move_to(const MachineState machine_state, const xy_pos_t& raw, const feedRate_t& fr_mm_s /*=0.0f*/) {
-	do_blocking_move_to(machine_state, raw.x, raw.y, current_position.z, fr_mm_s);
-}
-void do_blocking_move_to(const MachineState machine_state, const xyz_pos_t& raw, const feedRate_t& fr_mm_s /*=0.0f*/) {
-	do_blocking_move_to(machine_state, raw.x, raw.y, raw.z, fr_mm_s);
-}
-void do_blocking_move_to(const MachineState machine_state, const xyze_pos_t& raw, const feedRate_t& fr_mm_s /*=0.0f*/) {
-	do_blocking_move_to(machine_state, raw.x, raw.y, raw.z, fr_mm_s);
-}
-
-void do_blocking_move_to_x(const MachineState machine_state, const float& rx, const feedRate_t& fr_mm_s /*=0.0*/) {
-	do_blocking_move_to(machine_state, rx, current_position.y, current_position.z, fr_mm_s);
-}
-void do_blocking_move_to_y(const MachineState machine_state, const float& ry, const feedRate_t& fr_mm_s /*=0.0*/) {
-	do_blocking_move_to(machine_state, current_position.x, ry, current_position.z, fr_mm_s);
-}
-void do_blocking_move_to_z(const MachineState machine_state, const float& rz, const feedRate_t& fr_mm_s /*=0.0*/) {
-	do_blocking_move_to_xy_z(machine_state, current_position, rz, fr_mm_s);
-}
-
-void do_blocking_move_to_xy(const MachineState machine_state, const float& rx, const float& ry, const feedRate_t& fr_mm_s /*=0.0*/) {
-	do_blocking_move_to(machine_state, rx, ry, current_position.z, fr_mm_s);
-}
-void do_blocking_move_to_xy(const MachineState machine_state, const xy_pos_t& raw, const feedRate_t& fr_mm_s /*=0.0f*/) {
-	do_blocking_move_to_xy(machine_state, raw.x, raw.y, fr_mm_s);
-}
-
-void do_blocking_move_to_xy_z(const MachineState machine_state, const xy_pos_t& raw, const float& z, const feedRate_t& fr_mm_s /*=0.0f*/) {
-	do_blocking_move_to(machine_state, raw.x, raw.y, z, fr_mm_s);
-}
 
 void do_z_clearance(const MachineState machine_state, const float& zclear, const bool z_trusted /*=true*/, const bool raise_on_untrusted /*=true*/, const bool lower_allowed /*=false*/) {
 	const bool rel = raise_on_untrusted && !z_trusted;
-	float zdest = zclear + (rel ? current_position.z : 0.0f);
+	float zdest = zclear + (rel ? current_position.z() : 0.0f);
 	if (!lower_allowed)
-		NOLESS(zdest, current_position.z);
-	do_blocking_move_to_z(machine_state, _MIN(zdest, Z_MAX_POS), TERN(HAS_BED_PROBE, z_probe_fast_mm_s, homing_feedrate(Z_AXIS)));
+		NOLESS(zdest, current_position.z());
+
+	do_blocking_move_to_z(machine_state, _MIN(zdest, Z_MAX_POS), TERN(HAS_BED_PROBE, z_probe_fast_mm_s, homing_feedrate(Axis::Z())));
 }
 
 //
 // Prepare to do endstop or probe moves with custom feedrates.
 //  - Save / restore current feedrate and multiplier
 //
-static float saved_feedrate_mm_s;
+static FeedRate saved_feedrate_mm_s = FeedRate::MillimetersPerSecond(0);
 static int16_t saved_feedrate_percentage;
 void remember_feedrate_and_scaling() {
 	saved_feedrate_mm_s = feedrate_mm_s;
@@ -767,11 +640,15 @@ inline void segmented_line_to_destination(const feedRate_t& fr_mm_s, const float
  * Return true if 'current_position' was set to 'destination'
  */
 inline bool line_to_destination_cartesian(const swordfish::status::MachineState machine_state, const float32_t accel_mm_s2) {
-	const float scaled_fr_mm_s = MMS_SCALED(feedrate_mm_s);
+	FeedRate scaled_feed_rate = feedrate_mm_s;
+
+	if (parser.feedrate_type == FeedRateType::MillimetersPerSecond) {
+	  scaled_feed_rate = MMS_SCALED(feedrate_mm_s);
+	}
 
 	planner.buffer_line(
 			destination,
-			scaled_fr_mm_s,
+			scaled_feed_rate,
 			active_extruder,
 			machine_state,
 			0.0,
@@ -925,9 +802,12 @@ void prepare_line_to_destination(const swordfish::status::MachineState machine_s
 	auto& motionModule = MotionModule::getInstance();
 	auto& limits = motionModule.getLimits();
 
-	Eigen::Vector3f dest = { destination.x, destination.y, destination.z };
+	Vector3f32 dest = { destination.x(), destination.y(), destination.z() };
 
 	limits.throwIfOutside(dest);
+
+	debug()("current_position x: ", current_position.x(), ", y: ", current_position.y(), ", z: ", current_position.z(), ", a: ", current_position.a(), ", b: ", current_position.b(), ", c: ", current_position.c());
+	debug()("destination x: ", destination.x(), ", y: ", destination.y(), ", z: ", destination.z(), ", a: ", destination.a(), ", b: ", destination.b(), ", c: ", destination.c());
 
 	if (line_to_destination_cartesian(machine_state, accel_mm_s2)) {
 		return;
@@ -939,12 +819,12 @@ void prepare_line_to_destination(const swordfish::status::MachineState machine_s
 uint8_t axes_should_home(uint8_t axis_bits /*=0x07*/) {
 #define SHOULD_HOME(A) TERN(HOME_AFTER_DEACTIVATE, axis_is_trusted, axis_was_homed)(A)
 	// Clear test bits that are trusted
-	if (TEST(axis_bits, X_AXIS) && SHOULD_HOME(X_AXIS))
-		CBI(axis_bits, X_AXIS);
-	if (TEST(axis_bits, Y_AXIS) && SHOULD_HOME(Y_AXIS))
-		CBI(axis_bits, Y_AXIS);
-	if (TEST(axis_bits, Z_AXIS) && SHOULD_HOME(Z_AXIS))
-		CBI(axis_bits, Z_AXIS);
+	if (TEST(axis_bits, Axis::X()) && SHOULD_HOME(Axis::X()))
+		CBI(axis_bits, Axis::X());
+	if (TEST(axis_bits, Axis::Y()) && SHOULD_HOME(Axis::Y()))
+		CBI(axis_bits, Axis::Y());
+	if (TEST(axis_bits, Axis::Z()) && SHOULD_HOME(Axis::Z()))
+		CBI(axis_bits, Axis::Z());
 	return axis_bits;
 }
 
@@ -958,7 +838,7 @@ bool homing_needed_error(uint8_t axis_bits /*=0x07*/) {
 /**
  * Homing bump feedrate (mm/s)
  */
-feedRate_t get_homing_bump_feedrate(const AxisEnum axis) {
+FeedRate get_homing_bump_feedrate(const Axis axis) {
 #if HOMING_Z_WITH_PROBE
 	if (axis == Z_AXIS)
 		return MMM_TO_MMS(Z_PROBE_SPEED_SLOW);
@@ -1129,17 +1009,18 @@ void end_sensorless_homing_per_axis(const AxisEnum axis, sensorless_t enable_ste
 /**
  * Home an individual linear axis
  */
-void do_homing_move(const AxisEnum axis, const float distance, const feedRate_t fr_mm_s = 0.0, [[maybe_unused]] const bool final_approach = true) {
+void do_homing_move(const Axis axis, const float distance, const std::optional<FeedRate> feed_rate = std::nullopt, [[maybe_unused]] const bool final_approach = true) {
 	DEBUG_SECTION(log_move, "do_homing_move", DEBUGGING(LEVELING));
 
-	const feedRate_t home_fr_mm_s = fr_mm_s ?: homing_feedrate(axis);
+	const FeedRate homing_feed_rate = feed_rate ? *feed_rate : homing_feedrate(axis);
 
 	if (DEBUGGING(LEVELING)) {
-		DEBUG_ECHOPAIR("...(", axis_codes[axis], ", ", distance, ", ");
-		if (fr_mm_s)
-			DEBUG_ECHO(fr_mm_s);
-		else
-			DEBUG_ECHOPAIR("[", home_fr_mm_s, "]");
+		DEBUG_ECHOPAIR("...(", axis.to_char(), ", ", distance, ", ");
+		if (feed_rate.has_value()) {
+			DEBUG_ECHO(feed_rate.value().value());
+		} else {
+			DEBUG_ECHOPAIR("[", homing_feed_rate.value(), "]");
+		}
 		DEBUG_ECHOLNPGM(")");
 	}
 
@@ -1176,7 +1057,7 @@ void do_homing_move(const AxisEnum axis, const float distance, const feedRate_t 
 	line_to_current_position(home_fr_mm_s);
 #else
 	// Get the ABC or XYZ positions in mm
-	abce_pos_t target = planner.get_axis_positions_mm();
+	Vector6f32 target = planner.get_axis_positions_mm();
 
 	target[axis] = 0; // Set the single homing axis to 0
 	planner.set_machine_position_mm(target); // Update the machine position
@@ -1193,7 +1074,7 @@ void do_homing_move(const AxisEnum axis, const float distance, const feedRate_t 
 	                       cart_dist_mm
 #	endif
 	                       ,
-	                       home_fr_mm_s, active_extruder, MachineState::Homing);
+	                       homing_feed_rate, active_extruder, MachineState::Homing);
 #endif
 
 	planner.synchronize();
@@ -1230,11 +1111,11 @@ void do_homing_move(const AxisEnum axis, const float distance, const feedRate_t 
  *
  * Callers must sync the planner position after calling this!
  */
-void set_axis_is_at_home(const AxisEnum axis) {
+void set_axis_is_at_home(const Axis axis) {
 	auto& motionManager = MotionModule::getInstance();
 
 	if (DEBUGGING(LEVELING))
-		DEBUG_ECHOLNPAIR(">>> set_axis_is_at_home(", axis_codes[axis], ")");
+		DEBUG_ECHOLNPAIR(">>> set_axis_is_at_home(", axis.to_char(), ")");
 
 	set_axis_trusted(axis);
 	set_axis_homed(axis);
@@ -1289,25 +1170,25 @@ void set_axis_is_at_home(const AxisEnum axis) {
 
 	if (DEBUGGING(LEVELING)) {
 #if HAS_HOME_OFFSET
-		DEBUG_ECHOLNPAIR("> home_offset[", axis_codes[axis], "] = ", motionManager.getHomeOffset()[axis]);
+		DEBUG_ECHOLNPAIR("> home_offset[", axis.to_char(), "] = ", motionManager.getHomeOffset()[axis]);
 #endif
 		DEBUG_POS("", current_position);
-		DEBUG_ECHOLNPAIR("<<< set_axis_is_at_home(", axis_codes[axis], ")");
+		DEBUG_ECHOLNPAIR("<<< set_axis_is_at_home(", axis.to_char(), ")");
 	}
 }
 
 /**
  * Set an axis to be unhomed.
  */
-void set_axis_never_homed(const AxisEnum axis) {
+void set_axis_never_homed(const Axis axis) {
 	if (DEBUGGING(LEVELING))
-		DEBUG_ECHOLNPAIR(">>> set_axis_never_homed(", axis_codes[axis], ")");
+		DEBUG_ECHOLNPAIR(">>> set_axis_never_homed(", axis.to_char(), ")");
 
 	set_axis_untrusted(axis);
 	set_axis_unhomed(axis);
 
 	if (DEBUGGING(LEVELING))
-		DEBUG_ECHOLNPAIR("<<< set_axis_never_homed(", axis_codes[axis], ")");
+		DEBUG_ECHOLNPAIR("<<< set_axis_never_homed(", axis.to_char(), ")");
 
 	TERN_(I2C_POSITION_ENCODERS, I2CPEM.unhomed(axis));
 }
@@ -1370,7 +1251,7 @@ void backout_to_tmc_homing_phase(const AxisEnum axis) {
 	if (ABS(phaseDelta) * planner.steps_to_mm[axis] / phasePerUStep < 0.05f)
 		SERIAL_ECHOLNPAIR("Selected home phase ", home_phase[axis],
 		                  " too close to endstop trigger phase ", phaseCurrent,
-		                  ". Pick a different phase for ", axis_codes[axis]);
+		                  ". Pick a different phase for ", axis.to_char());
 
 	// Skip to next if target position is behind current. So it only moves away from endstop.
 	if (phaseDelta < 0)
@@ -1382,7 +1263,7 @@ void backout_to_tmc_homing_phase(const AxisEnum axis) {
 	// Optional debug messages
 	if (DEBUGGING(LEVELING)) {
 		DEBUG_ECHOLNPAIR(
-				"Endstop ", axis_codes[axis], " hit at Phase:", phaseCurrent,
+				"Endstop ", axis.to_char(), " hit at Phase:", phaseCurrent,
 				" Delta:", phaseDelta, " Distance:", mmDelta);
 	}
 
@@ -1404,20 +1285,20 @@ void backout_to_tmc_homing_phase(const AxisEnum axis) {
  * before updating the current position.
  */
 
-void homeaxis(const AxisEnum axis) {
+void homeaxis(const Axis axis) {
 	/*#if ENABLED(TMC_DEBUG)
 	  REMEMBER(tmc_serial_port,report_tmc_status_serial_port,1);
 	  REMEMBER(tmc_interval,report_tmc_status_interval,10);
 	#endif
 	*/
 
-#define _CAN_HOME(A) (axis == _AXIS(A) && (ENABLED(A##_SPI_SENSORLESS) || (_AXIS(A) == Z_AXIS && ENABLED(HOMING_Z_WITH_PROBE)) || (A##_MIN_PIN > -1 && A##_HOME_DIR < 0) || (A##_MAX_PIN > -1 && A##_HOME_DIR > 0)))
+	#define _CAN_HOME(A) (axis == _AXIS(A) && (ENABLED(A##_SPI_SENSORLESS) || (_AXIS(A) == Axis::Z() && ENABLED(HOMING_Z_WITH_PROBE)) || (A##_MIN_PIN > -1 && A##_HOME_DIR < 0) || (A##_MAX_PIN > -1 && A##_HOME_DIR > 0)))
 
 	if (!_CAN_HOME(X) && !_CAN_HOME(Y) && !_CAN_HOME(Z))
 		return;
 
 	if (DEBUGGING(LEVELING))
-		DEBUG_ECHOLNPAIR(">>> homeaxis(", axis_codes[axis], ")");
+		DEBUG_ECHOLNPAIR(">>> homeaxis(", axis.to_char(), ")");
 
 	const int axis_home_dir = home_dir(axis);
 
@@ -1438,7 +1319,7 @@ void homeaxis(const AxisEnum axis) {
 		// Move away from the endstop by the axis HOMING_BUMP_MM
 		if (DEBUGGING(LEVELING))
 			DEBUG_ECHOLNPAIR("Move Away: ", -bump, "mm");
-		do_homing_move(axis, -bump, TERN0(HOMING_Z_WITH_PROBE, axis == Z_AXIS) ? MMM_TO_MMS(Z_PROBE_SPEED_FAST) : 0, false);
+		do_homing_move(axis, -bump, homing_feedrate(axis), false);
 
 #if ENABLED(DETECT_BROKEN_ENDSTOP)
 		// Check for a broken endstop
@@ -1456,15 +1337,15 @@ void homeaxis(const AxisEnum axis) {
 				break;
 		}
 		if (TEST(endstops.state(), es)) {
-			SERIAL_ECHO_MSG("Bad ", axis_codes[axis], " Endstop?");
+			SERIAL_ECHO_MSG("Bad ", axis.to_char(), " Endstop?");
 			kill(GET_TEXT(MSG_KILL_HOMING_FAILED));
 		}
 #endif
 
-		switch (axis) {
-			TERN_(X_DUAL_ENDSTOPS, case X_AXIS:)
-			TERN_(Y_DUAL_ENDSTOPS, case Y_AXIS:)
-			TERN_(Z_MULTI_ENDSTOPS, case Z_AXIS:)
+		switch (axis.value()) {
+			TERN_(X_DUAL_ENDSTOPS, case AxisValue::X:)
+			TERN_(Y_DUAL_ENDSTOPS, case AxisValue::Y:)
+			TERN_(Z_MULTI_ENDSTOPS, case AxisValue::Z:)
 			stepper.set_separate_multi_axis(true);
 			default:
 				break;
@@ -1476,10 +1357,10 @@ void homeaxis(const AxisEnum axis) {
 			DEBUG_ECHOLNPAIR("Re-bump: ", rebump, "mm");
 		do_homing_move(axis, rebump, get_homing_bump_feedrate(axis), true);
 
-		switch (axis) {
-			TERN_(X_DUAL_ENDSTOPS, case X_AXIS:)
-			TERN_(Y_DUAL_ENDSTOPS, case Y_AXIS:)
-			TERN_(Z_MULTI_ENDSTOPS, case Z_AXIS:)
+		switch (axis.value()) {
+			TERN_(X_DUAL_ENDSTOPS, case AxisValue::X:)
+			TERN_(Y_DUAL_ENDSTOPS, case AxisValue::Y:)
+			TERN_(Z_MULTI_ENDSTOPS, case AxisValue::Z:)
 			stepper.set_separate_multi_axis(false);
 			default:
 				break;
@@ -1491,10 +1372,10 @@ void homeaxis(const AxisEnum axis) {
 
 #if HAS_EXTRA_ENDSTOPS
 	// Set flags for X, Y, Z motor locking
-	switch (axis) {
-		TERN_(X_DUAL_ENDSTOPS, case X_AXIS:)
-		TERN_(Y_DUAL_ENDSTOPS, case Y_AXIS:)
-		TERN_(Z_MULTI_ENDSTOPS, case Z_AXIS:)
+	switch (axis.value()) {
+		TERN_(X_DUAL_ENDSTOPS, case AxisValue::X:)
+		TERN_(Y_DUAL_ENDSTOPS, case AxisValue::Y:)
+		TERN_(Z_MULTI_ENDSTOPS, case AxisValue::Z:)
 		stepper.set_separate_multi_axis(true);
 		default:
 			break;
@@ -1516,7 +1397,7 @@ void homeaxis(const AxisEnum axis) {
 	}
 #	endif
 #	if ENABLED(Y_DUAL_ENDSTOPS)
-	if (axis == Y_AXIS) {
+	if (axis == Axis::Y()) {
 		const float adj = ABS(endstops.y2_endstop_adj);
 		if (adj) {
 			if (pos_dir ? (endstops.y2_endstop_adj > 0) : (endstops.y2_endstop_adj < 0))
@@ -1638,12 +1519,12 @@ void homeaxis(const AxisEnum axis) {
 #	endif
 
 	// Reset flags for X, Y, Z motor locking
-	switch (axis) {
+	switch (axis.value()) {
 		default:
 			break;
-			TERN_(X_DUAL_ENDSTOPS, case X_AXIS:)
-			TERN_(Y_DUAL_ENDSTOPS, case Y_AXIS:)
-			TERN_(Z_MULTI_ENDSTOPS, case Z_AXIS:)
+			TERN_(X_DUAL_ENDSTOPS, case AxisValue::X:)
+			TERN_(Y_DUAL_ENDSTOPS, case AxisValue::Y:)
+			TERN_(Z_MULTI_ENDSTOPS, case AxisValue::Z:)
 			stepper.set_separate_multi_axis(false);
 	}
 #endif
@@ -1662,29 +1543,53 @@ void homeaxis(const AxisEnum axis) {
 		DEBUG_POS("> AFTER set_axis_is_at_home", current_position);
 
 	if (DEBUGGING(LEVELING))
-		DEBUG_ECHOLNPAIR("<<< homeaxis(", axis_codes[axis], ")");
+		DEBUG_ECHOLNPAIR("<<< homeaxis(", axis.to_char(), ")");
 } // homeaxis()
 
-float32_t toNative(float32_t value, AxisEnum axis) {
+float32_t toNative(const float32_t value, Axis axis) {
 	return MotionModule::getInstance().toNative(axis, value);
 }
 
-float32_t toLogical(float32_t value, AxisEnum axis) {
+float32_t toLogical(const float32_t value, Axis axis) {
 	return MotionModule::getInstance().toLogical(axis, value);
 }
 
-void toLogical(xy_pos_t& raw) {
-	MotionModule::getInstance().toLogical(raw);
+Vector2f32 toLogical(const Vector2f32& raw) {
+	return MotionModule::getInstance().toLogical(raw);
 }
 
-void toLogical(xyz_pos_t& raw) {
-	MotionModule::getInstance().toLogical(raw);
+Vector3f32 toLogical(const Vector3f32& raw) {
+	return MotionModule::getInstance().toLogical(raw);
 }
 
-void toNative(xy_pos_t& raw) {
-	MotionModule::getInstance().toNative(raw);
+Vector4f32 toLogical(const Vector4f32& raw) {
+	return  MotionModule::getInstance().toLogical(raw);
 }
 
-void toNative(xyz_pos_t& raw) {
-	MotionModule::getInstance().toNative(raw);
+Vector5f32 toLogical(const Vector5f32& raw) {
+	return MotionModule::getInstance().toLogical(raw);
+}
+
+Vector6f32 toLogical(const Vector6f32& raw) {
+	return MotionModule::getInstance().toLogical(raw);
+}
+
+Vector2f32 toNative(const Vector2f32& raw) {
+	return MotionModule::getInstance().toNative(raw);
+}
+
+Vector3f32 toNative(const Vector3f32& raw) {
+	return MotionModule::getInstance().toNative(raw);
+}
+
+Vector4f32 toNative(const Vector4f32& raw) {
+	return MotionModule::getInstance().toNative(raw);
+}
+
+Vector5f32 toNative(const Vector5f32& raw) {
+	return MotionModule::getInstance().toNative(raw);
+}
+
+Vector6f32 toNative(const Vector6f32& raw) {
+	return MotionModule::getInstance().toNative(raw);
 }

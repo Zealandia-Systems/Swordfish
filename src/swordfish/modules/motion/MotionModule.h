@@ -8,11 +8,13 @@
 #pragma once
 
 #include <limits>
+#include <optional>
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
 #include <swordfish/macros.h>
+#include <swordfish/math.h>
 #include <swordfish/types.h>
 #include <swordfish/Module.h>
 
@@ -25,6 +27,7 @@
 
 #include "CoordinateSystem.h"
 #include "CoordinateSystemTable.h"
+#include "Feedrate.h"
 #include "Limits.h"
 #include "NotHomedException.h"
 
@@ -35,21 +38,14 @@ namespace swordfish::estop {
 } // namespace swordfish::estop
 
 namespace swordfish::motion {
-	enum class AxisSelector {
-		None = 0,
-		X = 1 << 0,
-		Y = 1 << 1,
-		Z = 1 << 2,
-		All = X | Y | Z,
-		__size__ = 3
-	};
+	using namespace swordfish::math;
 
 	struct Movement {
-		float32_t x = NaN;
-		float32_t y = NaN;
-		float32_t z = NaN;
-		float32_t feedRate = NaN;
-		utils::Flags<AxisSelector> relativeAxes = AxisSelector::None;
+		f32 x = NaN;
+		f32 y = NaN;
+		f32 z = NaN;
+		std::optional<FeedRate> feed_rate = std::nullopt;
+		utils::Flags<AxisSelector> relative_axes = AxisSelector::None;
 		float32_t accel_mm_s2 = NaN;
 		swordfish::status::MachineState state;
 	};
@@ -82,10 +78,10 @@ namespace swordfish::motion {
 		CoordinateSystem* _toolChangeCoordinateSystem = nullptr; // G59.8
 		CoordinateSystem* _toolCoordinateSystem = nullptr; // G59.9
 
-		Eigen::Vector3f _offset;
-		Eigen::Vector3f _rotation;
-		Eigen::Matrix4f _nativeTransform;
-		Eigen::Matrix4f _logicalTransform;
+		Vector3f32 _offset;
+		Vector3f32 _rotation;
+		Matrix4f32 _nativeTransform;
+		Matrix4f32 _logicalTransform;
 
 		virtual core::Pack& getPack() override;
 
@@ -161,124 +157,110 @@ namespace swordfish::motion {
 
 		void synchronize();
 
-		FORCE_INLINE float32_t toLogical(AxisEnum axis, float32_t value) {
-			return value + _offset(axis);
+		FORCE_INLINE float32_t toLogical(Axis axis, f32 value) {
+			if (axis.is_linear()) {
+				return value + _offset[axis];
+			} else {
+				return value + _rotation[axis - 3];
+			}
 		}
-		FORCE_INLINE float32_t toNative(AxisEnum axis, float32_t value) {
-			return value - _offset(axis);
-		}
-
-		FORCE_INLINE void toLogical(xy_pos_t& raw) {
-			raw.x += _offset(X);
-			raw.y += _offset(Y);
-		}
-		FORCE_INLINE void toLogical(xyz_pos_t& raw) {
-			raw.x += _offset(X);
-			raw.y += _offset(Y);
-			raw.z += _offset(Z);
-		}
-		FORCE_INLINE Eigen::Vector2f toLogical(Eigen::Vector2f& raw) {
-			return { raw(X) += _offset(X), raw(Y) += _offset(Y) };
-		}
-		FORCE_INLINE Eigen::Vector3f toLogical(Eigen::Vector3f& raw) {
-			return { raw(X) += _offset(X), raw(Y) += _offset(Y), raw(Z) += _offset(Z) };
+		FORCE_INLINE float32_t toNative(Axis axis, f32 value) {
+			if (axis.is_linear()) {
+				return value - _offset[axis];
+			} else {
+				return value - _rotation[axis - 3];
+			}
 		}
 
-		FORCE_INLINE void toNative(xy_pos_t& raw) {
-			raw.x -= _offset(X);
-			raw.y -= _offset(Y);
-		}
-		FORCE_INLINE void toNative(xyz_pos_t& raw) {
-			raw.x -= _offset(X);
-			raw.y -= _offset(Y);
-			raw.z -= _offset(Z);
-		}
-		FORCE_INLINE Eigen::Vector2f toNative(Eigen::Vector2f& raw) {
-			return { raw(X) -= _offset(X), raw(Y) -= _offset(Y) };
-		}
-		FORCE_INLINE Eigen::Vector3f toNative(Eigen::Vector3f& raw) {
-			return { raw(X) -= _offset(X), raw(Y) -= _offset(Y), raw(Z) -= _offset(Z) };
+		FORCE_INLINE Vector2f32 toLogical(const Vector2f32& raw) {
+			return {
+				raw.x() + _offset.x(),
+				raw.y() + _offset.y()
+			};
 		}
 
-		/*
-		FORCE_INLINE float32_t toLogical(AxisEnum axis, float32_t value) {
-		  return value + _offset(axis);
+		FORCE_INLINE Vector3f32 toLogical(const Vector3f32& raw) {
+			return {
+				raw.x() + _offset.x(),
+				raw.y() + _offset.y(),
+				raw.z() + _offset.z()
+			};
 		}
 
-		FORCE_INLINE float32_t toNative(AxisEnum axis, float32_t value) {
-		  return value - _offset(axis);
+		FORCE_INLINE Vector4f32 toLogical(const Vector4f32& raw) {
+			return {
+				raw.x() + _offset.x(),
+				raw.y() + _offset.y(),
+				raw.z() + _offset.z(),
+				raw.a() + _rotation.x()
+			};
 		}
 
-		FORCE_INLINE void toLogical(xy_pos_t &raw) {
-		  Eigen::Vector4f v = { raw.x, raw.y, 0, 1 };
-
-		  auto r = _logicalTransform * v;
-
-		  raw.x = r(X);
-		  raw.y = r(Y);
+		FORCE_INLINE Vector5f32 toLogical(const Vector5f32& raw) {
+			return {
+				raw.x() + _offset.x(),
+				raw.y() + _offset.y(),
+				raw.z() + _offset.z(),
+				raw.a() + _rotation.x(),
+				raw.b() + _rotation.y()
+			};
 		}
 
-		FORCE_INLINE void toLogical(xyz_pos_t &raw) {
-		  Eigen::Vector4f v = { raw.x, raw.y, raw.z, 1 };
-
-		  auto r = _logicalTransform * v;
-
-		  raw.x = r(X);
-		  raw.y = r(Y);
-		  raw.z = r(Z);
+		FORCE_INLINE Vector6f32 toLogical(const Vector6f32& raw) {
+			return {
+				raw.x() + _offset.x(),
+				raw.y() + _offset.y(),
+				raw.z() + _offset.z(),
+				raw.a() + _rotation.x(),
+				raw.b() + _rotation.y(),
+				raw.c() + _rotation.z()
+			};
 		}
 
-		FORCE_INLINE Eigen::Vector2f toLogical(Eigen::Vector2f& raw) {
-		  Eigen::Vector4f v = { raw(X), raw(Y), 0, 1 };
-
-		  auto r = _logicalTransform * v;
-
-		  return { r(X), r(Y) };
+FORCE_INLINE Vector2f32 toNative(const Vector2f32& raw) {
+			return {
+				raw.x() - _offset.x(),
+				raw.y() - _offset.y()
+			};
 		}
 
-		FORCE_INLINE Eigen::Vector3f toLogical(Eigen::Vector3f& raw) {
-		  Eigen::Vector4f v = { raw(X), raw(Y), raw(Z), 1 };
-
-		  auto r = _logicalTransform * v;
-
-		  return { r(X), r(Y), r(Z) };
+		FORCE_INLINE Vector3f32 toNative(const Vector3f32& raw) {
+			return {
+				raw.x() - _offset.x(),
+				raw.y() - _offset.y(),
+				raw.z() - _offset.z()
+			};
 		}
 
-		FORCE_INLINE void toNative(xy_pos_t &raw) {
-		  Eigen::Vector4f v = { raw.x, raw.y, 0, 1 };
-
-		  auto r = _nativeTransform * v;
-
-		  raw.x = r(X);
-		  raw.y = r(Y);
+		FORCE_INLINE Vector4f32 toNative(const Vector4f32& raw) {
+			return {
+				raw.x() - _offset.x(),
+				raw.y() - _offset.y(),
+				raw.z() - _offset.z(),
+				raw.a() - _rotation.x()
+			};
 		}
 
-		FORCE_INLINE void toNative(xyz_pos_t &raw) {
-		  Eigen::Vector4f v = { raw.x, raw.y, raw.z, 1 };
-
-		  auto r = _nativeTransform * v;
-
-		  raw.x = r(X);
-		  raw.y = r(Y);
-		  raw.z = r(Z);
+		FORCE_INLINE Vector5f32 toNative(const Vector5f32& raw) {
+			return {
+				raw.x() - _offset.x(),
+				raw.y() - _offset.y(),
+				raw.z() - _offset.z(),
+				raw.a() - _rotation.x(),
+				raw.b() - _rotation.y()
+			};
 		}
 
-		FORCE_INLINE Eigen::Vector2f toNative(Eigen::Vector2f& raw) {
-		  Eigen::Vector4f v = { raw(X), raw(Y), 0, 1 };
-
-		  auto r = _nativeTransform * v;
-
-		  return { r(X), r(Y) };
+		FORCE_INLINE Vector6f32 toNative(const Vector6f32& raw) {
+			return {
+				raw.x() - _offset.x(),
+				raw.y() - _offset.y(),
+				raw.z() - _offset.z(),
+				raw.a() - _rotation.x(),
+				raw.b() - _rotation.y(),
+				raw.c() - _rotation.z()
+			};
 		}
-
-		FORCE_INLINE Eigen::Vector3f toNative(Eigen::Vector3f& raw) {
-		  Eigen::Vector4f v = { raw(X), raw(Y), raw(Z), 1 };
-
-		  auto r = _nativeTransform * v;
-
-		  return { r(X), r(Y), r(Z) };
-		}
-		*/
 
 		static MotionModule& getInstance(core::Object* parent = nullptr);
 	};

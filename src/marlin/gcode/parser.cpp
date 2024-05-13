@@ -26,16 +26,18 @@
 
 #include "parser.h"
 
+#include <swordfish/Controller.h>
+
+using namespace swordfish::motion;
+
 #include "../MarlinCore.h"
 
 // Must be declared for allocation and to satisfy the linker
 // Zero values need no initialization.
 
-bool GCodeParser::volumetric_enabled;
-
-#if ENABLED(INCH_MODE_SUPPORT)
-float GCodeParser::linear_unit_factor, GCodeParser::volumetric_unit_factor;
-#endif
+f32 GCodeParser::linear_unit_factor;
+f32 GCodeParser::radial_unit_factor;
+FeedRateType GCodeParser::feedrate_type;
 
 #if ENABLED(TEMPERATURE_UNITS_SUPPORT)
 TempUnit GCodeParser::input_temp_units = TEMPUNIT_C;

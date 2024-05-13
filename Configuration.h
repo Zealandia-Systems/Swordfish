@@ -1166,32 +1166,33 @@
 #define X_ENABLE_ON               1
 #define Y_ENABLE_ON               1
 #define Z_ENABLE_ON               1
-#define E_ENABLE_ON               0 // For all extruders
+#define A_ENABLE_ON               1
 
 // Disable axis steppers immediately when they're not being stepped.
 // WARNING: When motors turn off there is a chance of losing position accuracy!
 #define DISABLE_X                 false
 #define DISABLE_Y                 false
 #define DISABLE_Z                 false
+#define DISABLE_A                 false
 
 // Turn off the display blinking that warns about possible accuracy reduction
 // #define DISABLE_REDUCED_ACCURACY_WARNING
 
 // @section extruder
 
-#define DISABLE_E                 false // Disable the extruder when not stepping
 #define DISABLE_INACTIVE_EXTRUDER // Keep only the active extruder enabled
 
 // @section machine
 
 // Invert the stepper direction. Change (or reverse the motor connector) if an axis goes the wrong way.
 #define INVERT_X_DIR              false
-#if MACHINE_TYPE == 5
+#if MACHINE_TYPE == 5 || MACHINE_TYPE == 6 || MACHINE_TYPE == 7 || MACHINE_TYPE == 8 || MACHINE_TYPE == 9
 #define INVERT_Y_DIR              false
 #else
 #define INVERT_Y_DIR              true
 #endif
 #define INVERT_Z_DIR              true
+#define INVERT_A_DIR              false
 
 // @section extruder
 
@@ -1289,7 +1290,7 @@
 #define Y_MIN_POS 0
 #if MACHINE_TYPE == 1 || MACHINE_TYPE == 2 || MACHINE_TYPE == 3 || MACHINE_TYPE == 4
 #define Z_MIN_POS -155
-#elif MACHINE_TYPE == 5
+#elif MACHINE_TYPE == 5 || MACHINE_TYPE == 6 || MACHINE_TYPE == 7 || MACHINE_TYPE == 8 || MACHINE_TYPE == 9
 #define Z_MIN_POS -200
 #endif
 #define X_MAX_POS X_BED_SIZE

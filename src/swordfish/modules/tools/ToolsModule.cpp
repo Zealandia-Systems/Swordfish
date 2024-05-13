@@ -29,7 +29,7 @@
 
 #include "ToolsModule.h"
 
-extern bool run_probe(AxisEnum axis, EndstopEnum endstop, float distance, float retract);
+extern bool run_probe(Axis axis, EndstopValue endstop, float distance, float retract);
 
 namespace swordfish::tools {
 	using namespace Eigen;
@@ -346,9 +346,9 @@ start:
 		motionModule.setActiveCoordinateSystem(mcs);
 		motionModule.rapidMove({ .z = 0 });
 
-		auto nativeClearanceX = motionModule.toNative(X_AXIS, CaddyClearanceX);
+		auto nativeClearanceX = motionModule.toNative(Axis::X(), CaddyClearanceX);
 
-		if (current_position.x < nativeClearanceX) {
+		if (current_position.x() < nativeClearanceX) {
 			motionModule.setActiveCoordinateSystem(tcs);
 			motionModule.rapidMove({ .x = CaddyClearanceX });
 		}
@@ -402,7 +402,7 @@ start:
 		estopModule.throwIfTriggered();
 
 		// Activate the tool offset
-		motionModule.setToolOffset({ .x = 0, .y = 0, .z = offsetZ });
+		motionModule.setToolOffset({ 0, 0, offsetZ });
 
 		motionModule.setActiveCoordinateSystem(oldWCS);
 
@@ -548,22 +548,22 @@ start:
 		// Run the tool probe
 		remember_feedrate_scaling_off();
 
-		feedrate_mm_s = homing_feedrate(Z_AXIS) * 0.3;
+		feedrate_mm_s = homing_feedrate(Axis::Z()) * 0.3;
 
-		const auto delta = -abs(home_dir(Z_AXIS) > 0 ? Z_MAX_POS - Z_MIN_POS : Z_MIN_POS - Z_MAX_POS);
+		const auto delta = -abs(home_dir(Axis::Z()) > 0 ? Z_MAX_POS - Z_MIN_POS : Z_MIN_POS - Z_MAX_POS);
 
 		endstops.enable_tool_probe(true);
 
-		run_probe(Z_AXIS, TOOL_PROBE, delta, 5);
+		run_probe(Axis::Z(), TOOL_PROBE, delta, 5);
 
 		endstops.enable_tool_probe(false);
 
 		restore_feedrate_and_scaling();
 
-		debug()("z: ", current_position[Z_AXIS]);
+		debug()("z: ", current_position.z());
 
 		// auto length = motionModule.toNative(Z_AXIS, current_position[Z_AXIS]);
-		auto offsetZ = -homeOffset[Z_AXIS] - workOffset[Z_AXIS] - current_position[Z_AXIS];
+		auto offsetZ = -homeOffset.z() - workOffset.z() - current_position.z();
 		// auto offsetZ = motionModule.toLogical(Z_AXIS, current_position[Z_AXIS]);
 
 		debug()("tool offsetZ: ", offsetZ);
@@ -576,7 +576,7 @@ start:
 			auto& limits = motionModule.getLimits();
 			auto& minObj = limits.getMin();
 
-			motionModule.move({ .x = minObj.x(), .feedRate = homing_feedrate(X_AXIS) });
+			motionModule.move({ .x = minObj.x(), .feed_rate = homing_feedrate(Axis::X()) });
 		}
 
 		return offsetZ;
@@ -623,7 +623,7 @@ start:
 
 			_flags[HomingFlag] = true;
 
-			motionModule.move({ .x = 100, .feedRate = homing_feedrate(X_AXIS), .relativeAxes = AxisSelector::All, .state = MachineState::Homing });
+			motionModule.move({ .x = 100, .feed_rate = homing_feedrate(Axis::X()), .relative_axes = AxisSelector::All, .state = MachineState::Homing });
 
 			planner.synchronize();
 
@@ -662,16 +662,16 @@ start:
 			caddyClearanceX = CaddyDustShoeClearanceX;
 		}
 
-		auto nativeClearanceX = motionModule.toNative(X_AXIS, caddyClearanceX);
+		auto nativeClearanceX = motionModule.toNative(Axis::X(), caddyClearanceX);
 
-		if (current_position.x >= nativeClearanceX) {
-			motionModule.rapidMove({ .x = caddyClearanceX, .y = target(Y) });
+		if (current_position.x() >= nativeClearanceX) {
+			motionModule.rapidMove({ .x = caddyClearanceX, .y = target.y() });
 			motionModule.synchronize();
 		} else {
 			motionModule.rapidMove({ .x = caddyClearanceX });
 			motionModule.synchronize();
 
-			motionModule.rapidMove({ .y = target(Y) });
+			motionModule.rapidMove({ .y = target.y() });
 			motionModule.synchronize();
 		}
 
@@ -683,15 +683,15 @@ start:
 
 		// move to the tool clip clearance position on the X axis, this is slightly closer to the pocket than
 		// the caddy clearance position.
-		motionModule.move({ .x = target(X) + ToolClipClearanceX, .feedRate = homing_feedrate(X_AXIS) });
+		motionModule.move({ .x = target.x() + ToolClipClearanceX, .feed_rate = homing_feedrate(Axis::X()) });
 		motionModule.synchronize();
 
 		// move z to pocket offset.z
-		motionModule.move({ .z = target(Z), .feedRate = homing_feedrate(Z_AXIS) });
+		motionModule.move({ .z = target.z(), .feed_rate = homing_feedrate(Axis::Z()) });
 		motionModule.synchronize();
 
 		// move to x position of pocket offset
-		motionModule.move({ .x = target(X), .feedRate = homing_feedrate(X_AXIS) });
+		motionModule.move({ .x = target.x(), .feed_rate = homing_feedrate(Axis::X()) });
 		motionModule.synchronize();
 
 		unlock();
@@ -742,22 +742,22 @@ start:
 
 			Vector3f target = sourcePocket->getOffset();
 
-			debug()("target -> x: ", target(X), ", y: ", target(Y));
+			debug()("target -> x: ", target.x(), ", y: ", target.y());
 
 			// move to x y of pocket offset
-			motionModule.rapidMove({ .x = target(X), .y = target(Y) });
+			motionModule.rapidMove({ .x = target.x(), .y = target.y() });
 			motionModule.synchronize();
 
 			unlock();
 
 			// move z to pocket offset.z
-			motionModule.move({ .z = target(Z), .feedRate = homing_feedrate(Z_AXIS) });
+			motionModule.move({ .z = target.z(), .feed_rate = homing_feedrate(Axis::Z()) });
 			motionModule.synchronize();
 
 			lock();
 
 			// remove tool from pocket
-			motionModule.move({ .x = target(X) + ToolClipClearanceX, .feedRate = homing_feedrate(X_AXIS) });
+			motionModule.move({ .x = target.x() + ToolClipClearanceX, .feed_rate = homing_feedrate(Axis::X()) });
 			motionModule.synchronize();
 
 			// move z to top

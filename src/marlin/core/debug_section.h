@@ -21,6 +21,8 @@
  */
 #pragma once
 
+#include <swordfish/math.h>
+
 #include "serial.h"
 #include "../module/motion.h"
 

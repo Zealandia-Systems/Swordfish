@@ -33,6 +33,9 @@
 #include <string_view>
 #include <stdlib.h>
 
+#include <swordfish/types.h>
+#include <swordfish/modules/motion/FeedRate.h>
+
 #if ENABLED(DEBUG_GCODE_PARSER)
 #	include "../libs/hex_print.h"
 #endif
@@ -75,15 +78,9 @@ private:
 public:
 	// Global states for GCode-level units features
 
-	static bool volumetric_enabled;
-
-#if ENABLED(INCH_MODE_SUPPORT)
-	static float linear_unit_factor, volumetric_unit_factor;
-#endif
-
-#if ENABLED(TEMPERATURE_UNITS_SUPPORT)
-	static TempUnit input_temp_units;
-#endif
+	static f32 linear_unit_factor;
+	static f32 radial_unit_factor;
+	static swordfish::motion::FeedRateType feedrate_type;
 
 	// Command line state
 	static char* command_ptr; // The command, so it can be echoed
@@ -392,17 +389,16 @@ public:
 
 	// Units modes: Inches, Fahrenheit, Kelvin
 
-#if ENABLED(INCH_MODE_SUPPORT)
 	static inline float mm_to_linear_unit(const float mm) {
 		return mm / linear_unit_factor;
-	}
-	static inline float mm_to_volumetric_unit(const float mm) {
-		return mm / (volumetric_enabled ? volumetric_unit_factor : linear_unit_factor);
 	}
 
 	// Init linear units by constructor
 	GCodeParser() {
 		set_input_linear_units(LINEARUNIT_MM);
+		set_feed_rate_type(swordfish::motion::FeedRateType::MillimetersPerSecond);
+
+		radial_unit_factor = 1.0f;
 	}
 
 	static inline void set_input_linear_units(const LinearUnit units) {
@@ -415,43 +411,31 @@ public:
 				linear_unit_factor = 25.4f;
 				break;
 		}
-		volumetric_unit_factor = POW(linear_unit_factor, 3);
 	}
 
-	static inline float axis_unit_factor(const AxisEnum axis) {
-		return (axis >= E_AXIS && volumetric_enabled ? volumetric_unit_factor : linear_unit_factor);
+	static inline void set_feed_rate_type(const swordfish::motion::FeedRateType type) {
+		feedrate_type = type;
 	}
 
-	static inline float linear_value_to_mm(const float v) {
+	static inline float axis_unit_factor(const Axis axis) {
+		return (axis.is_radial() ? radial_unit_factor : linear_unit_factor);
+	}
+
+	static inline float linear_value_to_mm(const f32 v) {
 		return v * linear_unit_factor;
 	}
-	static inline float axis_value_to_mm(const AxisEnum axis, const float v) {
+
+	static inline f32 radial_value_to_degrees(const f32 v) {
+		return v * radial_unit_factor;
+	}
+
+	static inline float axis_value_to_mm(const Axis axis, const f32 v) {
 		return v * axis_unit_factor(axis);
 	}
-	static inline float per_axis_value(const AxisEnum axis, const float v) {
+
+	static inline float per_axis_value(const Axis axis, const f32 v) {
 		return v / axis_unit_factor(axis);
 	}
-
-#else
-
-	static inline float mm_to_linear_unit(const float mm) {
-		return mm;
-	}
-	static inline float mm_to_volumetric_unit(const float mm) {
-		return mm;
-	}
-
-	static inline float linear_value_to_mm(const float v) {
-		return v;
-	}
-	static inline float axis_value_to_mm(const AxisEnum, const float v) {
-		return v;
-	}
-	static inline float per_axis_value(const AxisEnum, const float v) {
-		return v;
-	}
-
-#endif
 
 	static inline bool using_inch_units() {
 		return mm_to_linear_unit(1.0f) != 1.0f;
@@ -459,90 +443,35 @@ public:
 
 #define IN_TO_MM(I)        ((I) *25.4f)
 #define MM_TO_IN(M)        ((M) / 25.4f)
-#define LINEAR_UNIT(V)     parser.mm_to_linear_unit(V)
-#define VOLUMETRIC_UNIT(V) parser.mm_to_volumetric_unit(V)
 
 	static inline float value_linear_units() {
 		return linear_value_to_mm(value_float());
 	}
-	static inline float value_axis_units(const AxisEnum axis) {
+
+	static inline float value_radial_units() {
+		return radial_value_to_degrees(value_float());
+	}
+
+	static inline float value_axis_units(const Axis axis) {
 		return axis_value_to_mm(axis, value_float());
 	}
-	static inline float value_per_axis_units(const AxisEnum axis) {
+	static inline float value_per_axis_units(const Axis axis) {
 		return per_axis_value(axis, value_float());
 	}
 
-#if ENABLED(TEMPERATURE_UNITS_SUPPORT)
 
-	static inline void set_input_temp_units(const TempUnit units) {
-		input_temp_units = units;
-	}
 
-#	if HAS_LCD_MENU && DISABLED(DISABLE_M503)
+	static inline swordfish::motion::FeedRate value_feedrate() {
+		switch (feedrate_type) {
+			case swordfish::motion::FeedRateType::InverseTime: {
+				return swordfish::motion::FeedRate::InverseTime(value_float());
+			}
 
-	static inline char temp_units_code() {
-		return input_temp_units == TEMPUNIT_K ? 'K' : input_temp_units == TEMPUNIT_F ? 'F'
-		                                                                             : 'C';
-	}
-	static inline PGM_P temp_units_name() {
-		return input_temp_units == TEMPUNIT_K ? PSTR("Kelvin") : input_temp_units == TEMPUNIT_F ? PSTR("Fahrenheit")
-		                                                                                        : PSTR("Celsius");
-	}
-	static inline float to_temp_units(const float& f) {
-		switch (input_temp_units) {
-			case TEMPUNIT_F:
-				return f * 0.5555555556f + 32;
-			case TEMPUNIT_K:
-				return f + 273.15f;
-			case TEMPUNIT_C:
 			default:
-				return f;
+			case swordfish::motion::FeedRateType::MillimetersPerSecond: {
+				return swordfish::motion::FeedRate::MillimetersPerSecond(MMM_TO_MMS(value_linear_units()));
+			}
 		}
-	}
-
-#	endif // HAS_LCD_MENU && !DISABLE_M503
-
-	static inline float value_celsius() {
-		const float f = value_float();
-		switch (input_temp_units) {
-			case TEMPUNIT_F:
-				return (f - 32) * 0.5555555556f;
-			case TEMPUNIT_K:
-				return f - 273.15f;
-			case TEMPUNIT_C:
-			default:
-				return f;
-		}
-	}
-
-	static inline float value_celsius_diff() {
-		switch (input_temp_units) {
-			case TEMPUNIT_F:
-				return value_float() * 0.5555555556f;
-			case TEMPUNIT_C:
-			case TEMPUNIT_K:
-			default:
-				return value_float();
-		}
-	}
-
-#	define TEMP_UNIT(N) parser.to_temp_units(N)
-
-#else // !TEMPERATURE_UNITS_SUPPORT
-
-	static inline float value_celsius() {
-		return value_float();
-	}
-	static inline float value_celsius_diff() {
-		return value_float();
-	}
-
-#	define TEMP_UNIT(N) (N)
-
-#endif // !TEMPERATURE_UNITS_SUPPORT
-
-	static inline feedRate_t value_feedrate() {
-		return MMM_TO_MMS(value_linear_units());
 	}
 
 	void unknown_command_warning();
@@ -574,9 +503,6 @@ public:
 	}
 	static inline float linearval(const char c, const float dval = 0) {
 		return seenval(c) ? value_linear_units() : dval;
-	}
-	static inline float celsiusval(const char c, const float dval = 0) {
-		return seenval(c) ? value_celsius() : dval;
 	}
 
 	static inline uint8_t* hex_adr_val(const char c, uint8_t* const dval = nullptr) {
