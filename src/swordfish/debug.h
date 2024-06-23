@@ -14,7 +14,7 @@
 #include <swordfish/io/Writer.h>
 
 namespace swordfish {
-#ifdef DEBUG
+#if defined(DEBUG)
 	extern io::Writer out;
 
 	struct debug {

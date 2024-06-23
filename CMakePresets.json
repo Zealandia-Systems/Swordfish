@@ -32,7 +32,8 @@
 			"displayName": "Debug Proteus P1",
 			"cacheVariables": {
 				"SWORDFISH_MACHINE_TYPE": "1",
-				"SWORDFISH_MACHINE_NAME": "Proteus P1"
+				"SWORDFISH_MACHINE_NAME": "Proteus P1",
+				"SWORDFISH_INVERT_ENDSTOPS": true
 			}
 		},
 		{
@@ -41,7 +42,8 @@
 			"displayName": "Debug Proteus P2",
 			"cacheVariables": {
 				"SWORDFISH_MACHINE_TYPE": "2",
-				"SWORDFISH_MACHINE_NAME": "Proteus P2"
+				"SWORDFISH_MACHINE_NAME": "Proteus P2",
+				"SWORDFISH_INVERT_ENDSTOPS": true
 			}
 		},
 		{
@@ -50,7 +52,8 @@
 			"displayName": "Debug Proteus P3",
 			"cacheVariables": {
 				"SWORDFISH_MACHINE_TYPE": "3",
-				"SWORDFISH_MACHINE_NAME": "Proteus P3"
+				"SWORDFISH_MACHINE_NAME": "Proteus P3",
+				"SWORDFISH_INVERT_ENDSTOPS": true
 			}
 		},
 		{
@@ -59,7 +62,8 @@
 			"displayName": "Debug Proteus P4",
 			"cacheVariables": {
 				"SWORDFISH_MACHINE_TYPE": "4",
-				"SWORDFISH_MACHINE_NAME": "Proteus P4"
+				"SWORDFISH_MACHINE_NAME": "Proteus P4",
+				"SWORDFISH_INVERT_ENDSTOPS": true
 			}
 		},
 		{
@@ -68,7 +72,8 @@
 			"displayName": "Debug Discovery GR 0303",
 			"cacheVariables": {
 				"SWORDFISH_MACHINE_TYPE": "5",
-				"SWORDFISH_MACHINE_NAME": "Discovery GR 0303"
+				"SWORDFISH_MACHINE_NAME": "Discovery GR 0303",
+				"SWORDFISH_INVERT_ENDSTOPS": false
 			}
 		},
 		{
@@ -77,7 +82,8 @@
 			"displayName": "Debug Discovery GR 0603",
 			"cacheVariables": {
 				"SWORDFISH_MACHINE_TYPE": "6",
-				"SWORDFISH_MACHINE_NAME": "Discovery GR 0603"
+				"SWORDFISH_MACHINE_NAME": "Discovery GR 0603",
+				"SWORDFISH_INVERT_ENDSTOPS": false
 			}
 		},
 		{
@@ -86,7 +92,8 @@
 			"displayName": "Debug Discovery GR 0606",
 			"cacheVariables": {
 				"SWORDFISH_MACHINE_TYPE": "7",
-				"SWORDFISH_MACHINE_NAME": "Discovery GR 0606"
+				"SWORDFISH_MACHINE_NAME": "Discovery GR 0606",
+				"SWORDFISH_INVERT_ENDSTOPS": false
 			}
 		},
 		{
@@ -95,7 +102,8 @@
 			"displayName": "Debug Discovery GR 1206",
 			"cacheVariables": {
 				"SWORDFISH_MACHINE_TYPE": "8",
-				"SWORDFISH_MACHINE_NAME": "Discovery GR 1206"
+				"SWORDFISH_MACHINE_NAME": "Discovery GR 1206",
+				"SWORDFISH_INVERT_ENDSTOPS": false
 			}
 		},
 		{
@@ -104,7 +112,48 @@
 			"displayName": "Debug Discovery GR 1212",
 			"cacheVariables": {
 				"SWORDFISH_MACHINE_TYPE": "9",
-				"SWORDFISH_MACHINE_NAME": "Discovery GR 1212"
+				"SWORDFISH_MACHINE_NAME": "Discovery GR 1212",
+				"SWORDFISH_INVERT_ENDSTOPS": false
+			}
+		},
+		{
+			"name": "Debug Venture GR 1313",
+			"inherits": "Debug",
+			"displayName": "Debug Venture GR 1313",
+			"cacheVariables": {
+				"SWORDFISH_MACHINE_TYPE": "10",
+				"SWORDFISH_MACHINE_NAME": "Venture GR 1313",
+				"SWORDFISH_INVERT_ENDSTOPS": false
+			}
+		},
+		{
+			"name": "Debug Venture GR 1325",
+			"inherits": "Debug",
+			"displayName": "Debug Venture GR 1325",
+			"cacheVariables": {
+				"SWORDFISH_MACHINE_TYPE": "11",
+				"SWORDFISH_MACHINE_NAME": "Venture GR 1325",
+				"SWORDFISH_INVERT_ENDSTOPS": false
+			}
+		},
+		{
+			"name": "Debug Venture GR 1336",
+			"inherits": "Debug",
+			"displayName": "Debug Venture GR 1336",
+			"cacheVariables": {
+				"SWORDFISH_MACHINE_TYPE": "12",
+				"SWORDFISH_MACHINE_NAME": "Venture GR 1336",
+				"SWORDFISH_INVERT_ENDSTOPS": false
+			}
+		},
+		{
+			"name": "Debug Venture GR 1836",
+			"inherits": "Debug",
+			"displayName": "Debug Venture GR 1836",
+			"cacheVariables": {
+				"SWORDFISH_MACHINE_TYPE": "13",
+				"SWORDFISH_MACHINE_NAME": "Venture GR 1836",
+				"SWORDFISH_INVERT_ENDSTOPS": false
 			}
 		},
 		{
@@ -123,7 +172,8 @@
 			"displayName": "Release Proteus P1",
 			"cacheVariables": {
 				"SWORDFISH_MACHINE_TYPE": "1",
-				"SWORDFISH_MACHINE_NAME": "Proteus P1"
+				"SWORDFISH_MACHINE_NAME": "Proteus P1",
+				"SWORDFISH_INVERT_ENDSTOPS": true
 			}
 		},
 		{
@@ -132,7 +182,8 @@
 			"displayName": "Release Proteus P2",
 			"cacheVariables": {
 				"SWORDFISH_MACHINE_TYPE": "2",
-				"SWORDFISH_MACHINE_NAME": "Proteus P2"
+				"SWORDFISH_MACHINE_NAME": "Proteus P2",
+				"SWORDFISH_INVERT_ENDSTOPS": true
 			}
 		},
 		{
@@ -141,7 +192,8 @@
 			"displayName": "Release Proteus P3",
 			"cacheVariables": {
 				"SWORDFISH_MACHINE_TYPE": "3",
-				"SWORDFISH_MACHINE_NAME": "Proteus P3"
+				"SWORDFISH_MACHINE_NAME": "Proteus P3",
+				"SWORDFISH_INVERT_ENDSTOPS": true
 			}
 		},
 		{
@@ -150,7 +202,8 @@
 			"displayName": "Release Proteus P4",
 			"cacheVariables": {
 				"SWORDFISH_MACHINE_TYPE": "4",
-				"SWORDFISH_MACHINE_NAME": "Proteus P4"
+				"SWORDFISH_MACHINE_NAME": "Proteus P4",
+				"SWORDFISH_INVERT_ENDSTOPS": true
 			}
 		},
 		{
@@ -159,7 +212,8 @@
 			"displayName": "Release Discovery GR 0303",
 			"cacheVariables": {
 				"SWORDFISH_MACHINE_TYPE": "5",
-				"SWORDFISH_MACHINE_NAME": "Discovery GR 0303"
+				"SWORDFISH_MACHINE_NAME": "Discovery GR 0303",
+				"SWORDFISH_INVERT_ENDSTOPS": false
 			}
 		},
 		{
@@ -168,7 +222,8 @@
 			"displayName": "Release Discovery GR 0603",
 			"cacheVariables": {
 				"SWORDFISH_MACHINE_TYPE": "6",
-				"SWORDFISH_MACHINE_NAME": "Discovery GR 0603"
+				"SWORDFISH_MACHINE_NAME": "Discovery GR 0603",
+				"SWORDFISH_INVERT_ENDSTOPS": false
 			}
 		},
 		{
@@ -177,7 +232,8 @@
 			"displayName": "Release Discovery GR 0606",
 			"cacheVariables": {
 				"SWORDFISH_MACHINE_TYPE": "7",
-				"SWORDFISH_MACHINE_NAME": "Discovery GR 0606"
+				"SWORDFISH_MACHINE_NAME": "Discovery GR 0606",
+				"SWORDFISH_INVERT_ENDSTOPS": false
 			}
 		},
 		{
@@ -186,7 +242,8 @@
 			"displayName": "Release Discovery GR 1206",
 			"cacheVariables": {
 				"SWORDFISH_MACHINE_TYPE": "8",
-				"SWORDFISH_MACHINE_NAME": "Discovery GR 1206"
+				"SWORDFISH_MACHINE_NAME": "Discovery GR 1206",
+				"SWORDFISH_INVERT_ENDSTOPS": false
 			}
 		},
 		{
@@ -195,7 +252,48 @@
 			"displayName": "Release Discovery GR 1212",
 			"cacheVariables": {
 				"SWORDFISH_MACHINE_TYPE": "9",
-				"SWORDFISH_MACHINE_NAME": "Discovery GR 1212"
+				"SWORDFISH_MACHINE_NAME": "Discovery GR 1212",
+				"SWORDFISH_INVERT_ENDSTOPS": false
+			}
+		},
+		{
+			"name": "Release Venture GR 1313",
+			"inherits": "Release",
+			"displayName": "Release Venture GR 1313",
+			"cacheVariables": {
+				"SWORDFISH_MACHINE_TYPE": "10",
+				"SWORDFISH_MACHINE_NAME": "Venture GR 1313",
+				"SWORDFISH_INVERT_ENDSTOPS": false
+			}
+		},
+		{
+			"name": "Release Venture GR 1325",
+			"inherits": "Release",
+			"displayName": "Release Venture GR 1325",
+			"cacheVariables": {
+				"SWORDFISH_MACHINE_TYPE": "11",
+				"SWORDFISH_MACHINE_NAME": "Venture GR 1325",
+				"SWORDFISH_INVERT_ENDSTOPS": false
+			}
+		},
+		{
+			"name": "Release Venture GR 1336",
+			"inherits": "Release",
+			"displayName": "Release Venture GR 1336",
+			"cacheVariables": {
+				"SWORDFISH_MACHINE_TYPE": "12",
+				"SWORDFISH_MACHINE_NAME": "Venture GR 1336",
+				"SWORDFISH_INVERT_ENDSTOPS": false
+			}
+		},
+		{
+			"name": "Release Venture GR 1836",
+			"inherits": "Release",
+			"displayName": "Release Venture GR 1836",
+			"cacheVariables": {
+				"SWORDFISH_MACHINE_TYPE": "13",
+				"SWORDFISH_MACHINE_NAME": "Venture GR 1836",
+				"SWORDFISH_INVERT_ENDSTOPS": false
 			}
 		}
 	]

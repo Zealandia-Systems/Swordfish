@@ -685,13 +685,13 @@
 #endif
 
 // Mechanical endstop with COM to ground and NC to Signal uses "false" here (most common setup).
-#define X_MIN_ENDSTOP_INVERTING       true // Set to true to invert the logic of the endstop.
-#define Y_MIN_ENDSTOP_INVERTING       true // Set to true to invert the logic of the endstop.
-#define Z_MIN_ENDSTOP_INVERTING       true // Set to true to invert the logic of the endstop.
-#define X_MAX_ENDSTOP_INVERTING       true // Set to true to invert the logic of the endstop.
-#define Y_MAX_ENDSTOP_INVERTING       true // Set to true to invert the logic of the endstop.
-#define Z_MAX_ENDSTOP_INVERTING       true // Set to true to invert the logic of the endstop.
-#define A_MAX_ENDSTOP_INVERTING       true // Set to true to invert the logic of the endstop.
+#define X_MIN_ENDSTOP_INVERTING       INVERT_ENDSTOPS
+#define Y_MIN_ENDSTOP_INVERTING       INVERT_ENDSTOPS
+#define Z_MIN_ENDSTOP_INVERTING       INVERT_ENDSTOPS
+#define X_MAX_ENDSTOP_INVERTING       INVERT_ENDSTOPS
+#define Y_MAX_ENDSTOP_INVERTING       INVERT_ENDSTOPS
+#define Z_MAX_ENDSTOP_INVERTING       INVERT_ENDSTOPS
+#define A_MAX_ENDSTOP_INVERTING       INVERT_ENDSTOPS
 #define Z_MIN_PROBE_ENDSTOP_INVERTING true // Set to true to invert the logic of the probe.
 #define TOOL_PROBE_ENDSTOP_INVERTING  true
 #define WORK_PROBE_ENDSTOP_INVERTING  true
@@ -778,11 +778,17 @@
  * Override with M92
  *                                      X, Y, Z, E0 [, E1 [, E2...]]
  */
+#if MACHINE_TYPE == 10 || MACHINE_TYPE == 11 || MACHINE_TYPE == 12 || MACHINE_TYPE == 13
+#define DEFAULT_AXIS_STEPS_PER_UNIT \
+	{ \
+		320, 320, 320, 400 \
+	}
+#else
 #define DEFAULT_AXIS_STEPS_PER_UNIT \
 	{ \
 		400, 400, 400, 400 \
 	}
-
+#endif
 /**
  * Default Max Feed Rate (mm/s)
  * Override with M203
@@ -1166,32 +1172,33 @@
 #define X_ENABLE_ON               1
 #define Y_ENABLE_ON               1
 #define Z_ENABLE_ON               1
-#define E_ENABLE_ON               0 // For all extruders
+#define A_ENABLE_ON               1
 
 // Disable axis steppers immediately when they're not being stepped.
 // WARNING: When motors turn off there is a chance of losing position accuracy!
 #define DISABLE_X                 false
 #define DISABLE_Y                 false
 #define DISABLE_Z                 false
+#define DISABLE_A                 false
 
 // Turn off the display blinking that warns about possible accuracy reduction
 // #define DISABLE_REDUCED_ACCURACY_WARNING
 
 // @section extruder
 
-#define DISABLE_E                 false // Disable the extruder when not stepping
 #define DISABLE_INACTIVE_EXTRUDER // Keep only the active extruder enabled
 
 // @section machine
 
 // Invert the stepper direction. Change (or reverse the motor connector) if an axis goes the wrong way.
 #define INVERT_X_DIR              false
-#if MACHINE_TYPE == 5
+#if MACHINE_TYPE == 5 || MACHINE_TYPE == 6 || MACHINE_TYPE == 7 || MACHINE_TYPE == 8 || MACHINE_TYPE == 9
 #define INVERT_Y_DIR              false
 #else
 #define INVERT_Y_DIR              true
 #endif
 #define INVERT_Z_DIR              true
+#define INVERT_A_DIR              false
 
 // @section extruder
 
@@ -1276,9 +1283,15 @@
 #define X_HOME_DIR -1
 #define Y_HOME_DIR -1
 #define Z_HOME_DIR 1
+#elif MACHINE_TYPE == 10
+#define X_BED_SIZE 1300
+#define Y_BED_SIZE 1300
+#define X_HOME_DIR -1
+#define Y_HOME_DIR 1
+#define Z_HOME_DIR 1
 #else
-#	define X_BED_SIZE 1355
-#	define Y_BED_SIZE 1330
+#	define X_BED_SIZE 1540
+#	define Y_BED_SIZE 1500
 #define X_HOME_DIR -1
 #define Y_HOME_DIR 1
 #define Z_HOME_DIR 1
@@ -1289,7 +1302,7 @@
 #define Y_MIN_POS 0
 #if MACHINE_TYPE == 1 || MACHINE_TYPE == 2 || MACHINE_TYPE == 3 || MACHINE_TYPE == 4
 #define Z_MIN_POS -155
-#elif MACHINE_TYPE == 5
+#elif MACHINE_TYPE == 5 || MACHINE_TYPE == 6 || MACHINE_TYPE == 7 || MACHINE_TYPE == 8 || MACHINE_TYPE == 9 || MACHINE_TYPE == 10
 #define Z_MIN_POS -200
 #endif
 #define X_MAX_POS X_BED_SIZE
