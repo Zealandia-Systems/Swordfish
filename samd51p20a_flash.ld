@@ -95,18 +95,19 @@ SECTIONS
 		KEEP(*(.eh_frame*))
 	} > FLASH
 
-	.ARM.extab :
+	.ARM.extab : ALIGN(8)
 	{
 		*(.ARM.extab* .gnu.linkonce.armextab.*)
 	} > FLASH
 
-	.ARM.exidx :
+	.ARM.exidx : ALIGN(8)
 	{
 		__exidx_start = .;
 		*(.ARM.exidx* .gnu.linkonce.armexidx.*)
 		__exidx_end = .;
 	} > FLASH
-	
+
+
 	/* To copy multiple ROM to RAM sections,
 	 * uncomment .copy.table section and,
 	 * define __STARTUP_COPY_MULTIPLE in startup_ARMCMx.S */

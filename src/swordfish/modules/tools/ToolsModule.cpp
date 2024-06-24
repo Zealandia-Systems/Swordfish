@@ -25,6 +25,7 @@
 #include <swordfish/io/Writer.h>
 #include <swordfish/modules/estop/EStopException.h>
 #include <swordfish/modules/motion/MotionModule.h>
+#include <swordfish/modules/status/StatusModule.h>
 
 #include "ToolsModule.h"
 
@@ -38,6 +39,7 @@ namespace swordfish::tools {
 	using namespace swordfish::estop;
 	using namespace swordfish::motion;
 	using namespace swordfish::utils;
+	using namespace swordfish::status;
 
 	ToolsModule* ToolsModule::__instance = nullptr;
 
@@ -510,7 +512,7 @@ start:
 					loadTool(*nextTool);
 				}
 			}
-		} catch (EStopException& e) {
+		} catch (Exception& e) {
 		}
 
 		motionModule.setActiveCoordinateSystem(oldWCS);
@@ -621,7 +623,7 @@ start:
 
 			_flags[HomingFlag] = true;
 
-			motionModule.move({ .x = 100, .feedRate = homing_feedrate(X_AXIS), .relativeAxes = AxisSelector::All });
+			motionModule.move({ .x = 100, .feedRate = homing_feedrate(X_AXIS), .relativeAxes = AxisSelector::All, .state = MachineState::Homing });
 
 			planner.synchronize();
 

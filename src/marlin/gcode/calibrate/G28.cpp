@@ -37,6 +37,7 @@
 using namespace swordfish;
 using namespace swordfish::tools;
 using namespace swordfish::motion;
+using namespace swordfish::status;
 
 #if ENABLED(QUICK_HOME)
 
@@ -182,7 +183,6 @@ void GcodeSuite::G28() {
 	auto& toolsModule = ToolsModule::getInstance();
 	auto& motionModule = MotionModule::getInstance();
 
-	KEEPALIVE_STATE(HOMING);
 	DEBUG_SECTION(log_G28, "G28", DEBUGGING(LEVELING));
 	if (DEBUGGING(LEVELING))
 		log_machine_info();
@@ -199,6 +199,8 @@ void GcodeSuite::G28() {
 	}
 
 	planner.synchronize(); // Wait for planner moves to finish!
+
+	TemporaryState temp(MachineState::Homing);
 
 // Disable the leveling matrix before homing
 #if HAS_LEVELING
@@ -232,7 +234,7 @@ void GcodeSuite::G28() {
 		if (homing) {
 			homeaxis(Z_AXIS);
 		} else {
-			do_blocking_move_to_z(home_dir(Z_AXIS) > 0 ? Z_MAX_POS : Z_MIN_POS);
+			do_blocking_move_to_z(MachineState::Homing, home_dir(Z_AXIS) > 0 ? Z_MAX_POS : Z_MIN_POS);
 		}
 	}
 
@@ -246,7 +248,7 @@ void GcodeSuite::G28() {
 		// Raise Z before homing any other axes and z is not already high enough (never lower z)
 		if (DEBUGGING(LEVELING))
 			DEBUG_ECHOLNPAIR("Raise Z (before homing) by ", z_homing_height);
-		do_z_clearance(z_homing_height, axis_is_trusted(Z_AXIS), DISABLED(UNKNOWN_Z_NO_RAISE));
+		do_z_clearance(MachineState::Homing, z_homing_height, axis_is_trusted(Z_AXIS), DISABLED(UNKNOWN_Z_NO_RAISE));
 	}
 
 #if ENABLED(QUICK_HOME)
@@ -291,7 +293,7 @@ void GcodeSuite::G28() {
 		if (homing) {
 			homeaxis(X_AXIS);
 		} else {
-			do_blocking_move_to_x(home_dir(X_AXIS) > 0 ? X_MAX_POS : X_MIN_POS);
+			do_blocking_move_to_x(MachineState::Homing, home_dir(X_AXIS) > 0 ? X_MAX_POS : X_MIN_POS);
 		}
 
 #endif
@@ -302,7 +304,7 @@ void GcodeSuite::G28() {
 		if (homing) {
 			homeaxis(Y_AXIS);
 		} else {
-			do_blocking_move_to_y(home_dir(Y_AXIS) > 0 ? Y_MAX_POS : Y_MIN_POS);
+			do_blocking_move_to_y(MachineState::Homing, home_dir(Y_AXIS) > 0 ? Y_MAX_POS : Y_MIN_POS);
 		}
 	}
 
@@ -340,7 +342,7 @@ void GcodeSuite::G28() {
 
 	if (toolsModule.isAutomatic()) {
 		// move to X min
-		do_blocking_move_to_x(motionModule.getLimits().getMin().x());
+		do_blocking_move_to_x(MachineState::Homing, motionModule.getLimits().getMin().x());
 	}
 
 	report_current_position();

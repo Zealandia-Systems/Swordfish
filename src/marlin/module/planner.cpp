@@ -63,10 +63,11 @@
  */
 
 #include <swordfish/debug.h>
-#include <swordfish/modules/estop/EStopModule.h>
+#include <swordfish/Controller.h>
 
 using namespace swordfish;
 using namespace swordfish::estop;
+using namespace swordfish::status;
 
 #include "planner.h"
 #include "stepper.h"
@@ -1718,6 +1719,7 @@ bool Planner::_buffer_steps(
 #endif
 		const feedRate_t fr_mm_s,
 		const uint8_t extruder,
+		const MachineState machine_state,
 		const float& millimeters /* = 0.0*/,
 		const float32_t accel_mm_s2 /* = 0.0*/
 ) {
@@ -1739,6 +1741,7 @@ bool Planner::_buffer_steps(
 #endif
 					fr_mm_s,
 					extruder,
+					machine_state,
 					millimeters,
 					accel_mm_s2)) {
 		// Movement was not queued, probably because it was too short.
@@ -1786,6 +1789,7 @@ bool Planner::_populate_block(
 #endif
 		feedRate_t fr_mm_s,
 		const uint8_t extruder,
+		const MachineState machine_state,
 		const float& millimeters /* = 0.0*/,
 		float32_t accel_mm_s2 /* = 0.0*/
 ) {
@@ -1878,6 +1882,8 @@ bool Planner::_populate_block(
 #else
 	constexpr uint32_t esteps = 0;
 #endif
+
+	block->machine_state = machine_state;
 
 	// Clear all flags, including the "busy" bit
 	block->flag = 0x00;
@@ -2656,8 +2662,9 @@ bool Planner::buffer_segment(
 		const float& e,
 		const feedRate_t& fr_mm_s,
 		const uint8_t extruder,
+		const MachineState machine_state,
 		const float& millimeters /* = 0.0*/,
-		const float32_t accel_mm_s2 /* = 0.0*/
+		const float32_t accel_mm_s2/* = 0.0*/
 ) {
 
 	// If we are cleaning, do not accept queuing of movements
@@ -2732,6 +2739,7 @@ bool Planner::buffer_segment(
 #endif
 					fr_mm_s,
 					extruder,
+					machine_state,
 					millimeters,
 					accel_mm_s2)) {
 		return false;
@@ -2759,6 +2767,7 @@ bool Planner::buffer_line(
 		const float& e,
 		const feedRate_t& fr_mm_s,
 		const uint8_t extruder,
+		const MachineState machine_state,
 		const float millimeters,
 		const float32_t accel_mm_s2 /* = 0.0*/
 ) {
@@ -2769,6 +2778,7 @@ bool Planner::buffer_line(
 			machine,
 			fr_mm_s,
 			extruder,
+			machine_state,
 			millimeters,
 			accel_mm_s2);
 } // buffer_line()

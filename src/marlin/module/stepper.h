@@ -407,6 +407,8 @@ class Stepper {
     // The stepper block processing ISR phase
     static uint32_t block_phase_isr();
 
+		static void update_state();
+
     #if ENABLED(LIN_ADVANCE)
       // The Linear advance ISR phase
       static uint32_t advance_isr();

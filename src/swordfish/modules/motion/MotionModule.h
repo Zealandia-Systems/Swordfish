@@ -21,6 +21,7 @@
 #include <swordfish/core/Boundary.h>
 #include <swordfish/core/ObjectList.h>
 #include <swordfish/core/Pack.h>
+#include <swordfish/modules/status/StatusModule.h>
 
 #include "CoordinateSystem.h"
 #include "CoordinateSystemTable.h"
@@ -50,6 +51,7 @@ namespace swordfish::motion {
 		float32_t feedRate = NaN;
 		utils::Flags<AxisSelector> relativeAxes = AxisSelector::None;
 		float32_t accel_mm_s2 = NaN;
+		swordfish::status::MachineState state;
 	};
 
 	class Limits;

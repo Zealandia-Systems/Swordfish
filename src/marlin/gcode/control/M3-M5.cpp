@@ -29,6 +29,7 @@
 
 using namespace swordfish::core;
 using namespace swordfish::tools;
+using namespace swordfish::status;
 
 /**
  * Laser:
@@ -68,7 +69,7 @@ using namespace swordfish::tools;
  *  PWM duty cycle goes from 0 (off) to 255 (always on).
  */
 void GcodeSuite::M3_M4(const bool is_M4) {
-	KEEPALIVE_STATE(SPINDLE_RAMPING);
+	TemporaryState state(MachineState::SpindleRamp);
 
 	auto& toolsModule = ToolsModule::getInstance();
 	auto& driver = toolsModule.getCurrentDriver();
@@ -91,7 +92,7 @@ void GcodeSuite::M3_M4(const bool is_M4) {
  * M5 - Cutter OFF (when moves are complete)
  */
 void GcodeSuite::M5() {
-	KEEPALIVE_STATE(SPINDLE_RAMPING);
+	TemporaryState state(MachineState::SpindleRamp);
 
 	auto& toolsModule = ToolsModule::getInstance();
 	auto& driver = toolsModule.getCurrentDriver();

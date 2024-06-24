@@ -81,6 +81,7 @@ using namespace swordfish::core;
 using namespace swordfish::estop;
 using namespace swordfish::io;
 using namespace swordfish::motion;
+using namespace swordfish::status;
 using namespace swordfish::tools;
 
 // Inactivity shutdown
@@ -91,13 +92,14 @@ millis_t GcodeSuite::previous_move_ms = 0,
 // Relative motion mode for each logical axis
 static constexpr xyze_bool_t ar_init = AXIS_RELATIVE_MODES;
 uint8_t GcodeSuite::axis_relative = ((ar_init.x ? _BV(REL_X) : 0) | (ar_init.y ? _BV(REL_Y) : 0) | (ar_init.z ? _BV(REL_Z) : 0) | (ar_init.e ? _BV(REL_E) : 0));
+bool GcodeSuite::aborted_ = false;
 
 #if EITHER(HAS_AUTO_REPORTING, HOST_KEEPALIVE_FEATURE)
 bool GcodeSuite::autoreport_paused; // = false
 #endif
 
 #if ENABLED(HOST_KEEPALIVE_FEATURE)
-GcodeSuite::MarlinBusyState GcodeSuite::busy_state = NOT_BUSY;
+//MarlinBusyState GcodeSuite::busy_state = NOT_BUSY;
 float GcodeSuite::host_keepalive_interval = DEFAULT_KEEPALIVE_INTERVAL;
 #endif
 
@@ -285,15 +287,7 @@ void GcodeSuite::process_parsed_command(const bool no_ok /*=false*/) {
 #endif
 
 #if HAS_ESTOP
-	/*if (estop_engaged()) {
-	  SERIAL_ECHO_MSG(STR_ESTOP_ENGAGED);
-
-	  if (!no_ok) {
-	    queue.ok_to_send();
-	  }
-
-	  return;
-	}*/
+	GcodeSuite::aborted_ = false;
 
 	if (!EStopModule::getInstance().checkOrClear()) {
 		SERIAL_ECHO_MSG(STR_ESTOP_ENGAGED);
@@ -306,7 +300,9 @@ void GcodeSuite::process_parsed_command(const bool no_ok /*=false*/) {
 	}
 #endif
 
-	KEEPALIVE_STATE(IN_HANDLER);
+	//KEEPALIVE_STATE(IN_HANDLER);
+
+	//auto _ = keepalive_state(IN_HANDLER);
 
 	auto& out = Console::out();
 
@@ -1076,29 +1072,44 @@ void GcodeSuite::process_subcommands_now(char* gcode) {
 }
 
 const char* GcodeSuite::get_state() {
-	if (!EStopModule::getInstance().checkOrClear()) {
-		return "estop";
-	}
+	auto state = StatusModule::getInstance().peek_state();
 
-	switch (busy_state) {
-		case NOT_BUSY:
+	switch (state) {
+		case MachineState::Idle: {
 			return "idle";
-		case IN_HANDLER:
+		}
+
+		case MachineState::EmergencyStop: {
+			return "estop";
+		}
+
+		case MachineState::FeedMove: {
 			return "busy";
-		case IN_PROCESS:
+		}
+
+		case MachineState::RapidMove: {
 			return "busy";
-		case HOMING:
+		}
+
+		case MachineState::Homing: {
 			return "homing";
-		case PROBING:
-			return "probing";
-		case PAUSED_FOR_USER:
-			return "paused";
-		case PAUSED_FOR_INPUT:
+		}
+
+		case MachineState::AwaitingInput: {
 			return "waiting";
-		case SPINDLE_RAMPING:
+		}
+
+		case MachineState::SpindleRamp: {
 			return "spindle:ramping";
-		default:
+		}
+
+		case MachineState::Probing: {
+			return "probing";
+		}
+
+		default: {
 			return "idle";
+		}
 	}
 }
 
@@ -1131,7 +1142,7 @@ void GcodeSuite::report_state() {
 	SERIAL_PRINTF(",\"ovR\":%ld", rapidrate_percentage);
 	SERIAL_PRINTF(",\"ovF\":%ld", feedrate_percentage);
 	SERIAL_PRINTF(",\"ovS\":%ld", (uint32_t) driver.getPowerOverride());
-	SERIAL_PRINTF(",\"spindle\":{\"freq\":%d,\"rpm\":%d,\"dir\":%d}", driver.getOutputFrequency(), driver.getCurrentPower(), driver.getCurrentDirection());
+	SERIAL_PRINTF(",\"spindle\":{\"freq\":%d,\"rpm\":%d,\"dir\":%d}", driver.getOutputFrequency(), 0/*driver.getCurrentPower()*/, driver.getCurrentDirection());
 	SERIAL_PRINTF(",\"tool\":%ld", toolManager.getCurrentToolIndex() + 1);
 	SERIAL_PRINTF(",\"ntool\":%ld", toolManager.getNextToolIndex() + 1);
 	SERIAL_ECHO("}\n");

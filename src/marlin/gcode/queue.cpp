@@ -742,7 +742,6 @@ void GCodeQueue::get_available_commands() {
  * Get the next command in the queue, optionally log it to SD, then dispatch it
  */
 void GCodeQueue::advance() {
-
 	// Process immediate commands
 	if (process_injected_command_P() || process_injected_command())
 		return;

@@ -202,6 +202,8 @@ typedef struct block_t {
            final_rate,                      // The minimal rate at exit
            acceleration_steps_per_s2;       // acceleration steps/sec^2
 
+	swordfish::status::MachineState machine_state;
+
   #if ENABLED(DIRECT_STEPPING)
     page_idx_t page_idx;                    // Page index used for direct stepping
   #endif
@@ -681,6 +683,7 @@ class Planner {
       #endif
       const feedRate_t fr_mm_s,
 			const uint8_t extruder,
+			const swordfish::status::MachineState machine_state,
 			const float &millimeters = 0.0,
 			const float32_t accel_mm_s2 = 0.0
     );
@@ -706,6 +709,7 @@ class Planner {
       #endif
       feedRate_t fr_mm_s,
 			const uint8_t extruder,
+			const swordfish::status::MachineState machine_state,
 			const float &millimeters = 0.0,
 			const float32_t accel_mm_s2 = 0.0
     );
@@ -742,6 +746,7 @@ class Planner {
 			const float &e,
       const feedRate_t &fr_mm_s,
 			const uint8_t extruder,
+			const swordfish::status::MachineState machine_state,
 			const float &millimeters = 0.0,
 			const float32_t accel_mm_s2 = 0.0
     );
@@ -750,6 +755,7 @@ class Planner {
 			abce_pos_t &abce,
       const feedRate_t &fr_mm_s,
 			const uint8_t extruder,
+			const swordfish::status::MachineState machine_state,
 			const float &millimeters = 0.0,
 			const float32_t accel_mm_s2 = 0.0
     ) {
@@ -760,6 +766,7 @@ class Planner {
 				abce.e,
         fr_mm_s,
 				extruder,
+				machine_state,
 				millimeters,
 				accel_mm_s2
 			);
@@ -785,6 +792,7 @@ class Planner {
 			const float &e,
 			const feedRate_t &fr_mm_s,
 			const uint8_t extruder,
+			const swordfish::status::MachineState machine_state,
 			const float millimeters = 0.0,
 			const float32_t accel_mm_s2 = 0.0
     );
@@ -793,6 +801,7 @@ class Planner {
 			const xyze_pos_t &cart,
 			const feedRate_t &fr_mm_s,
 			const uint8_t extruder,
+			const swordfish::status::MachineState machine_state,
 			const float millimeters = 0.0,
 			const float32_t accel_mm_s2 = 0.0
     ) {
@@ -803,6 +812,7 @@ class Planner {
 				cart.e,
 				fr_mm_s,
 				extruder,
+				machine_state,
 				millimeters,
 				accel_mm_s2
       );

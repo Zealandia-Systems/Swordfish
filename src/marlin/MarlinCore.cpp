@@ -34,6 +34,7 @@
 
 using namespace swordfish;
 using namespace swordfish::motion;
+using namespace swordfish::status;
 
 #if ENABLED(MARLIN_DEV_MODE)
 #	warning "WARNING! Disable MARLIN_DEV_MODE for the final build!"
@@ -241,7 +242,8 @@ bool wait_for_user; // = false;
 
 void wait_for_user_response(millis_t ms /*=0*/, const bool no_sleep /*=false*/) {
 	UNUSED(no_sleep);
-	KEEPALIVE_STATE(PAUSED_FOR_USER);
+	TemporaryState state(MachineState::AwaitingInput);
+
 	wait_for_user = true;
 	if (ms)
 		ms += millis(); // expire time
@@ -746,10 +748,12 @@ void idle(TERN_(ADVANCED_PAUSE_FEATURE, bool no_stepper_sleep /*=false*/)) {
 		SERIAL_ECHOLNPAIR("idle() call depth: ", int(idle_depth));
 #endif
 
-	Controller::getInstance().idle();
-
 	// Core Marlin activities
 	manage_inactivity(TERN_(ADVANCED_PAUSE_FEATURE, no_stepper_sleep));
+
+	Controller::getInstance().idle();
+
+	//gcode.set_busy_state(NOT_BUSY);
 
 	// Manage Heaters (and Watchdog)
 	thermalManager.manage_heater();

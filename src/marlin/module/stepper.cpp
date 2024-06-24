@@ -92,9 +92,14 @@ Stepper stepper; // Singleton
 #include "motion.h"
 
 #include "../gcode/queue.h"
+#include "../gcode/gcode.h"
 #include "../sd/cardreader.h"
 #include "../MarlinCore.h"
 #include "../HAL/shared/Delay.h"
+
+#include <swordfish/Controller.h>
+
+using namespace swordfish::status;
 
 #if ENABLED(INTEGRATED_BABYSTEPPING)
 #	include "../feature/babystep.h"
@@ -1871,6 +1876,18 @@ void Stepper::pulse_phase_isr() {
 	} while (--events_to_do);
 }
 
+void Stepper::update_state() {
+	using namespace swordfish::status;
+
+	auto& status_module = StatusModule::getInstance();
+
+	if (current_block) {
+		status_module.set_state(current_block->machine_state);
+	} else {
+		status_module.set_state(MachineState::Idle);
+	}
+}
+
 // This is the last half of the stepper interrupt: This one processes and
 // properly schedules blocks from the planner. This is executed after creating
 // the step pulses, so it is not time critical, as pulses are already done.
@@ -2090,10 +2107,14 @@ uint32_t Stepper::block_phase_isr() {
 				discard_current_block();
 
 				// Try to get a new block
-				if (!(current_block = planner.get_current_block()))
+				if (!(current_block = planner.get_current_block())) {
+					update_state();
+
 					return interval; // No more queued movements!
+				}
 			}
 
+			update_state();
 // For non-inline cutter, grossly apply power
 #if ENABLED(LASER_FEATURE) && DISABLED(LASER_POWER_INLINE)
 			cutter.apply_power(current_block->cutter_power);
@@ -2323,9 +2344,13 @@ uint32_t Stepper::block_phase_isr() {
 
 			// Calculate the initial timer interval
 			interval = calc_timer_interval(current_block->initial_rate, &steps_per_isr);
-		}
+		} else {
+			// No new block found; so apply inline laser parameters
+
+			update_state();
+
 #if ENABLED(LASER_POWER_INLINE_CONTINUOUS)
-		else { // No new block found; so apply inline laser parameters
+
 			// This should mean ending file with 'M5 I' will stop the laser; thus the inline flag isn't needed
 			const power_status_t stat = planner.laser_inline.status;
 			if (stat.isPlanned) { // Planner controls the laser
@@ -2339,6 +2364,7 @@ uint32_t Stepper::block_phase_isr() {
 			}
 		}
 #endif
+		}
 	}
 
 	// Return the interval to wait

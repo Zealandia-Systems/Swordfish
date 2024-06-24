@@ -45,11 +45,17 @@
 //
 
 #define X_MIN_PIN              70
+#if MACHINE_TYPE == 5 || MACHINE_TYPE == 6 || MACHINE_TYPE == 7 || MACHINE_TYPE == 8 || MACHINE_TYPE == 9
+#define Y_MIN_PIN 71
+#define Y_MAX_PIN -1
+#define Y2_MIN_PIN 72
+#else
 #define Y_MAX_PIN              71
 #define Y_MIN_PIN              -1
 #define Y2_MAX_PIN             72
+#endif
 #define Z_MAX_PIN              73
-
+#define A_MAX_PIN              57
 
 #define HAS_TOOL_PROBE          1
 #define TOOL_PROBE_PIN          4
@@ -113,10 +119,16 @@
 //
 // Misc. Functions
 //
-#define LED_PIN                13
+#define LED_PIN                16
 #define PS_ON_PIN              10
 
-//	
+#if MACHINE_TYPE == 5
+	#define LED_COUNT            50
+#else
+	#define LED_COUNT            1
+#endif
+
+//
 // SD Support
 //
 #ifndef SDCARD_CONNECTION

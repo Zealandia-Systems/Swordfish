@@ -29,6 +29,10 @@
 #	include "../../module/motion.h"
 #	include "../../module/endstops.h"
 
+#include <swordfish/Controller.h>
+
+using namespace swordfish::status;
+
 extern bool run_probe(AxisEnum axis, EndstopEnum endstop, float distance, float retract);
 
 /**
@@ -43,8 +47,6 @@ extern bool run_probe(AxisEnum axis, EndstopEnum endstop, float distance, float 
  *  G38.5 - Probe away from workpiece, stop on contact break
  */
 void GcodeSuite::G38(const int8_t subcode) {
-	KEEPALIVE_STATE(PROBING);
-
 	remember_feedrate_scaling_off();
 
 	[[maybe_unused]] const bool error_on_fail =
