@@ -1284,8 +1284,8 @@
 #define Y_HOME_DIR -1
 #define Z_HOME_DIR 1
 #elif MACHINE_TYPE == 10
-#define X_BED_SIZE 1300
-#define Y_BED_SIZE 1300
+#define X_BED_SIZE 1530
+#define Y_BED_SIZE 1475
 #define X_HOME_DIR -1
 #define Y_HOME_DIR 1
 #define Z_HOME_DIR 1
