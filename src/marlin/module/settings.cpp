@@ -48,6 +48,7 @@
 #include <swordfish/Controller.h>
 
 using namespace swordfish;
+using namespace swordfish::math;
 using namespace swordfish::motion;
 
 #include "endstops.h"
@@ -206,7 +207,15 @@ typedef struct SettingsDataStruct {
 	//
 	uint8_t esteppers; // XYZE_N - XYZ
 
-	planner_settings_t planner_settings;
+	u32 max_acceleration_unit_per_s2[4];
+	u32 min_segment_time_us;
+	f32 axis_steps_per_unit[4];
+	f32 max_feed_rate_unit_per_s[4];
+	f32 acceleration;
+	f32 retract_acceleration;
+	f32 travel_acceleration;
+	f32 min_feedrate_unit_per_s;
+	f32 min_travel_feedrate_unit_per_s;
 
 	xyze_float_t planner_max_jerk; // M205 XYZE  planner.max_jerk
 	float planner_junction_deviation_mm; // M205 J     planner.junction_deviation_mm
@@ -503,7 +512,7 @@ float new_z_fade_height;
 #endif
 
 void MarlinSettings::postprocess() {
-	xyz_pos_t oldpos = current_position;
+	Vector6f32 oldpos = current_position;
 
 	// steps per s2 needs to be updated to agree with units per s2
 	planner.reset_acceleration_rates();
@@ -658,14 +667,33 @@ bool MarlinSettings::save() {
 
 	_FIELD_TEST(esteppers);
 
-	const uint8_t esteppers = COUNT(planner.settings.axis_steps_per_mm) - XYZ;
+	const uint8_t esteppers = 1;
 	EEPROM_WRITE(esteppers);
 
 	//
 	// Planner Motion
 	//
 	{
-		EEPROM_WRITE(planner.settings);
+		u32 tmp1[4];
+		f32 tmp2[4];
+		f32 tmp3[4];
+
+		for (auto i = 0; i < 4; i++) {
+			tmp1[i] = planner.settings.max_acceleration_unit_per_s2[i];
+			tmp2[i] = planner.settings.axis_steps_per_unit[i];
+			tmp3[i] = planner.settings.max_feedrate_unit_per_s[i];
+		}
+
+		EEPROM_WRITE(tmp1); // max_acceleration_mm_per_s2
+		EEPROM_WRITE(planner.settings.min_segment_time_us);
+		EEPROM_WRITE(tmp2); // axis_steps_per_mm
+		EEPROM_WRITE(tmp3); // max_feedrate_mm_s
+
+		EEPROM_WRITE(planner.settings.acceleration);
+		EEPROM_WRITE(planner.settings.retract_acceleration);
+		EEPROM_WRITE(planner.settings.travel_acceleration);
+		EEPROM_WRITE(planner.settings.min_feedrate_unit_per_s);
+		EEPROM_WRITE(planner.settings.min_travel_feedrate_unit_per_s);
 
 #	if HAS_CLASSIC_JERK
 		EEPROM_WRITE(planner.max_jerk);
@@ -1244,7 +1272,7 @@ bool MarlinSettings::save() {
 		_FIELD_TEST(tmc_stealth_enabled);
 
 		tmc_stealth_enabled_t tmc_stealth_enabled = { false, false, false, false, false, false, false, false, false, false, false, false, false, false, false };
-#	if AXIS_HAS_STEALTHCHOP(X)
+/*#	if AXIS_HAS_STEALTHCHOP(X)
 		tmc_stealth_enabled.X = stepperX.get_stored_stealthChop();
 #	endif
 #	if AXIS_HAS_STEALTHCHOP(Y)
@@ -1292,6 +1320,7 @@ bool MarlinSettings::save() {
 #	if AXIS_HAS_STEALTHCHOP(E7)
 		tmc_stealth_enabled.E7 = stepperE7.get_stored_stealthChop();
 #	endif
+*/
 		EEPROM_WRITE(tmc_stealth_enabled);
 	}
 
@@ -1545,9 +1574,9 @@ bool MarlinSettings::_load() {
 			// Get only the number of E stepper parameters previously stored
 			// Any steppers added later are set to their defaults
 
-			uint32_t tmp1[XYZE_N];
-			float tmp2[XYZE_N];
-			feedRate_t tmp3[XYZE_N];
+			uint32_t tmp1[4];
+			float tmp2[4];
+			feedRate_t tmp3[4];
 
 			EEPROM_READ(tmp1); // max_acceleration_mm_per_s2
 			EEPROM_READ(planner.settings.min_segment_time_us);
@@ -1555,18 +1584,18 @@ bool MarlinSettings::_load() {
 			EEPROM_READ(tmp3); // max_feedrate_mm_s
 
 			if (!validating)
-				LOOP_XYZE_N(i) {
+				for (auto i = 0; i < 4; i++) {
 					const bool in = (i < esteppers + XYZ);
-					planner.settings.max_acceleration_mm_per_s2[i] = in ? tmp1[i] : pgm_read_dword(&_DMA[ALIM(i, _DMA)]);
-					planner.settings.axis_steps_per_mm[i] = in ? tmp2[i] : pgm_read_float(&_DASU[ALIM(i, _DASU)]);
-					planner.settings.max_feedrate_mm_s[i] = in ? tmp3[i] : pgm_read_float(&_DMF[ALIM(i, _DMF)]);
+					planner.settings.max_acceleration_unit_per_s2[i] = in ? tmp1[i] : pgm_read_dword(&_DMA[ALIM(i, _DMA)]);
+					planner.settings.axis_steps_per_unit[i] = in ? tmp2[i] : pgm_read_float(&_DASU[ALIM(i, _DASU)]);
+					planner.settings.max_feedrate_unit_per_s[i] = in ? tmp3[i] : pgm_read_float(&_DMF[ALIM(i, _DMF)]);
 				}
 
 			EEPROM_READ(planner.settings.acceleration);
 			EEPROM_READ(planner.settings.retract_acceleration);
 			EEPROM_READ(planner.settings.travel_acceleration);
-			EEPROM_READ(planner.settings.min_feedrate_mm_s);
-			EEPROM_READ(planner.settings.min_travel_feedrate_mm_s);
+			EEPROM_READ(planner.settings.min_feedrate_unit_per_s);
+			EEPROM_READ(planner.settings.min_travel_feedrate_unit_per_s);
 
 #	if HAS_CLASSIC_JERK
 			EEPROM_READ(planner.max_jerk);
@@ -2653,18 +2682,18 @@ bool MarlinSettings::save() {
 void MarlinSettings::reset() {
 	// Controller::getInstance().reset();
 
-	LOOP_XYZE_N(i) {
-		planner.settings.max_acceleration_mm_per_s2[i] = pgm_read_dword(&_DMA[ALIM(i, _DMA)]);
-		planner.settings.axis_steps_per_mm[i] = pgm_read_float(&_DASU[ALIM(i, _DASU)]);
-		planner.settings.max_feedrate_mm_s[i] = pgm_read_float(&_DMF[ALIM(i, _DMF)]);
+	for (auto i = 0; i < 4; i++) {
+		planner.settings.max_acceleration_unit_per_s2[i] = pgm_read_dword(&_DMA[ALIM(i, _DMA)]);
+		planner.settings.axis_steps_per_unit[i] = pgm_read_float(&_DASU[ALIM(i, _DASU)]);
+		planner.settings.max_feedrate_unit_per_s[i] = pgm_read_float(&_DMF[ALIM(i, _DMF)]);
 	}
 
 	planner.settings.min_segment_time_us = DEFAULT_MINSEGMENTTIME;
 	planner.settings.acceleration = DEFAULT_ACCELERATION;
 	planner.settings.retract_acceleration = DEFAULT_RETRACT_ACCELERATION;
 	planner.settings.travel_acceleration = DEFAULT_TRAVEL_ACCELERATION;
-	planner.settings.min_feedrate_mm_s = feedRate_t(DEFAULT_MINIMUMFEEDRATE);
-	planner.settings.min_travel_feedrate_mm_s = feedRate_t(DEFAULT_MINTRAVELFEEDRATE);
+	planner.settings.min_feedrate_unit_per_s = feedRate_t(DEFAULT_MINIMUMFEEDRATE);
+	planner.settings.min_travel_feedrate_unit_per_s = feedRate_t(DEFAULT_MINTRAVELFEEDRATE);
 
 #if HAS_CLASSIC_JERK
 #	ifndef DEFAULT_XJERK
@@ -3147,7 +3176,7 @@ inline void say_units(const bool colon) {
 		SERIAL_ECHOLNPGM(":");
 }
 
-void report_M92(const bool echo = true, const int8_t e = -1);
+void report_M92(const bool echo = true);
 
 /**
  * M503 - Report current settings in RAM
@@ -3230,10 +3259,9 @@ void MarlinSettings::report(const bool forReplay) {
 	CONFIG_ECHO_HEADING("Maximum feedrates (units/m):");
 	CONFIG_ECHO_START();
 	SERIAL_ECHOLNPAIR_P(
-			PSTR("  M203 X"), LINEAR_UNIT(MMS_TO_MMM(planner.settings.max_feedrate_mm_s[X_AXIS])), SP_Y_STR, LINEAR_UNIT(MMS_TO_MMM(planner.settings.max_feedrate_mm_s[Y_AXIS])), SP_Z_STR, LINEAR_UNIT(MMS_TO_MMM(planner.settings.max_feedrate_mm_s[Z_AXIS]))
+			PSTR("  M203 X"), LINEAR_UNIT(MMS_TO_MMM(planner.settings.max_feedrate_unit_per_s[Axis::X()])), SP_Y_STR, LINEAR_UNIT(MMS_TO_MMM(planner.settings.max_feedrate_unit_per_s[Axis::Y()])), SP_Z_STR, LINEAR_UNIT(MMS_TO_MMM(planner.settings.max_feedrate_unit_per_s[Axis::Z()]))
 #	if DISABLED(DISTINCT_E_FACTORS)
-																																																																																													,
-			SP_E_STR, VOLUMETRIC_UNIT(planner.settings.max_feedrate_mm_s[E_AXIS])
+, SP_A_STR, parser.radial_value_to_degrees(planner.settings.max_feedrate_unit_per_s[Axis::A()])
 #	endif
 	);
 #	if ENABLED(DISTINCT_E_FACTORS)
@@ -3247,10 +3275,10 @@ void MarlinSettings::report(const bool forReplay) {
 	CONFIG_ECHO_HEADING("Maximum Acceleration (units/s2):");
 	CONFIG_ECHO_START();
 	SERIAL_ECHOLNPAIR_P(
-			PSTR("  M201 X"), LINEAR_UNIT(planner.settings.max_acceleration_mm_per_s2[X_AXIS]), SP_Y_STR, LINEAR_UNIT(planner.settings.max_acceleration_mm_per_s2[Y_AXIS]), SP_Z_STR, LINEAR_UNIT(planner.settings.max_acceleration_mm_per_s2[Z_AXIS])
+			PSTR("  M201 X"), parser.linear_value_to_mm(planner.settings.max_acceleration_unit_per_s2[Axis::X()]), SP_Y_STR, parser.linear_value_to_mm(planner.settings.max_acceleration_unit_per_s2[Axis::Y()]), SP_Z_STR, parser.linear_value_to_mm(planner.settings.max_acceleration_unit_per_s2[Axis::Z()])
 #	if DISABLED(DISTINCT_E_FACTORS)
 																																																																																										,
-			SP_E_STR, VOLUMETRIC_UNIT(planner.settings.max_acceleration_mm_per_s2[E_AXIS])
+			SP_A_STR, parser.radial_value_to_degrees(planner.settings.max_acceleration_unit_per_s2[Axis::A()])
 #	endif
 	);
 #	if ENABLED(DISTINCT_E_FACTORS)
@@ -3277,10 +3305,10 @@ void MarlinSettings::report(const bool forReplay) {
 	);
 	CONFIG_ECHO_START();
 	SERIAL_ECHOLNPAIR_P(
-			PSTR("  M205 B"), LINEAR_UNIT(planner.settings.min_segment_time_us), PSTR(" S"), LINEAR_UNIT(planner.settings.min_feedrate_mm_s), SP_T_STR, LINEAR_UNIT(planner.settings.min_travel_feedrate_mm_s)
+			PSTR("  M205 B"), parser.linear_value_to_mm(planner.settings.min_segment_time_us), PSTR(" S"), parser.linear_value_to_mm(planner.settings.min_feedrate_unit_per_s), SP_T_STR, parser.linear_value_to_mm(planner.settings.min_travel_feedrate_unit_per_s)
 #	if HAS_JUNCTION_DEVIATION
 																																																																											,
-			PSTR(" J"), LINEAR_UNIT(planner.junction_deviation_mm)
+			PSTR(" J"), parser.linear_value_to_mm(planner.junction_deviation_mm)
 #	endif
 #	if HAS_CLASSIC_JERK
 											,
@@ -3299,12 +3327,12 @@ void MarlinSettings::report(const bool forReplay) {
 	CONFIG_ECHO_START();
 	SERIAL_ECHOLNPAIR_P(
 #		if IS_CARTESIAN
-			PSTR("  M206 X"), LINEAR_UNIT(homeOffset(X)), SP_Y_STR, LINEAR_UNIT(homeOffset(Y)), SP_Z_STR
+			PSTR("  M206 X"), parser.linear_value_to_mm(homeOffset.x()), SP_Y_STR, parser.linear_value_to_mm(homeOffset.y()), SP_Z_STR
 #		else
 			PSTR("  M206 Z")
 #		endif
 			,
-			LINEAR_UNIT(homeOffset(Z)));
+			parser.linear_value_to_mm(homeOffset.z()));
 #	endif
 
 #	if HAS_HOTEND_OFFSET

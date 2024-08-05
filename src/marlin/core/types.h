@@ -38,7 +38,7 @@ typedef const __FlashStringHelper* progmem_str;
 //  - A_AXIS, B_AXIS, and C_AXIS should be used for Steppers, corresponding to XYZ on Cartesians
 //  - X_HEAD, Y_HEAD, and Z_HEAD should be used for Steppers on Core kinematics
 //
-enum AxisEnum : uint8_t {
+/*enum AxisEnum : uint8_t {
 	X_AXIS = 0,
 	A_AXIS = 0,
 	Y_AXIS = 1,
@@ -59,17 +59,7 @@ enum AxisEnum : uint8_t {
 	E7_AXIS,
 	ALL_AXES = 0xFE,
 	NO_AXIS = 0xFF
-};
-
-//
-// Loop over XYZE axes
-//
-#define LOOP_XYZ(VAR)    LOOP_S_LE_N(VAR, X_AXIS, Z_AXIS)
-#define LOOP_XYZE(VAR)   LOOP_S_LE_N(VAR, X_AXIS, E_AXIS)
-#define LOOP_XYZE_N(VAR) LOOP_S_L_N(VAR, X_AXIS, XYZE_N)
-#define LOOP_ABC(VAR)    LOOP_S_LE_N(VAR, A_AXIS, C_AXIS)
-#define LOOP_ABCE(VAR)   LOOP_S_LE_N(VAR, A_AXIS, E_AXIS)
-#define LOOP_ABCE_N(VAR) LOOP_S_L_N(VAR, A_AXIS, XYZE_N)
+};*/
 
 //
 // Conditional type assignment magic. For example...

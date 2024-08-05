@@ -28,34 +28,15 @@
 #include "../inc/MarlinConfig.h"
 #include <stdint.h>
 
-enum EndstopEnum : char {
-  X_MIN       = 0,
-	Y_MIN       = 1,
-	Z_MIN       = 2,
-	Z_MIN_PROBE = 3,
-	WORK_PROBE  = 4,
-	TOOL_PROBE  = 5,
-	UNUSED			= 6,
-  X_MAX       = 7,
-	Y_MAX       = 8,
-	Z_MAX       = 9,
-  X2_MIN      = 10,
-	X2_MAX      = 11,
-  Y2_MIN      = 12,
-	Y2_MAX      = 13,
-  Z2_MIN      = 14,
-	Z2_MAX      = 15,
-  Z3_MIN      = 16,
-	Z3_MAX      = 17,
-  Z4_MIN      = 18,
-	Z4_MAX      = 19
-};
+#include <swordfish/types.h>
 
-#define X_ENDSTOP			(X_HOME_DIR < 0 ? X_MIN : X_MAX)
-#define X2_ENDSTOP		(X_HOME_DIR < 0 ? X2_MIN : X2_MAX)
-#define Y_ENDSTOP			(Y_HOME_DIR < 0 ? Y_MIN : Y_MAX)
-#define Y2_ENDSTOP		(Y_HOME_DIR < 0 ? Y2_MIN : Y2_MAX)
-#define Z_ENDSTOP			(Z_HOME_DIR < 0 ? TERN(HOMING_Z_WITH_PROBE, Z_MIN, Z_MIN_PROBE) : Z_MAX)
+#define X_ENDSTOP			(X_HOME_DIR < 0 ? EndstopValue::X_MIN : EndstopValue::X_MAX)
+#define X2_ENDSTOP		(X_HOME_DIR < 0 ? EndstopValue::X2_MIN : EndstopValue::X2_MAX)
+#define Y_ENDSTOP			(Y_HOME_DIR < 0 ? EndstopValue::Y_MIN : EndstopValue::Y_MAX)
+#define Y2_ENDSTOP		(Y_HOME_DIR < 0 ? EndstopValue::Y2_MIN : EndstopValue::Y2_MAX)
+#define Z_ENDSTOP			(Z_HOME_DIR < 0 ? EndstopValue::Z_MIN, EndstopValue::Z_MAX)
+#define A_ENDSTOP EndstopValue::A_MAX
+
 #define WORK_ENDSTOP	WORK_PROBE
 
 class Endstops {
@@ -174,22 +155,27 @@ class Endstops {
       static volatile bool z_probe_enabled;
       static void enable_z_probe(const bool onoff=true);
     #endif
-		
+
 		#if HAS_TOOL_PROBE
 			static bool tool_probe_enabled;
-			
+
 			static void enable_tool_probe(const bool enabled) {
 				tool_probe_enabled = enabled;
 			}
 		#endif
-		
+
 		#if HAS_WORK_PROBE
 			static xyz_bool_t work_probe_enabled;
-			
-			static void enable_work_probe(const AxisEnum axis, const bool enabled = true) {
+
+			static void enable_work_probe(const Axis axis, const bool enabled = true) {
 				work_probe_enabled[axis] = enabled;
 			}
 		#endif
+
+		static volatile bool a_home_enabled;
+		static void enable_a_home(const bool enabled) {
+			a_home_enabled = enabled;
+		}
 
     static void resync();
 

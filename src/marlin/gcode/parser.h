@@ -33,6 +33,9 @@
 #include <string_view>
 #include <stdlib.h>
 
+#include <swordfish/types.h>
+#include <swordfish/modules/motion/FeedRate.h>
+
 #if ENABLED(DEBUG_GCODE_PARSER)
 #	include "../libs/hex_print.h"
 #endif
@@ -77,9 +80,10 @@ public:
 
 	static bool volumetric_enabled;
 
-#if ENABLED(INCH_MODE_SUPPORT)
-	static float linear_unit_factor, volumetric_unit_factor;
-#endif
+	static f32 linear_unit_factor;
+	static f32 radial_unit_factor;
+	static swordfish::motion::FeedRateType feedrate_type;
+
 
 #if ENABLED(TEMPERATURE_UNITS_SUPPORT)
 	static TempUnit input_temp_units;
@@ -392,17 +396,16 @@ public:
 
 	// Units modes: Inches, Fahrenheit, Kelvin
 
-#if ENABLED(INCH_MODE_SUPPORT)
 	static inline float mm_to_linear_unit(const float mm) {
 		return mm / linear_unit_factor;
-	}
-	static inline float mm_to_volumetric_unit(const float mm) {
-		return mm / (volumetric_enabled ? volumetric_unit_factor : linear_unit_factor);
 	}
 
 	// Init linear units by constructor
 	GCodeParser() {
 		set_input_linear_units(LINEARUNIT_MM);
+		set_feed_rate_type(swordfish::motion::FeedRateType::UnitsPerSecond);
+
+		radial_unit_factor = 1.0f;
 	}
 
 	static inline void set_input_linear_units(const LinearUnit units) {
@@ -415,43 +418,31 @@ public:
 				linear_unit_factor = 25.4f;
 				break;
 		}
-		volumetric_unit_factor = POW(linear_unit_factor, 3);
 	}
 
-	static inline float axis_unit_factor(const AxisEnum axis) {
-		return (axis >= E_AXIS && volumetric_enabled ? volumetric_unit_factor : linear_unit_factor);
+	static inline void set_feed_rate_type(const swordfish::motion::FeedRateType type) {
+		feedrate_type = type;
 	}
 
-	static inline float linear_value_to_mm(const float v) {
+	static inline float axis_unit_factor(const Axis axis) {
+		return (axis.is_radial() ? radial_unit_factor : linear_unit_factor);
+	}
+
+	static inline float linear_value_to_mm(const f32 v) {
 		return v * linear_unit_factor;
 	}
-	static inline float axis_value_to_mm(const AxisEnum axis, const float v) {
+
+	static inline f32 radial_value_to_degrees(const f32 v) {
+		return v * radial_unit_factor;
+	}
+
+	static inline float axis_value_to_mm(const Axis axis, const f32 v) {
 		return v * axis_unit_factor(axis);
 	}
-	static inline float per_axis_value(const AxisEnum axis, const float v) {
+
+	static inline float per_axis_value(const Axis axis, const f32 v) {
 		return v / axis_unit_factor(axis);
 	}
-
-#else
-
-	static inline float mm_to_linear_unit(const float mm) {
-		return mm;
-	}
-	static inline float mm_to_volumetric_unit(const float mm) {
-		return mm;
-	}
-
-	static inline float linear_value_to_mm(const float v) {
-		return v;
-	}
-	static inline float axis_value_to_mm(const AxisEnum, const float v) {
-		return v;
-	}
-	static inline float per_axis_value(const AxisEnum, const float v) {
-		return v;
-	}
-
-#endif
 
 	static inline bool using_inch_units() {
 		return mm_to_linear_unit(1.0f) != 1.0f;
@@ -460,15 +451,14 @@ public:
 #define IN_TO_MM(I)        ((I) *25.4f)
 #define MM_TO_IN(M)        ((M) / 25.4f)
 #define LINEAR_UNIT(V)     parser.mm_to_linear_unit(V)
-#define VOLUMETRIC_UNIT(V) parser.mm_to_volumetric_unit(V)
 
 	static inline float value_linear_units() {
 		return linear_value_to_mm(value_float());
 	}
-	static inline float value_axis_units(const AxisEnum axis) {
+	static inline float value_axis_units(const Axis axis) {
 		return axis_value_to_mm(axis, value_float());
 	}
-	static inline float value_per_axis_units(const AxisEnum axis) {
+	static inline float value_per_axis_units(const Axis axis) {
 		return per_axis_value(axis, value_float());
 	}
 
@@ -541,8 +531,17 @@ public:
 
 #endif // !TEMPERATURE_UNITS_SUPPORT
 
-	static inline feedRate_t value_feedrate() {
-		return MMM_TO_MMS(value_linear_units());
+	static inline swordfish::motion::FeedRate value_feedrate() {
+		switch (feedrate_type) {
+			case swordfish::motion::FeedRateType::InverseTime: {
+				return swordfish::motion::FeedRate::InverseTime(value_float());
+			}
+
+			default:
+			case swordfish::motion::FeedRateType::UnitsPerSecond: {
+				return swordfish::motion::FeedRate::UnitsPerSecond(MMM_TO_MMS(value_linear_units()));
+			}
+		}
 	}
 
 	void unknown_command_warning();

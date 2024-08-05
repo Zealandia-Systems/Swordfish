@@ -5,8 +5,6 @@
  *  Author: smohekey
  */
 
-#include <Eigen/Core>
-
 #include "../gcode.h"
 #include "../../module/motion.h"
 
@@ -15,16 +13,16 @@
 #if HAS_TOOL_OFFSET
 
 using namespace swordfish;
+using namespace swordfish::math;
 using namespace swordfish::motion;
 using namespace swordfish::tools;
-using namespace Eigen;
 
 void GcodeSuite::G43() {
 	auto& toolManager = ToolsModule::getInstance();
 	auto& motionManager = MotionModule::getInstance();
 	auto& tools = toolManager.getTools();
 
-	Vector3f offset { 0, 0, 0 };
+	Vector3f32 offset { 0, 0, 0 };
 
 	if (parser.seenval('H')) {
 		int16_t h = parser.intval('H');
@@ -43,12 +41,11 @@ void GcodeSuite::G43() {
 			return;
 		}
 
-		offset(Z) = -tool->getGeometry().length();
+		offset.z() = -tool->getGeometry().length();
 	}
-
-	LOOP_XYZ(i) {
-		if (parser.seenval(XYZ_CHAR(i))) {
-			offset(i) += parser.value_axis_units((AxisEnum) i);
+	for (auto axis : linear_axes) {
+		if (parser.seenval(axis.to_char())) {
+			offset[axis] += parser.value_axis_units(axis);
 		}
 	}
 

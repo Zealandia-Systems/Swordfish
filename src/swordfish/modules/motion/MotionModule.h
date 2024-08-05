@@ -25,6 +25,7 @@
 
 #include "CoordinateSystem.h"
 #include "CoordinateSystemTable.h"
+#include "Feedrate.h"
 #include "Limits.h"
 #include "NotHomedException.h"
 
@@ -48,7 +49,7 @@ namespace swordfish::motion {
 		float32_t x = NaN;
 		float32_t y = NaN;
 		float32_t z = NaN;
-		float32_t feedRate = NaN;
+		std::optional<FeedRate> feed_rate = std::nullopt;
 		utils::Flags<AxisSelector> relativeAxes = AxisSelector::None;
 		float32_t accel_mm_s2 = NaN;
 		swordfish::status::MachineState state;
@@ -59,6 +60,7 @@ namespace swordfish::motion {
 	class MotionModule : public swordfish::Module {
 	private:
 		static core::ValueField<int16_t> __activeCoordinateSystemField;
+		static core::ValueField<bool> __shouldHomeFourth;
 		static core::ObjectField<CoordinateSystemTable> __workCoordinateSystemsField;
 		static core::ObjectField<Limits> __limitsField;
 		static core::ObjectField<core::LinearVector3> __homeOffsetField;
@@ -82,8 +84,8 @@ namespace swordfish::motion {
 		CoordinateSystem* _toolChangeCoordinateSystem = nullptr; // G59.8
 		CoordinateSystem* _toolCoordinateSystem = nullptr; // G59.9
 
-		Eigen::Vector3f _offset;
-		Eigen::Vector3f _rotation;
+		swordfish::math::Vector3f32 _offset;
+		swordfish::math::Vector3f32 _rotation;
 		Eigen::Matrix4f _nativeTransform;
 		Eigen::Matrix4f _logicalTransform;
 
@@ -113,22 +115,26 @@ namespace swordfish::motion {
 			return __homeOffsetField.get(_pack);
 		}
 
-		void setHomeOffset(Eigen::Vector3f homeOffset);
+		void setHomeOffset(swordfish::math::Vector3f32 homeOffset);
 
 		Eigen::Vector3f getWorkOffset() {
 			return __workOffsetField.get(_pack);
 		}
 
-		void setWorkOffset(Eigen::Vector3f workOffset);
+		void setWorkOffset(swordfish::math::Vector3f32 workOffset);
 
 		Eigen::Vector3f getToolOffset() {
 			return __toolOffsetField.get(_pack);
 		}
 
-		void setToolOffset(Eigen::Vector3f toolOffset);
+		void setToolOffset(swordfish::math::Vector3f32 toolOffset);
 
 		CoordinateSystemTable& getWorkCoordinateSystems() {
 			return _workCoordinateSystems;
+		}
+
+		bool shouldHomeFourth() {
+			return __shouldHomeFourth.get(_pack);
 		}
 
 		Limits& getLimits() {
@@ -161,124 +167,110 @@ namespace swordfish::motion {
 
 		void synchronize();
 
-		FORCE_INLINE float32_t toLogical(AxisEnum axis, float32_t value) {
-			return value + _offset(axis);
+		FORCE_INLINE float32_t toLogical(Axis axis, f32 value) {
+			if (axis.is_linear()) {
+				return value + _offset[axis];
+			} else {
+				return value + _rotation[axis - 3];
+			}
 		}
-		FORCE_INLINE float32_t toNative(AxisEnum axis, float32_t value) {
-			return value - _offset(axis);
-		}
-
-		FORCE_INLINE void toLogical(xy_pos_t& raw) {
-			raw.x += _offset(X);
-			raw.y += _offset(Y);
-		}
-		FORCE_INLINE void toLogical(xyz_pos_t& raw) {
-			raw.x += _offset(X);
-			raw.y += _offset(Y);
-			raw.z += _offset(Z);
-		}
-		FORCE_INLINE Eigen::Vector2f toLogical(Eigen::Vector2f& raw) {
-			return { raw(X) += _offset(X), raw(Y) += _offset(Y) };
-		}
-		FORCE_INLINE Eigen::Vector3f toLogical(Eigen::Vector3f& raw) {
-			return { raw(X) += _offset(X), raw(Y) += _offset(Y), raw(Z) += _offset(Z) };
+		FORCE_INLINE float32_t toNative(Axis axis, f32 value) {
+			if (axis.is_linear()) {
+				return value - _offset[axis];
+			} else {
+				return value - _rotation[axis - 3];
+			}
 		}
 
-		FORCE_INLINE void toNative(xy_pos_t& raw) {
-			raw.x -= _offset(X);
-			raw.y -= _offset(Y);
-		}
-		FORCE_INLINE void toNative(xyz_pos_t& raw) {
-			raw.x -= _offset(X);
-			raw.y -= _offset(Y);
-			raw.z -= _offset(Z);
-		}
-		FORCE_INLINE Eigen::Vector2f toNative(Eigen::Vector2f& raw) {
-			return { raw(X) -= _offset(X), raw(Y) -= _offset(Y) };
-		}
-		FORCE_INLINE Eigen::Vector3f toNative(Eigen::Vector3f& raw) {
-			return { raw(X) -= _offset(X), raw(Y) -= _offset(Y), raw(Z) -= _offset(Z) };
+		FORCE_INLINE swordfish::math::Vector2f32 toLogical(const swordfish::math::Vector2f32& raw) {
+			return {
+				raw.x() + _offset.x(),
+				raw.y() + _offset.y()
+			};
 		}
 
-		/*
-		FORCE_INLINE float32_t toLogical(AxisEnum axis, float32_t value) {
-		  return value + _offset(axis);
+		FORCE_INLINE swordfish::math::Vector3f32 toLogical(const swordfish::math::Vector3f32& raw) {
+			return {
+				raw.x() + _offset.x(),
+				raw.y() + _offset.y(),
+				raw.z() + _offset.z()
+			};
 		}
 
-		FORCE_INLINE float32_t toNative(AxisEnum axis, float32_t value) {
-		  return value - _offset(axis);
+		FORCE_INLINE swordfish::math::Vector4f32 toLogical(const swordfish::math::Vector4f32& raw) {
+			return {
+				raw.x() + _offset.x(),
+				raw.y() + _offset.y(),
+				raw.z() + _offset.z(),
+				raw.a() + _rotation.x()
+			};
 		}
 
-		FORCE_INLINE void toLogical(xy_pos_t &raw) {
-		  Eigen::Vector4f v = { raw.x, raw.y, 0, 1 };
-
-		  auto r = _logicalTransform * v;
-
-		  raw.x = r(X);
-		  raw.y = r(Y);
+		FORCE_INLINE swordfish::math::Vector5f32 toLogical(const swordfish::math::Vector5f32& raw) {
+			return {
+				raw.x() + _offset.x(),
+				raw.y() + _offset.y(),
+				raw.z() + _offset.z(),
+				raw.a() + _rotation.x(),
+				raw.b() + _rotation.y()
+			};
 		}
 
-		FORCE_INLINE void toLogical(xyz_pos_t &raw) {
-		  Eigen::Vector4f v = { raw.x, raw.y, raw.z, 1 };
-
-		  auto r = _logicalTransform * v;
-
-		  raw.x = r(X);
-		  raw.y = r(Y);
-		  raw.z = r(Z);
+		FORCE_INLINE swordfish::math::Vector6f32 toLogical(const swordfish::math::Vector6f32& raw) {
+			return {
+				raw.x() + _offset.x(),
+				raw.y() + _offset.y(),
+				raw.z() + _offset.z(),
+				raw.a() + _rotation.x(),
+				raw.b() + _rotation.y(),
+				raw.c() + _rotation.z()
+			};
 		}
 
-		FORCE_INLINE Eigen::Vector2f toLogical(Eigen::Vector2f& raw) {
-		  Eigen::Vector4f v = { raw(X), raw(Y), 0, 1 };
-
-		  auto r = _logicalTransform * v;
-
-		  return { r(X), r(Y) };
+FORCE_INLINE swordfish::math::Vector2f32 toNative(const swordfish::math::Vector2f32& raw) {
+			return {
+				raw.x() - _offset.x(),
+				raw.y() - _offset.y()
+			};
 		}
 
-		FORCE_INLINE Eigen::Vector3f toLogical(Eigen::Vector3f& raw) {
-		  Eigen::Vector4f v = { raw(X), raw(Y), raw(Z), 1 };
-
-		  auto r = _logicalTransform * v;
-
-		  return { r(X), r(Y), r(Z) };
+		FORCE_INLINE swordfish::math::Vector3f32 toNative(const swordfish::math::Vector3f32& raw) {
+			return {
+				raw.x() - _offset.x(),
+				raw.y() - _offset.y(),
+				raw.z() - _offset.z()
+			};
 		}
 
-		FORCE_INLINE void toNative(xy_pos_t &raw) {
-		  Eigen::Vector4f v = { raw.x, raw.y, 0, 1 };
-
-		  auto r = _nativeTransform * v;
-
-		  raw.x = r(X);
-		  raw.y = r(Y);
+		FORCE_INLINE swordfish::math::Vector4f32 toNative(const swordfish::math::Vector4f32& raw) {
+			return {
+				raw.x() - _offset.x(),
+				raw.y() - _offset.y(),
+				raw.z() - _offset.z(),
+				raw.a() - _rotation.x()
+			};
 		}
 
-		FORCE_INLINE void toNative(xyz_pos_t &raw) {
-		  Eigen::Vector4f v = { raw.x, raw.y, raw.z, 1 };
-
-		  auto r = _nativeTransform * v;
-
-		  raw.x = r(X);
-		  raw.y = r(Y);
-		  raw.z = r(Z);
+		FORCE_INLINE swordfish::math::Vector5f32 toNative(const swordfish::math::Vector5f32& raw) {
+			return {
+				raw.x() - _offset.x(),
+				raw.y() - _offset.y(),
+				raw.z() - _offset.z(),
+				raw.a() - _rotation.x(),
+				raw.b() - _rotation.y()
+			};
 		}
 
-		FORCE_INLINE Eigen::Vector2f toNative(Eigen::Vector2f& raw) {
-		  Eigen::Vector4f v = { raw(X), raw(Y), 0, 1 };
-
-		  auto r = _nativeTransform * v;
-
-		  return { r(X), r(Y) };
+		FORCE_INLINE swordfish::math::Vector6f32 toNative(const swordfish::math::Vector6f32& raw) {
+			return {
+				raw.x() - _offset.x(),
+				raw.y() - _offset.y(),
+				raw.z() - _offset.z(),
+				raw.a() - _rotation.x(),
+				raw.b() - _rotation.y(),
+				raw.c() - _rotation.z()
+			};
 		}
-
-		FORCE_INLINE Eigen::Vector3f toNative(Eigen::Vector3f& raw) {
-		  Eigen::Vector4f v = { raw(X), raw(Y), raw(Z), 1 };
-
-		  auto r = _nativeTransform * v;
-
-		  return { r(X), r(Y), r(Z) };
-		}
-		*/
 
 		static MotionModule& getInstance(core::Object* parent = nullptr);
 	};

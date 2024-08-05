@@ -31,6 +31,8 @@
 #include "../sd/cardreader.h"
 #include "temperature.h"
 
+#include <swordfish/types.h>
+
 #if ENABLED(ENDSTOP_INTERRUPTS_FEATURE)
 // clang-format off
 #	include HAL_PATH(../HAL, endstop_interrupts.h)
@@ -74,6 +76,8 @@ uint8_t Endstops::endstop_poll_count;
 #if HAS_BED_PROBE
 volatile bool Endstops::z_probe_enabled = false;
 #endif
+
+volatile bool Endstops::a_home_enabled = false;
 
 #if HAS_TOOL_PROBE
 bool Endstops::tool_probe_enabled = false;
@@ -193,6 +197,16 @@ void Endstops::init() {
 #	endif
 #endif
 
+#if HAS_A_MIN
+#	if ENABLED(ENDSTOPPULLUP_AMIN)
+	SET_INPUT_PULLUP(A_MIN_PIN);
+#	elif ENABLED(ENDSTOPPULLDOWN_AMIN)
+	SET_INPUT_PULLDOWN(A_MIN_PIN);
+#	else
+	SET_INPUT(A_MIN_PIN);
+#	endif
+#endif
+
 #if HAS_X_MAX
 #	if ENABLED(ENDSTOPPULLUP_XMAX)
 	SET_INPUT_PULLUP(X_MAX_PIN);
@@ -270,6 +284,16 @@ void Endstops::init() {
 	SET_INPUT_PULLDOWN(Z4_MAX_PIN);
 #	else
 	SET_INPUT(Z4_MAX_PIN);
+#	endif
+#endif
+
+#if HAS_A_MAX
+#	if ENABLED(ENDSTOPPULLUP_AMAX)
+	SET_INPUT_PULLUP(A_MAX_PIN);
+#	elif ENABLED(ENDSTOPPULLDOWN_AMAX)
+	SET_INPUT_PULLDOWN(A_MAX_PIN);
+#	else
+	SET_INPUT(A_MAX_PIN);
 #	endif
 #endif
 
@@ -497,6 +521,9 @@ void OPT_O2 Endstops::report_states() {
 #if HAS_Z4_MIN
 	ES_REPORT(Z4_MIN);
 #endif
+#if HAS_A_MIN
+	ES_REPORT(A_MIN);
+#endif
 #if HAS_Z_MAX
 	ES_REPORT(Z_MAX);
 #endif
@@ -508,6 +535,9 @@ void OPT_O2 Endstops::report_states() {
 #endif
 #if HAS_Z4_MAX
 	ES_REPORT(Z4_MAX);
+#endif
+#if HAS_A_MAX
+	ES_REPORT(A_MAX);
 #endif
 #if BOTH(MARLIN_DEV_MODE, PROBE_ACTIVATION_SWITCH)
 	print_es_state(probe_switch_activated(), PSTR(STR_PROBE_EN));
@@ -673,6 +703,14 @@ void Endstops::update() {
 #			endif
 #		endif
 #	endif
+#endif
+
+#if HAS_A_MIN && !A_SPI_SENSORLESS
+	UPDATE_ENDSTOP_BIT(A, MIN);
+#endif
+
+#if HAS_A_MAX && !A_SPI_SENSORLESS
+	UPDATE_ENDSTOP_BIT(A, MAX);
 #endif
 
 #if HAS_BED_PROBE
@@ -849,8 +887,8 @@ void Endstops::update() {
 
 	// Signal, after validation, if an endstop limit is pressed or not
 
-	if (stepper.axis_is_moving(X_AXIS)) {
-		if (stepper.motor_direction(X_AXIS_HEAD)) { // -direction
+	if (stepper.axis_is_moving(Axis::X())) {
+		if (stepper.motor_direction(Axis::X())) { // -direction
 #if HAS_X_MIN || (X_SPI_SENSORLESS && X_HOME_DIR < 0)
 			PROCESS_ENDSTOP_X(MIN);
 #	if CORE_DIAG(XY, Y, MIN)
@@ -865,10 +903,10 @@ void Endstops::update() {
 #endif
 
 #if HAS_WORK_PROBE
-			if (work_probe_enabled[X_AXIS] && TEST_ENDSTOP(WORK_PROBE)) {
+			if (work_probe_enabled[Axis::X()] && TEST_ENDSTOP(WORK_PROBE)) {
 				SBI(hit_state, WORK_PROBE);
 
-				planner.endstop_triggered(X_AXIS);
+				planner.endstop_triggered(Axis::X());
 			}
 #endif
 		} else { // +direction
@@ -886,17 +924,17 @@ void Endstops::update() {
 #endif
 
 #if HAS_WORK_PROBE
-			if (work_probe_enabled[X_AXIS] && TEST_ENDSTOP(WORK_PROBE)) {
+			if (work_probe_enabled[Axis::X()] && TEST_ENDSTOP(WORK_PROBE)) {
 				SBI(hit_state, WORK_PROBE);
 
-				planner.endstop_triggered(X_AXIS);
+				planner.endstop_triggered(Axis::X());
 			}
 #endif
 		}
 	}
 
-	if (stepper.axis_is_moving(Y_AXIS)) {
-		if (stepper.motor_direction(Y_AXIS_HEAD)) { // -direction
+	if (stepper.axis_is_moving(Axis::Y())) {
+		if (stepper.motor_direction(Axis::Y())) { // -direction
 #if HAS_Y_MIN || (Y_SPI_SENSORLESS && Y_HOME_DIR < 0)
 			PROCESS_ENDSTOP_Y(MIN);
 #	if CORE_DIAG(XY, X, MIN)
@@ -911,10 +949,10 @@ void Endstops::update() {
 #endif
 
 #if HAS_WORK_PROBE
-			if (work_probe_enabled[Y_AXIS] && TEST_ENDSTOP(WORK_PROBE)) {
+			if (work_probe_enabled[Axis::Y()] && TEST_ENDSTOP(WORK_PROBE)) {
 				SBI(hit_state, WORK_PROBE);
 
-				planner.endstop_triggered(Y_AXIS);
+				planner.endstop_triggered(Axis::Y());
 			}
 #endif
 		} else { // +direction
@@ -932,17 +970,17 @@ void Endstops::update() {
 #endif
 
 #if HAS_WORK_PROBE
-			if (work_probe_enabled[Y_AXIS] && TEST_ENDSTOP(WORK_PROBE)) {
+			if (work_probe_enabled[Axis::Y()] && TEST_ENDSTOP(WORK_PROBE)) {
 				SBI(hit_state, WORK_PROBE);
 
-				planner.endstop_triggered(Y_AXIS);
+				planner.endstop_triggered(Axis::Y());
 			}
 #endif
 		}
 	}
 
-	if (stepper.axis_is_moving(Z_AXIS)) {
-		if (stepper.motor_direction(Z_AXIS_HEAD)) { // Z -direction. Gantry down, bed up.
+	if (stepper.axis_is_moving(Axis::Z())) {
+		if (stepper.motor_direction(Axis::Z())) { // Z -direction. Gantry down, bed up.
 
 #if HAS_Z_MIN || (Z_SPI_SENSORLESS && Z_HOME_DIR < 0)
 			if (TERN1(Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN, z_probe_enabled) && TERN1(HAS_CUSTOM_PROBE_PIN, !z_probe_enabled))
@@ -968,15 +1006,15 @@ void Endstops::update() {
 			if (tool_probe_enabled && TEST_ENDSTOP(TOOL_PROBE)) {
 				SBI(hit_state, TOOL_PROBE);
 
-				planner.endstop_triggered(Z_AXIS);
+				planner.endstop_triggered(Axis::Z());
 			}
 #endif
 
 #if HAS_WORK_PROBE
-			if (work_probe_enabled[Z_AXIS] && TEST_ENDSTOP(WORK_PROBE)) {
+			if (work_probe_enabled[Axis::Z()] && TEST_ENDSTOP(WORK_PROBE)) {
 				SBI(hit_state, WORK_PROBE);
 
-				planner.endstop_triggered(Z_AXIS);
+				planner.endstop_triggered(Axis::Z());
 			}
 #endif
 		} else { // Z +direction. Gantry up, bed down.
@@ -997,6 +1035,10 @@ void Endstops::update() {
 #	endif
 #endif
 		}
+	}
+
+	if (a_home_enabled && stepper.axis_is_moving(Axis::A())) {
+		PROCESS_ENDSTOP(A, MAX);
 	}
 } // Endstops::update()
 
@@ -1129,6 +1171,12 @@ void Endstops::monitor() {
 #	if HAS_Z4_MAX
 	ES_GET_STATE(Z4_MAX);
 #	endif
+#	if HAS_A_MIN
+	ES_GET_STATE(A_MIN);
+#	endif
+#	if HAS_A_MAX
+	ES_GET_STATE(A_MAX);
+#	endif
 
 	esbits_t endstop_change = live_state_local ^ old_live_state_local;
 #	define ES_REPORT_CHANGE(S) \
@@ -1192,6 +1240,13 @@ void Endstops::monitor() {
 		local_LED_status ^= 255;
 		old_live_state_local = live_state_local;
 	}
+
+	#	if HAS_A_MIN
+		ES_REPORT_CHANGE(A_MIN);
+#	endif
+#	if HAS_A_MAX
+		ES_REPORT_CHANGE(A_MAX);
+#	endif
 }
 
 #endif // PINS_DEBUGGING

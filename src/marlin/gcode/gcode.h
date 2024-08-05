@@ -334,14 +334,8 @@ public:
 	static bool aborted_;
 	static uint8_t axis_relative;
 
-	static inline bool axis_is_relative(const AxisEnum a) {
-		if (a == E_AXIS) {
-			if (TEST(axis_relative, E_MODE_REL))
-				return true;
-			if (TEST(axis_relative, E_MODE_ABS))
-				return false;
-		}
-		return TEST(axis_relative, a);
+	static inline bool axis_is_relative(const Axis axis) {
+		return TEST(axis_relative, axis);
 	}
 
 	static inline uint8_t relative_mode() {
@@ -400,7 +394,7 @@ public:
 
 	static int8_t get_target_extruder_from_command();
 	static int8_t get_target_e_stepper_from_command();
-	static void get_destination_from_command();
+	static void get_destination_from_command(bool rapid_move);
 
 	static void process_parsed_command(const bool no_ok = false);
 	static void process_next_command();
@@ -541,7 +535,7 @@ private:
 
 	TERN_(NOZZLE_PARK_FEATURE, static void G27());
 
-	static void G28();
+	static void G28(const int8_t subcode);
 
 #if HAS_LEVELING
 #	if ENABLED(G29_RETRY_AND_RECOVER)
@@ -607,6 +601,8 @@ private:
 	TERN_(GCODE_MOTION_MODES, static void G80());
 
 	static void G92(bool report = true);
+	static void G93();
+	static void G94();
 
 	TERN_(CALIBRATION_GCODE, static void G425());
 

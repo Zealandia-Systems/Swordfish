@@ -52,10 +52,7 @@ extern bool G38_did_trigger; // Flag from the ISR to indicate the endstop change
 /**
  * The axis order in all axis related arrays is X, Y, Z, E
  */
-void enable_e_steppers();
 void enable_all_steppers();
-void disable_e_stepper(const uint8_t e);
-void disable_e_steppers();
 void disable_all_steppers();
 
 void kill(PGM_P const lcd_error = nullptr, PGM_P const lcd_component = nullptr, const bool steppers_off = false);
@@ -142,4 +139,4 @@ void event_probe_failure();
 extern const char NUL_STR[], M112_KILL_STR[], G28_STR[], M21_STR[], M23_STR[], M24_STR[],
 		SP_A_STR[], SP_B_STR[], SP_C_STR[],
 		SP_P_STR[], SP_T_STR[], SP_X_STR[], SP_Y_STR[], SP_Z_STR[], SP_E_STR[],
-		X_LBL[], Y_LBL[], Z_LBL[], E_LBL[], SP_X_LBL[], SP_Y_LBL[], SP_Z_LBL[], SP_E_LBL[];
+		X_LBL[], Y_LBL[], Z_LBL[], E_LBL[], SP_X_LBL[], SP_Y_LBL[], SP_Z_LBL[], SP_A_LBL[], SP_B_LBL[], SP_C_LBL[];

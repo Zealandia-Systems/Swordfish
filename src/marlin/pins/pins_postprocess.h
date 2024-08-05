@@ -203,6 +203,7 @@
 //
 // Destroy unused CS pins
 //
+/*
 #if !AXIS_HAS_SPI(X)
   #undef X_CS_PIN
 #endif
@@ -236,6 +237,7 @@
 #if E_STEPPERS > 7 && !AXIS_HAS_SPI(E7)
   #undef E7_CS_PIN
 #endif
+*/
 
 #ifndef X_CS_PIN
   #define X_CS_PIN -1
@@ -606,17 +608,6 @@
   #endif
   #ifndef Y2_MS3_PIN
     #define Y2_MS3_PIN    _EPIN(Y2_E_INDEX, MS3)
-  #endif
-  #if AXIS_HAS_SPI(Y2) && !defined(Y2_CS_PIN)
-    #define Y2_CS_PIN     _EPIN(Y2_E_INDEX, CS)
-  #endif
-  #if AXIS_HAS_UART(Y2)
-    #ifndef Y2_SERIAL_TX_PIN
-      #define Y2_SERIAL_TX_PIN _EPIN(Y2_E_INDEX, SERIAL_TX)
-    #endif
-    #ifndef Y2_SERIAL_RX_PIN
-      #define Y2_SERIAL_RX_PIN _EPIN(Y2_E_INDEX, SERIAL_RX)
-    #endif
   #endif
   #if defined(Y2_STALL_SENSITIVITY) && ENABLED(Y_DUAL_ENDSTOPS) && _PEXI(Y2_E_INDEX, DIAG)
     #define Y2_DIAG_PIN _EPIN(Y2_E_INDEX, DIAG)

@@ -9,6 +9,7 @@
 
 #include <array>
 
+#include <swordfish/math.h>
 #include <swordfish/utils/NotCopyable.h>
 #include <swordfish/utils/NotMovable.h>
 #include <swordfish/utils/TypeInfo.h>

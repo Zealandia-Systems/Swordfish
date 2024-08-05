@@ -42,10 +42,9 @@ void GcodeSuite::M201() {
 		planner.xy_freq_min_speed_factor = constrain(parser.value_float(), 1, 100) / 100;
 #endif
 
-	LOOP_XYZE(i) {
-		if (parser.seen(axis_codes[i])) {
-			const uint8_t a = (i == E_AXIS ? uint8_t(E_AXIS_N(target_extruder)) : i);
-			planner.set_max_acceleration(a, parser.value_axis_units((AxisEnum) a));
+	for (auto axis : all_axes) {
+		if (parser.seen(axis.to_char())) {
+			planner.set_max_acceleration(axis, parser.value_axis_units(axis));
 		}
 	}
 }
@@ -56,15 +55,10 @@ void GcodeSuite::M201() {
  *       With multiple extruders use T to specify which one.
  */
 void GcodeSuite::M203() {
-
-	const int8_t target_extruder = get_target_extruder_from_command();
-	if (target_extruder < 0)
-		return;
-
-	LOOP_XYZE(i)
-	if (parser.seen(axis_codes[i])) {
-		const uint8_t a = (i == E_AXIS ? uint8_t(E_AXIS_N(target_extruder)) : i);
-		planner.set_max_feedrate(a, MMM_TO_MMS(parser.value_axis_units((AxisEnum) a)));
+	for (auto axis : all_axes) {
+		if (parser.seen(axis.to_char())) {
+			planner.set_max_feedrate(axis, MMM_TO_MMS(parser.value_axis_units(axis)));
+		}
 	}
 }
 
@@ -118,9 +112,9 @@ void GcodeSuite::M205() {
 	if (parser.seen('B'))
 		planner.settings.min_segment_time_us = parser.value_ulong();
 	if (parser.seen('S'))
-		planner.settings.min_feedrate_mm_s = parser.value_linear_units();
+		planner.settings.min_feedrate_unit_per_s = parser.value_linear_units();
 	if (parser.seen('T'))
-		planner.settings.min_travel_feedrate_mm_s = parser.value_linear_units();
+		planner.settings.min_travel_feedrate_unit_per_s = parser.value_linear_units();
 #if HAS_JUNCTION_DEVIATION
 	if (parser.seen('J')) {
 		const float junc_dev = parser.value_linear_units();

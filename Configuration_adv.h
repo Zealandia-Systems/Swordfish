@@ -663,9 +663,9 @@
 // #define SENSORLESS_BACKOFF_MM  { 40, 40, 40 }     // (mm) Backoff from endstops before sensorless homing
 
 #define HOMING_BUMP_MM \
-	{ 15, 15, 15 } // (mm) Backoff from endstops after first bump
+	{ 15, 15, 15, 15, 15, 15 } // (mm) Backoff from endstops after first bump
 #define HOMING_BUMP_DIVISOR \
-	{ 10, 10, 5 } // Re-Bump Speed Divisor (Divides the Homing Feedrate)
+	{ 10, 10, 5, 10, 10, 10 } // Re-Bump Speed Divisor (Divides the Homing Feedrate)
 
 // #define HOMING_BACKOFF_POST_MM { 5, 5, 2 }  // (mm) Backoff from endstops after homing
 
@@ -857,7 +857,9 @@
 #define INVERT_X_STEP_PIN             true
 #define INVERT_Y_STEP_PIN             true
 #define INVERT_Z_STEP_PIN             true
-#define INVERT_E_STEP_PIN             true
+#define INVERT_A_STEP_PIN             true
+#define INVERT_B_STEP_PIN             true
+#define INVERT_C_STEP_PIN             true
 
 /**
  * Idle Stepper Shutdown
@@ -868,7 +870,9 @@
 #define DISABLE_INACTIVE_X            false
 #define DISABLE_INACTIVE_Y            false
 #define DISABLE_INACTIVE_Z            false // Set 'false' if the nozzle could fall onto your printed part!
-#define DISABLE_INACTIVE_E            false
+#define DISABLE_INACTIVE_A            false
+#define DISABLE_INACTIVE_B            false
+#define DISABLE_INACTIVE_C            false
 
 // If the Nozzle or Bed falls when the Z stepper is disabled, set its resting position here.
 // #define Z_AFTER_DEACTIVATE Z_HOME_POS

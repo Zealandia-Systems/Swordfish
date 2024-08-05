@@ -68,24 +68,17 @@
 #define AXIS_DRIVER_TYPE_Z3(T) (NUM_Z_STEPPER_DRIVERS >= 3 && _AXIS_DRIVER_TYPE(Z3,T))
 #define AXIS_DRIVER_TYPE_Z4(T) (NUM_Z_STEPPER_DRIVERS >= 4 && _AXIS_DRIVER_TYPE(Z4,T))
 
-#define AXIS_DRIVER_TYPE_E(N,T) (E_STEPPERS > N && _AXIS_DRIVER_TYPE(E##N,T))
-#define AXIS_DRIVER_TYPE_E0(T) AXIS_DRIVER_TYPE_E(0,T)
-#define AXIS_DRIVER_TYPE_E1(T) AXIS_DRIVER_TYPE_E(1,T)
-#define AXIS_DRIVER_TYPE_E2(T) AXIS_DRIVER_TYPE_E(2,T)
-#define AXIS_DRIVER_TYPE_E3(T) AXIS_DRIVER_TYPE_E(3,T)
-#define AXIS_DRIVER_TYPE_E4(T) AXIS_DRIVER_TYPE_E(4,T)
-#define AXIS_DRIVER_TYPE_E5(T) AXIS_DRIVER_TYPE_E(5,T)
-#define AXIS_DRIVER_TYPE_E6(T) AXIS_DRIVER_TYPE_E(6,T)
-#define AXIS_DRIVER_TYPE_E7(T) AXIS_DRIVER_TYPE_E(7,T)
+#define AXIS_DRIVER_TYPE_A(T) _AXIS_DRIVER_TYPE(A,T)
+#define AXIS_DRIVER_TYPE_B(T) _AXIS_DRIVER_TYPE(B,T)
+#define AXIS_DRIVER_TYPE_C(T) _AXIS_DRIVER_TYPE(C,T)
 
 #define AXIS_DRIVER_TYPE(A,T) AXIS_DRIVER_TYPE_##A(T)
 
-#define _OR_ADTE(N,T)   || AXIS_DRIVER_TYPE_E(N,T)
-#define HAS_E_DRIVER(T) (0 RREPEAT2(E_STEPPERS, _OR_ADTE, T))
 
 #define HAS_DRIVER(T) (  AXIS_DRIVER_TYPE_X(T)  || AXIS_DRIVER_TYPE_Y(T)  || AXIS_DRIVER_TYPE_Z(T)  \
                       || AXIS_DRIVER_TYPE_X2(T) || AXIS_DRIVER_TYPE_Y2(T) || AXIS_DRIVER_TYPE_Z2(T) \
-                      || AXIS_DRIVER_TYPE_Z3(T) || AXIS_DRIVER_TYPE_Z4(T) || HAS_E_DRIVER(T) )
+                      || AXIS_DRIVER_TYPE_Z3(T) || AXIS_DRIVER_TYPE_Z4(T) || AXIS_DRIVER_TYPE_A(T) \
+											|| AXIS_DRIVER_TYPE_B(T) || AXIS_DRIVER_TYPE_C(T) )
 
 //
 // Trinamic Stepper Drivers
@@ -117,6 +110,7 @@
   #define HAS_TMC220x 1
 #endif
 
+/*
 #define AXIS_IS_TMC(A)   (    AXIS_DRIVER_TYPE(A,TMC2130) || AXIS_DRIVER_TYPE(A,TMC2160) \
                            || AXIS_DRIVER_TYPE(A,TMC2208) || AXIS_DRIVER_TYPE(A,TMC2209) \
                            || AXIS_DRIVER_TYPE(A,TMC2660) \
@@ -142,7 +136,7 @@
 #define AXIS_HAS_STEALTHCHOP(A)  (    AXIS_DRIVER_TYPE(A,TMC2130) || AXIS_DRIVER_TYPE(A,TMC2160) \
                                    || AXIS_DRIVER_TYPE(A,TMC2208) || AXIS_DRIVER_TYPE(A,TMC2209) \
                                    || AXIS_DRIVER_TYPE(A,TMC5130) || AXIS_DRIVER_TYPE(A,TMC5160) )
-																	 
+
 #define AXIS_HAS_SG_RESULT(A)    (    AXIS_DRIVER_TYPE(A,TMC2130) || AXIS_DRIVER_TYPE(A,TMC2160) \
                                    || AXIS_DRIVER_TYPE(A,TMC2208) || AXIS_DRIVER_TYPE(A,TMC2209) \
 																	 || AXIS_DRIVER_TYPE(A,TMC2660) )
@@ -158,7 +152,8 @@
 
 #define ANY_AXIS_HAS(T) (    AXIS_HAS_##T(X)  || AXIS_HAS_##T(Y)  || AXIS_HAS_##T(Z)  \
                           || AXIS_HAS_##T(X2) || AXIS_HAS_##T(Y2) || AXIS_HAS_##T(Z2) \
-                          || AXIS_HAS_##T(Z3) || AXIS_HAS_##T(Z4) || E_AXIS_HAS(T) )
+                          || AXIS_HAS_##T(Z3) || AXIS_HAS_##T(Z4) || AXIS_HAS_##T(A) \
+													|| AXIS_HAS_##T(B) || AXIS_HAS_##T(C) )
 
 #if ANY_AXIS_HAS(STEALTHCHOP)
   #define HAS_STEALTHCHOP 1
@@ -178,6 +173,7 @@
 #if ANY_AXIS_HAS(SPI)
   #define HAS_TMC_SPI 1
 #endif
+*/
 
 //
 // TMC26XX Stepper Drivers

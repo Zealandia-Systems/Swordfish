@@ -67,9 +67,9 @@ namespace swordfish::core {
 		}
 
 		void set(Eigen::Vector3f& value) {
-			x(value(X));
-			y(value(Y));
-			z(value(Z));
+			x(value(Axis::X()));
+			y(value(Axis::Y()));
+			z(value(Axis::Z()));
 		}
 
 		inline operator Eigen::Vector3f() {

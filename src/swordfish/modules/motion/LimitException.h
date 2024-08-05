@@ -7,29 +7,29 @@
 
 #pragma once
 
-#include <Eigen/Core>
 
+#include <swordfish/math.h>
 #include <swordfish/Exception.h>
 
 namespace swordfish::motion {
 	class LimitException : public Exception {
 	private:
-		const Eigen::Vector3f _target;
-		const Eigen::Vector3f _min;
-		const Eigen::Vector3f _max;
+		const swordfish::math::Vector3f32 _target;
+		const swordfish::math::Vector3f32 _min;
+		const swordfish::math::Vector3f32 _max;
 
 	protected:
 		void virtual writeType([[maybe_unused]] io::Writer& writer) const override { }
 		void virtual writeMessage([[maybe_unused]] io::Writer& writer) const override { }
 
 	public:
-		LimitException(const Eigen::Vector3f& target, const Eigen::Vector3f& min, const Eigen::Vector3f& max) : _target(target), _min(min), _max(max) {
+		LimitException(const swordfish::math::Vector3f32& target, const swordfish::math::Vector3f32& min, const swordfish::math::Vector3f32& max) : _target(target), _min(min), _max(max) {
 
 		}
 
 		virtual ~LimitException() { }
 
-		const Eigen::Vector3f& getTarget() {
+		const swordfish::math::Vector3f32& getTarget() {
 			return _target;
 		}
 

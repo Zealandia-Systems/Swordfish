@@ -20,8 +20,6 @@
  *
  */
 
-#include <Eigen/Core>
-
 #include "../../inc/MarlinConfig.h"
 
 #if HAS_M206_COMMAND
@@ -33,9 +31,8 @@
 
 #	include <swordfish/Controller.h>
 
-using namespace Eigen;
-
 using namespace swordfish;
+using namespace swordfish::math;
 using namespace swordfish::motion;
 
 extern const char SP_Y_STR[], SP_Z_STR[];
@@ -43,7 +40,7 @@ extern const char SP_Y_STR[], SP_Z_STR[];
 void m206_report() {
 	auto homeOffset = MotionModule::getInstance().getHomeOffset();
 
-	SERIAL_ECHOLNPAIR_P(PSTR("M206 X"), homeOffset(X), SP_Y_STR, homeOffset(Y), SP_Z_STR, homeOffset(Z));
+	SERIAL_ECHOLNPAIR_P(PSTR("M206 X"), homeOffset.x(), SP_Y_STR, homeOffset.y(), SP_Z_STR, homeOffset.z());
 }
 
 /**
@@ -54,11 +51,11 @@ void m206_report() {
  * ***              In the 2.0 release, it will simply be disabled by default.
  */
 void GcodeSuite::M206() {
-	Vector3f homeOffset { 0, 0, 0 };
+	Vector3f32 homeOffset { 0, 0, 0 };
 
-	LOOP_XYZ(i) {
-		if (parser.seen(XYZ_CHAR(i)))
-			homeOffset(i) = parser.value_linear_units();
+	for (auto i : linear_axes) {
+		if (parser.seen(i.to_char()))
+			homeOffset[i] = parser.value_linear_units();
 	}
 
 	MotionModule::getInstance().setHomeOffset(homeOffset);
@@ -84,13 +81,14 @@ void GcodeSuite::M206() {
  *       Use M206 to set these values directly.
  */
 void GcodeSuite::M428() {
-	if (homing_needed_error())
+if (homing_needed_error())
 		return;
 
-	Vector3f diff;
-	LOOP_XYZ(i) {
-		diff[i] = base_home_pos((AxisEnum) i) - current_position[i];
-		if (!WITHIN(diff[i], -20, 20) && home_dir((AxisEnum) i) > 0)
+	Vector3f32 diff;
+
+	for (auto i : linear_axes) {
+		diff[i] = base_home_pos(i) - current_position[i];
+		if (!WITHIN(diff[i], -20, 20) && home_dir(i) > 0)
 			diff[i] = -current_position[i];
 		if (!WITHIN(diff[i], -20, 20)) {
 			SERIAL_ERROR_MSG(STR_ERR_M428_TOO_FAR);

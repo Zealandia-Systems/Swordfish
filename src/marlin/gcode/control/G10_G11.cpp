@@ -144,13 +144,13 @@ void GcodeSuite::G10() {
 
 			xyz_pos_t offset { 0, 0, 0 };
 
-			LOOP_XYZ(i) {
-				if (parser.seenval(XYZ_CHAR(i))) {
+			for (auto axis : linear_axes) {
+				if (parser.seenval(axis.to_char())) {
 					const float v = parser.value_linear_units();
 
-					offset[i] = axis_is_relative((AxisEnum) i) ? toLogical(current_position[i], (AxisEnum) i) + v : v;
+					offset[axis] = axis_is_relative(axis) ? toLogical(current_position[axis], axis) + v : v;
 				} else {
-					offset[i] = toLogical(current_position[i], (AxisEnum) i);
+					offset[axis] = toLogical(current_position[axis], axis);
 				}
 			}
 
@@ -666,17 +666,17 @@ void GcodeSuite::set_work_offsets(const uint8_t p) {
 
 	if (parser.seen('X')) {
 		// offset.x(toNative(parser.value_axis_units(X_AXIS), X_AXIS) - current_position[0]);
-		offset.x(parser.value_axis_units(X_AXIS) - homeOffset[X_AXIS] - toolOffset[X_AXIS] - current_position[X_AXIS]);
+		offset.x(parser.value_axis_units(Axis::X()) - homeOffset[Axis::X()] - toolOffset[Axis::X()] - current_position[Axis::X()]);
 	}
 
 	if (parser.seen('Y')) {
 		// offset.y(toNative(parser.value_axis_units(Y_AXIS), Y_AXIS) - current_position[1]);
-		offset.y(parser.value_axis_units(Y_AXIS) - homeOffset[Y_AXIS] - toolOffset[Y_AXIS] - current_position[Y_AXIS]);
+		offset.y(parser.value_axis_units(Axis::Y()) - homeOffset[Axis::Y()] - toolOffset[Axis::Y()] - current_position[Axis::Y()]);
 	}
 
 	if (parser.seen('Z')) {
 		// offset.z(toNative(parser.value_axis_units(Z_AXIS), Z_AXIS) - current_position[2]);
-		offset.z(parser.value_axis_units(Z_AXIS) - homeOffset[Z_AXIS] - toolOffset[Z_AXIS] - current_position[Z_AXIS]);
+		offset.z(parser.value_axis_units(Axis::Z()) - homeOffset[Axis::Z()] - toolOffset[Axis::Z()] - current_position[Axis::Z()]);
 		// offset.z(current_position[Z_AXIS] - parser.value_axis_units(Z_AXIS) - homeOffset[Z_AXIS] - toolOffset[Z_AXIS]);
 	}
 

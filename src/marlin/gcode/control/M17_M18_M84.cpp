@@ -36,7 +36,9 @@ void GcodeSuite::M17() {
     if (parser.seen('X')) ENABLE_AXIS_X();
     if (parser.seen('Y')) ENABLE_AXIS_Y();
     if (parser.seen('Z')) ENABLE_AXIS_Z();
-    if (TERN0(HAS_E_STEPPER_ENABLE, parser.seen('E'))) enable_e_steppers();
+		if (parser.seen('A')) ENABLE_AXIS_A();
+		if (parser.seen('B')) ENABLE_AXIS_B();
+		if (parser.seen('C')) ENABLE_AXIS_C();
   }
   else {
     //LCD_MESSAGEPGM(MSG_NO_MOVE);
@@ -58,7 +60,9 @@ void GcodeSuite::M18_M84() {
       if (parser.seen('X')) DISABLE_AXIS_X();
       if (parser.seen('Y')) DISABLE_AXIS_Y();
       if (parser.seen('Z')) DISABLE_AXIS_Z();
-      if (TERN0(HAS_E_STEPPER_ENABLE, parser.seen('E'))) disable_e_steppers();
+			if (parser.seen('A')) DISABLE_AXIS_A();
+			if (parser.seen('B')) DISABLE_AXIS_B();
+			if (parser.seen('C')) DISABLE_AXIS_C();
     }
     else
       planner.finish_and_disable();

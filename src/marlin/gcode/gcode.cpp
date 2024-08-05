@@ -25,9 +25,9 @@
  *             Most will migrate to classes, by feature.
  */
 
-#include <Eigen/Core>
+#include <swordfish/math.h>
 
-using namespace Eigen;
+using namespace swordfish::math;
 
 #include "gcode.h"
 GcodeSuite gcode;
@@ -160,10 +160,10 @@ int8_t GcodeSuite::get_target_e_stepper_from_command() {
  *  - Set to current for missing axis codes
  *  - Set the feedrate, if included
  */
-void GcodeSuite::get_destination_from_command() {
+void GcodeSuite::get_destination_from_command(bool rapid_move) {
 	auto& motionModule = MotionModule::getInstance();
 
-	xyze_bool_t seen = { false, false, false, false };
+	Vector6u8 seen = { false, false, false, false, false, false };
 
 #if ENABLED(CANCEL_OBJECTS)
 	const bool& skip_move = cancelable.skipping;
@@ -171,23 +171,47 @@ void GcodeSuite::get_destination_from_command() {
 	constexpr bool skip_move = false;
 #endif
 
-	// Get new XYZ position, whether absolute or relative
-	LOOP_XYZ(i) {
-		if ((seen[i] = parser.seenval(XYZ_CHAR(i)))) {
-			const float v = parser.value_axis_units((AxisEnum) i);
-			if (skip_move)
-				destination[i] = current_position[i];
-			else
-				destination[i] = axis_is_relative(AxisEnum(i)) ? current_position[i] + v : motionModule.toNative((AxisEnum) i, v);
-		} else
-			destination[i] = current_position[i];
+	u8 linear_moves = 0;
+	u8 radial_moves = 0;
+
+	debug()("rapid_move: ", rapid_move);
+
+	// validate move
+	for (auto axis : all_axes) {
+		if (parser.seen(axis.to_char())) {
+			if (axis.is_linear()) {
+				linear_moves ++;
+			} else {
+				radial_moves ++;
+			}
+		}
 	}
 
-#if ENABLED(POWER_LOSS_RECOVERY) && !PIN_EXISTS(POWER_LOSS)
-	// Only update power loss recovery on moves with E
-	if (recovery.enabled && IS_SD_PRINTING() && seen.e && (seen.x || seen.y))
-		recovery.save();
-#endif
+	debug()("linear_moves: ", linear_moves, ", radial_moves: ", radial_moves);
+
+	if (!rapid_move && linear_moves > 0 && radial_moves > 0 && parser.feedrate_type != FeedRateType::InverseTime) {
+		throw CommandException("Linear and radial moves can only be combined in G93 mode");
+	}
+
+	if (parser.feedrate_type == FeedRateType::InverseTime && !parser.seen('F')) {
+		throw CommandException("Expected F parameter while in G93 mode.");
+	}
+
+	// Get new XYZ position, whether absolute or relative
+	for (auto axis : all_axes) {
+
+		if ((seen[axis] = parser.seenval(axis.to_char()))) {
+			const float v = parser.value_axis_units(axis);
+
+			debug()("axis: ", (usize)axis, " (", axis.to_char(), "), ", v);
+
+			if (skip_move)
+				destination[axis] = current_position[axis];
+			else
+				destination[axis] = axis_is_relative(axis) ? current_position[axis] + v : motionModule.toNative(axis, v);
+		} else
+			destination[axis] = current_position[axis];
+	}
 
 	if (parser.linearval('F') > 0)
 		feedrate_mm_s = parser.value_feedrate();
@@ -414,7 +438,7 @@ void GcodeSuite::process_parsed_command(const bool no_ok /*=false*/) {
 #endif
 
 					case 28:
-						G28();
+						G28(parser.subcode);
 						break; // G28: Home one or more axes
 
 #if HAS_LEVELING
@@ -557,9 +581,22 @@ void GcodeSuite::process_parsed_command(const bool no_ok /*=false*/) {
 						break;
 					}
 
-					case 92:
+					case 92: {
 						G92();
 						break; // G92: Set current axis position(s)
+					}
+
+					case 93: {
+						G93(); // set feed rate mode to inverse time
+
+						break;
+					}
+
+					case 94: {
+						G94(); // set feed rate mode to mm/s
+
+						break;
+					}
 
 #if HAS_MESH
 					case 42:
@@ -1113,8 +1150,26 @@ const char* GcodeSuite::get_state() {
 	}
 }
 
-inline void report_position_json(const xyz_pos_t& pos) {
-	SERIAL_PRINTF("{\"x\":%lf,\"y\":%lf,\"z\":%lf}", pos.x, pos.y, pos.z);
+inline void report_axis(Axis axis, const Vector6f32& pos) {
+	SERIAL_PRINTF("\"%c\":%lf", tolower(axis.to_char()), isnan(pos[axis]) ? 0.0 : pos[axis]);
+}
+
+inline void report_position_json(const Vector6f32& pos) {
+	bool first = true;
+
+	SERIAL_ECHO("{");
+
+	for (auto axis : all_axes) {
+		if (!first) {
+			SERIAL_ECHO(",");
+		}
+
+		first = false;
+
+		report_axis(axis, pos);
+	}
+
+	SERIAL_ECHO("}");
 }
 
 extern int16_t rapidrate_percentage;
@@ -1122,7 +1177,7 @@ extern int16_t rapidrate_percentage;
 void GcodeSuite::report_state() {
 	// get_cartesian_from_steppers();
 
-	xyz_pos_t pos = current_position;
+	auto pos = current_position;
 	// xyz_pos_t pos = cartes;
 
 	const char* state = get_state();
@@ -1135,7 +1190,7 @@ void GcodeSuite::report_state() {
 	SERIAL_ECHO("\",\"mpos\":");
 	report_position_json(pos);
 	SERIAL_ECHO(",\"wpos\":");
-	report_position_json(pos.asLogical());
+	report_position_json(toLogical(pos));
 	// SERIAL_ECHO(",\"spos\":");
 	// SERIAL_PRINTF("{\"x\":%lf,\"y\":%lf,\"z\":%lf}", Stepper::count_position.x, Stepper::count_position.y, Stepper::count_position.z);
 	SERIAL_PRINTF(",\"wcs\":%ld", motionManager.getActiveCoordinateSystem().getIndex() + 1);

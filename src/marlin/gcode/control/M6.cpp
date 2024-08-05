@@ -36,9 +36,9 @@
 using namespace swordfish::tools;
 
 void GcodeSuite::M6() {
-	if(homing_needed_error(_BV(X_AXIS)|_BV(Y_AXIS)|_BV(Z_AXIS))) {
+	if(homing_needed_error(_BV(Axis::X())|_BV(Axis::Y())|_BV(Axis::Z()))) {
 		return;
 	}
-	
+
 	ToolsModule::getInstance().change();
 }

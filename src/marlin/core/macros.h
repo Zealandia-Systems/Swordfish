@@ -31,7 +31,7 @@
 #define XYZ            3
 #define XY             2
 
-#define _AXIS(A)       (A##_AXIS)
+#define _AXIS(A)       (Axis::A())
 
 #define _XMIN_         100
 #define _YMIN_         200

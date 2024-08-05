@@ -229,7 +229,9 @@ PGMSTR(SP_E_STR, " E");
 PGMSTR(SP_X_LBL, " X:");
 PGMSTR(SP_Y_LBL, " Y:");
 PGMSTR(SP_Z_LBL, " Z:");
-PGMSTR(SP_E_LBL, " E:");
+PGMSTR(SP_A_LBL, " A:");
+PGMSTR(SP_B_LBL, " B:");
+PGMSTR(SP_C_LBL, " C:");
 
 MarlinState marlin_state = MF_INITIALIZING;
 
@@ -344,47 +346,28 @@ void protected_pin_err() {
 void quickstop_stepper() {
 	planner.quick_stop();
 	planner.synchronize();
-	set_current_from_steppers_for_axis(ALL_AXES);
+	set_current_from_steppers_for_axis(AxisValue::All);
 	sync_plan_position();
 }
 
-void enable_e_steppers() {
-#define _ENA_E(N) ENABLE_AXIS_E##N();
-	REPEAT(E_STEPPERS, _ENA_E)
-}
-
 void enable_all_steppers() {
-	TERN_(AUTO_POWER_CONTROL, powerManager.power_on());
 	ENABLE_AXIS_X();
 	ENABLE_AXIS_Y();
 	ENABLE_AXIS_Z();
-	enable_e_steppers();
+	ENABLE_AXIS_A();
+	ENABLE_AXIS_B();
+	ENABLE_AXIS_C();
 
-	TERN_(EXTENSIBLE_UI, ExtUI::onSteppersEnabled());
-}
-
-void disable_e_steppers() {
-#define _DIS_E(N) DISABLE_AXIS_E##N();
-	REPEAT(E_STEPPERS, _DIS_E)
-}
-
-void disable_e_stepper(const uint8_t e) {
-#define _CASE_DIS_E(N) \
-	case N: \
-		DISABLE_AXIS_E##N(); \
-		break;
-	switch (e) {
-		REPEAT(EXTRUDERS, _CASE_DIS_E)
-	}
+	safe_delay(200);
 }
 
 void disable_all_steppers() {
 	DISABLE_AXIS_X();
 	DISABLE_AXIS_Y();
 	DISABLE_AXIS_Z();
-	disable_e_steppers();
-
-	TERN_(EXTENSIBLE_UI, ExtUI::onSteppersDisabled());
+	DISABLE_AXIS_A();
+	DISABLE_AXIS_B();
+	DISABLE_AXIS_C();
 }
 
 #if ENABLED(G29_RETRY_AND_RECOVER)
@@ -544,8 +527,6 @@ inline void manage_inactivity(const bool ignore_stepper_queue = false) {
 					DISABLE_AXIS_Y();
 				if (ENABLED(DISABLE_INACTIVE_Z))
 					DISABLE_AXIS_Z();
-				if (ENABLED(DISABLE_INACTIVE_E))
-					disable_e_steppers();
 
 				TERN_(AUTO_BED_LEVELING_UBL, ubl.steppers_were_disabled());
 			}
@@ -891,8 +872,10 @@ void minkill(const bool steppers_off /*=false*/) {
 
 	TERN_(HAS_CUTTER, cutter.enabled(false)); // Reiterate cutter shutdown
 
-	// Power off all steppers (for M112) or just the E steppers
-	steppers_off ? disable_all_steppers() : disable_e_steppers();
+	// Power off all steppers (for M112)
+	if (steppers_off) {
+		disable_all_steppers();
+	}
 
 	TERN_(PSU_CONTROL, PSU_OFF());
 

@@ -154,6 +154,8 @@
 #define STR_Z3_MAX                      "z3_max"
 #define STR_Z4_MIN                      "z4_min"
 #define STR_Z4_MAX                      "z4_max"
+#define STR_A_MAX                       "a_max"
+#define STR_A_MIN                       "a_min"
 #define STR_Z_PROBE                     "z_probe"
 #define STR_ESTOP                       "estop"
 #define STR_WORK_PROBE                  "work_probe"

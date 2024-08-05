@@ -35,7 +35,7 @@
 #else
   #define _X_MAX
 #endif
-#if PIN_EXISTS(X_CS) && AXIS_HAS_SPI(X)
+#if PIN_EXISTS(X_CS)
   #define _X_CS X_CS_PIN,
 #else
   #define _X_CS
@@ -68,7 +68,7 @@
 #else
   #define _Y_MAX
 #endif
-#if PIN_EXISTS(Y_CS) && AXIS_HAS_SPI(Y)
+#if PIN_EXISTS(Y_CS)
   #define _Y_CS Y_CS_PIN,
 #else
   #define _Y_CS
@@ -101,7 +101,7 @@
 #else
   #define _Z_MAX
 #endif
-#if PIN_EXISTS(Z_CS) && AXIS_HAS_SPI(Z)
+#if PIN_EXISTS(Z_CS)
   #define _Z_CS Z_CS_PIN,
 #else
   #define _Z_CS
@@ -124,337 +124,40 @@
 
 #define _Z_PINS Z_STEP_PIN, Z_DIR_PIN, Z_ENABLE_PIN, _Z_MIN _Z_MAX _Z_MS1 _Z_MS2 _Z_MS3 _Z_CS
 
-//
-// Extruder Chip Select, Digital Micro-steps
-//
 
-// Mixing stepper, Switching stepper, or regular stepper
-#define E_NEEDED(N) (ENABLED(MIXING_EXTRUDER) && MIXING_STEPPERS > N) \
-                 || (ENABLED(SWITCHING_EXTRUDER) && E_STEPPERS > N) \
-                 || (NONE(SWITCHING_EXTRUDER, MIXING_EXTRUDER) && EXTRUDERS > N)
-
-#define _E0_CS
-#define _E0_MS1
-#define _E0_MS2
-#define _E0_MS3
-
-#if E_NEEDED(0)
-  #if PIN_EXISTS(E0_CS) && AXIS_HAS_SPI(E0)
-    #undef _E0_CS
-    #define _E0_CS E0_CS_PIN,
-  #endif
-  #if PIN_EXISTS(E0_MS1)
-    #undef _E0_MS1
-    #define _E0_MS1 E0_MS1_PIN,
-  #endif
-  #if PIN_EXISTS(E0_MS2)
-    #undef _E0_MS2
-    #define _E0_MS2 E0_MS2_PIN,
-  #endif
-  #if PIN_EXISTS(E0_MS3)
-    #undef _E0_MS3
-    #define _E0_MS3 E0_MS3_PIN,
-  #endif
+#if PIN_EXISTS(A_MIN)
+  #define _A_MIN A_MIN_PIN,
+#else
+  #define _A_MIN
+#endif
+#if PIN_EXISTS(A_MAX)
+  #define _A_MAX A_MAX_PIN,
+#else
+  #define _A_MAX
+#endif
+#if PIN_EXISTS(A_CS)
+  #define _A_CS A_CS_PIN,
+#else
+  #define _A_CS
+#endif
+#if PIN_EXISTS(A_MS1)
+  #define _A_MS1 A_MS1_PIN,
+#else
+  #define _A_MS1
+#endif
+#if PIN_EXISTS(A_MS2)
+  #define _A_MS2 A_MS2_PIN,
+#else
+  #define _A_MS2
+#endif
+#if PIN_EXISTS(A_MS3)
+  #define _A_MS3 A_MS3_PIN,
+#else
+  #define _A_MS3
 #endif
 
-#define _E1_CS
-#define _E1_MS1
-#define _E1_MS2
-#define _E1_MS3
+#define _A_PINS A_STEP_PIN, A_DIR_PIN, A_ENABLE_PIN, _A_MIN _A_MAX _A_MS1 _A_MS2 _A_MS3 _A_CS
 
-#if E_NEEDED(1)
-  #if PIN_EXISTS(E1_CS) && AXIS_HAS_SPI(E1)
-    #undef _E1_CS
-    #define _E1_CS E1_CS_PIN,
-  #endif
-  #if PIN_EXISTS(E1_MS1)
-    #undef _E1_MS1
-    #define _E1_MS1 E1_MS1_PIN,
-  #endif
-  #if PIN_EXISTS(E1_MS2)
-    #undef _E1_MS2
-    #define _E1_MS2 E1_MS2_PIN,
-  #endif
-  #if PIN_EXISTS(E1_MS3)
-    #undef _E1_MS3
-    #define _E1_MS3 E1_MS3_PIN,
-  #endif
-#endif
-
-#define _E2_CS
-#define _E2_MS1
-#define _E2_MS2
-#define _E2_MS3
-
-#if E_NEEDED(2)
-  #if PIN_EXISTS(E2_CS) && AXIS_HAS_SPI(E2)
-    #undef _E2_CS
-    #define _E2_CS E2_CS_PIN,
-  #endif
-  #if PIN_EXISTS(E2_MS1)
-    #undef _E2_MS1
-    #define _E2_MS1 E2_MS1_PIN,
-  #endif
-  #if PIN_EXISTS(E2_MS2)
-    #undef _E2_MS2
-    #define _E2_MS2 E2_MS2_PIN,
-  #endif
-  #if PIN_EXISTS(E2_MS3)
-    #undef _E2_MS3
-    #define _E2_MS3 E2_MS3_PIN,
-  #endif
-#endif
-
-#define _E3_CS
-#define _E3_MS1
-#define _E3_MS2
-#define _E3_MS3
-
-#if E_NEEDED(3)
-  #if PIN_EXISTS(E3_CS) && AXIS_HAS_SPI(E3)
-    #undef _E3_CS
-    #define _E3_CS E3_CS_PIN,
-  #endif
-  #if PIN_EXISTS(E3_MS1)
-    #undef _E3_MS1
-    #define _E3_MS1 E3_MS1_PIN,
-  #endif
-  #if PIN_EXISTS(E3_MS2)
-    #undef _E3_MS2
-    #define _E3_MS2 E3_MS2_PIN,
-  #endif
-  #if PIN_EXISTS(E3_MS3)
-    #undef _E3_MS3
-    #define _E3_MS3 E3_MS3_PIN,
-  #endif
-#endif
-
-#define _E4_CS
-#define _E4_MS1
-#define _E4_MS2
-#define _E4_MS3
-
-#if E_NEEDED(4)
-  #if PIN_EXISTS(E4_CS) && AXIS_HAS_SPI(E4)
-    #undef _E4_CS
-    #define _E4_CS E4_CS_PIN,
-  #endif
-  #if PIN_EXISTS(E4_MS1)
-    #undef _E4_MS1
-    #define _E4_MS1 E4_MS1_PIN,
-  #endif
-  #if PIN_EXISTS(E4_MS2)
-    #undef _E4_MS2
-    #define _E4_MS2 E4_MS2_PIN,
-  #endif
-  #if PIN_EXISTS(E4_MS3)
-    #undef _E4_MS3
-    #define _E4_MS3 E4_MS3_PIN,
-  #endif
-#endif
-
-#define _E5_CS
-#define _E5_MS1
-#define _E5_MS2
-#define _E5_MS3
-
-#if E_NEEDED(5)
-  #if PIN_EXISTS(E5_CS) && AXIS_HAS_SPI(E5)
-    #undef _E5_CS
-    #define _E5_CS E5_CS_PIN,
-  #endif
-  #if PIN_EXISTS(E5_MS1)
-    #undef _E5_MS1
-    #define _E5_MS1 E5_MS1_PIN,
-  #endif
-  #if PIN_EXISTS(E5_MS2)
-    #undef _E5_MS2
-    #define _E5_MS2 E5_MS2_PIN,
-  #endif
-  #if PIN_EXISTS(E5_MS3)
-    #undef _E5_MS3
-    #define _E5_MS3 E5_MS3_PIN,
-  #endif
-#endif
-
-#define _E6_CS
-#define _E6_MS1
-#define _E6_MS2
-#define _E6_MS3
-
-#if E_NEEDED(6)
-  #if PIN_EXISTS(E6_CS) && AXIS_HAS_SPI(E6)
-    #undef _E6_CS
-    #define _E6_CS E6_CS_PIN,
-  #endif
-  #if PIN_EXISTS(E6_MS2)
-    #undef _E6_MS2
-    #define _E6_MS2 E6_MS2_PIN,
-  #endif
-  #if PIN_EXISTS(E6_MS3)
-    #undef _E6_MS3
-    #define _E6_MS3 E6_MS3_PIN,
-  #endif
-  #if PIN_EXISTS(E6_MS4)
-    #undef _E6_MS4
-    #define _E6_MS4 E6_MS4_PIN,
-  #endif
-#endif
-
-#define _E7_CS
-#define _E7_MS1
-#define _E7_MS2
-#define _E7_MS3
-
-#if E_NEEDED(7)
-  #if PIN_EXISTS(E7_CS) && AXIS_HAS_SPI(E7)
-    #undef _E7_CS
-    #define _E7_CS E7_CS_PIN,
-  #endif
-  #if PIN_EXISTS(E7_MS3)
-    #undef _E7_MS3
-    #define _E7_MS3 E7_MS3_PIN,
-  #endif
-  #if PIN_EXISTS(E7_MS4)
-    #undef _E7_MS4
-    #define _E7_MS4 E7_MS4_PIN,
-  #endif
-  #if PIN_EXISTS(E7_MS5)
-    #undef _E7_MS5
-    #define _E7_MS5 E7_MS5_PIN,
-  #endif
-#endif
-
-//
-// E Steppers
-//
-
-#define _E0_PINS
-#define _E1_PINS
-#define _E2_PINS
-#define _E3_PINS
-#define _E4_PINS
-#define _E5_PINS
-#define _E6_PINS
-#define _E7_PINS
-
-#if EXTRUDERS
-  #undef _E0_PINS
-  #define _E0_PINS E0_STEP_PIN, E0_DIR_PIN, E0_ENABLE_PIN, _E0_CS _E0_MS1 _E0_MS2 _E0_MS3
-#endif
-
-#if ENABLED(SWITCHING_EXTRUDER)
-                      // Tools 0 and 1 use E0
-  #if EXTRUDERS > 2   // Tools 2 and 3 use E1
-    #undef _E1_PINS
-    #define _E1_PINS E1_STEP_PIN, E1_DIR_PIN, E1_ENABLE_PIN, _E1_CS _E1_MS1 _E1_MS2 _E1_MS3
-    #if EXTRUDERS > 4 // Tools 4 and 5 use E2
-      #undef _E2_PINS
-      #define _E2_PINS E2_STEP_PIN, E2_DIR_PIN, E2_ENABLE_PIN, _E2_CS _E2_MS1 _E2_MS2 _E2_MS3
-    #endif
-  #endif
-
-#elif EITHER(HAS_MULTI_EXTRUDER, MIXING_EXTRUDER)
-
-  #undef _E1_PINS
-  #define _E1_PINS E1_STEP_PIN, E1_DIR_PIN, E1_ENABLE_PIN, _E1_CS _E1_MS1 _E1_MS2 _E1_MS3
-  #if EXTRUDERS > 2 || (ENABLED(MIXING_EXTRUDER) && MIXING_STEPPERS > 2)
-    #undef _E2_PINS
-    #define _E2_PINS E2_STEP_PIN, E2_DIR_PIN, E2_ENABLE_PIN, _E2_CS _E2_MS1 _E2_MS2 _E2_MS3
-    #if EXTRUDERS > 3 || (ENABLED(MIXING_EXTRUDER) && MIXING_STEPPERS > 3)
-      #undef _E3_PINS
-      #define _E3_PINS E3_STEP_PIN, E3_DIR_PIN, E3_ENABLE_PIN, _E3_CS _E3_MS1 _E3_MS2 _E3_MS3
-      #if EXTRUDERS > 4 || (ENABLED(MIXING_EXTRUDER) && MIXING_STEPPERS > 4)
-        #undef _E4_PINS
-        #define _E4_PINS E4_STEP_PIN, E4_DIR_PIN, E4_ENABLE_PIN, _E4_CS _E4_MS1 _E4_MS2 _E4_MS3
-        #if EXTRUDERS > 5 || (ENABLED(MIXING_EXTRUDER) && MIXING_STEPPERS > 5)
-          #undef _E5_PINS
-          #define _E5_PINS E5_STEP_PIN, E5_DIR_PIN, E5_ENABLE_PIN, _E5_CS _E5_MS1 _E5_MS2 _E5_MS3
-          #if EXTRUDERS > 6 || (ENABLED(MIXING_EXTRUDER) && MIXING_STEPPERS > 6)
-            #undef _E6_PINS
-            #define _E6_PINS E6_STEP_PIN, E6_DIR_PIN, E6_ENABLE_PIN, _E6_CS _E6_MS1 _E6_MS2 _E6_MS3
-            #if EXTRUDERS > 7 || (ENABLED(MIXING_EXTRUDER) && MIXING_STEPPERS > 7)
-              #undef _E7_PINS
-              #define _E7_PINS E7_STEP_PIN, E7_DIR_PIN, E7_ENABLE_PIN, _E7_CS _E7_MS1 _E7_MS2 _E7_MS3
-            #endif // EXTRUDERS > 7 || MIXING_EXTRUDER > 7
-          #endif // EXTRUDERS > 6 || MIXING_EXTRUDER > 6
-        #endif // EXTRUDERS > 5 || MIXING_EXTRUDER > 5
-      #endif // EXTRUDERS > 4 || MIXING_EXTRUDER > 4
-    #endif // EXTRUDERS > 3 || MIXING_EXTRUDER > 3
-  #endif // EXTRUDERS > 2 || MIXING_EXTRUDER > 2
-
-#endif // HAS_MULTI_EXTRUDER || MIXING_EXTRUDER
-
-//
-// Heaters, Fans, Temp Sensors
-//
-
-#ifndef E0_AUTO_FAN_PIN
-  #define E0_AUTO_FAN_PIN -1
-#endif
-#ifndef E1_AUTO_FAN_PIN
-  #define E1_AUTO_FAN_PIN -1
-#endif
-#ifndef E2_AUTO_FAN_PIN
-  #define E2_AUTO_FAN_PIN -1
-#endif
-#ifndef E3_AUTO_FAN_PIN
-  #define E3_AUTO_FAN_PIN -1
-#endif
-#ifndef E4_AUTO_FAN_PIN
-  #define E4_AUTO_FAN_PIN -1
-#endif
-#ifndef E5_AUTO_FAN_PIN
-  #define E5_AUTO_FAN_PIN -1
-#endif
-#ifndef E6_AUTO_FAN_PIN
-  #define E6_AUTO_FAN_PIN -1
-#endif
-#ifndef E7_AUTO_FAN_PIN
-  #define E7_AUTO_FAN_PIN -1
-#endif
-
-#define _H0_PINS
-#define _H1_PINS
-#define _H2_PINS
-#define _H3_PINS
-#define _H4_PINS
-#define _H5_PINS
-#define _H6_PINS
-#define _H7_PINS
-
-#if HAS_HOTEND
-  #undef _H0_PINS
-  #define _H0_PINS HEATER_0_PIN, E0_AUTO_FAN_PIN, analogInputToDigitalPin(TEMP_0_PIN),
-  #if HAS_MULTI_HOTEND
-    #undef _H1_PINS
-    #define _H1_PINS HEATER_1_PIN, E1_AUTO_FAN_PIN, analogInputToDigitalPin(TEMP_1_PIN),
-    #if HOTENDS > 2
-      #undef _H2_PINS
-      #define _H2_PINS HEATER_2_PIN, E2_AUTO_FAN_PIN, analogInputToDigitalPin(TEMP_2_PIN),
-      #if HOTENDS > 3
-        #undef _H3_PINS
-        #define _H3_PINS HEATER_3_PIN, E3_AUTO_FAN_PIN, analogInputToDigitalPin(TEMP_3_PIN),
-        #if HOTENDS > 4
-          #undef _H4_PINS
-          #define _H4_PINS HEATER_4_PIN, E4_AUTO_FAN_PIN, analogInputToDigitalPin(TEMP_4_PIN),
-          #if HOTENDS > 5
-            #undef _H5_PINS
-            #define _H5_PINS HEATER_5_PIN, E5_AUTO_FAN_PIN, analogInputToDigitalPin(TEMP_5_PIN),
-            #if HOTENDS > 6
-              #undef _H6_PINS
-              #define _H6_PINS HEATER_6_PIN, E6_AUTO_FAN_PIN, analogInputToDigitalPin(TEMP_6_PIN),
-              #if HOTENDS > 7
-                #undef _H7_PINS
-                #define _H7_PINS HEATER_7_PIN, E7_AUTO_FAN_PIN, analogInputToDigitalPin(TEMP_7_PIN),
-              #endif // HOTENDS > 7
-            #endif // HOTENDS > 6
-          #endif // HOTENDS > 5
-        #endif // HOTENDS > 4
-      #endif // HOTENDS > 3
-    #endif // HOTENDS > 2
-  #endif // HAS_MULTI_HOTEND
-#endif // HOTENDS
 
 //
 // Dual X, Dual Y, Multi-Z
@@ -488,7 +191,7 @@
 #endif
 
 #if ENABLED(Y_DUAL_STEPPER_DRIVERS)
-  #if PIN_EXISTS(Y2_CS) && AXIS_HAS_SPI(Y2)
+  #if PIN_EXISTS(Y2_CS)
     #define _Y2_CS Y2_CS_PIN,
   #else
     #define _Y2_CS
@@ -682,8 +385,7 @@
 
 #define SENSITIVE_PINS { \
   _X_PINS _Y_PINS _Z_PINS _X2_PINS _Y2_PINS _Z2_PINS _Z3_PINS _Z4_PINS _Z_PROBE \
-  _E0_PINS _E1_PINS _E2_PINS _E3_PINS _E4_PINS _E5_PINS _E6_PINS _E7_PINS \
-  _H0_PINS _H1_PINS _H2_PINS _H3_PINS _H4_PINS _H5_PINS _H6_PINS _H7_PINS \
+  _A_PINS \
   _PS_ON _FAN0 _FAN1 _FAN2 _FAN3 _FAN4 _FAN5 _FAN6 _FAN7 _FANC \
   _BED_PINS _CHAMBER_TEMP _CHAMBER_HEATER _CHAMBER_FAN HAL_SENSITIVE_PINS \
 }

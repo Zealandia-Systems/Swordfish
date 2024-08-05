@@ -1172,7 +1172,7 @@
 #define X_ENABLE_ON               1
 #define Y_ENABLE_ON               1
 #define Z_ENABLE_ON               1
-#define A_ENABLE_ON               1
+#define A_ENABLE_ON          1
 
 // Disable axis steppers immediately when they're not being stepped.
 // WARNING: When motors turn off there is a chance of losing position accuracy!

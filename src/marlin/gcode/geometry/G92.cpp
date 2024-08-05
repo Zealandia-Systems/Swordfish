@@ -36,6 +36,7 @@
 using namespace Eigen;
 
 using namespace swordfish;
+using namespace swordfish::math;
 using namespace swordfish::core;
 using namespace swordfish::motion;
 
@@ -74,26 +75,26 @@ void GcodeSuite::G92(bool report) {
       } break;
     #endif
     case 0: {
-			Vector3f workOffset { 0, 0, 0 };
-				
-      LOOP_XYZE(i) {
-        if (parser.seenval(axis_codes[i])) {
-          const float l = parser.value_axis_units((AxisEnum)i),
-                      v = i == E_AXIS ? l : toNative(l, (AxisEnum)i),
+			Vector3f32 workOffset { 0, 0, 0 };
+
+      for (auto i : linear_axes) {
+        if (parser.seenval(i.to_char())) {
+          const float l = parser.value_axis_units(i),
+                      v = toNative(l, i),
                       d = v - current_position[i];
           if (!NEAR_ZERO(d)) {
             #if IS_SCARA || !HAS_POSITION_SHIFT
               if (i == E_AXIS) sync_E = true; else sync_XYZ = true;
               current_position[i] = v;        // Without workspaces revert to Marlin 1.0 behavior
             #elif HAS_POSITION_SHIFT
-               workOffset(i) += d;       // Other axes simply offset the coordinate space
+               workOffset[i] += d;       // Other axes simply offset the coordinate space
             #endif
           }
         }
       }
-			
+
 			motionManager.setWorkOffset(workOffset);
-			
+
     } break;
   }
 
